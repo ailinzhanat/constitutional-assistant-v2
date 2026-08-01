@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+requests
+python-multipart
+neo4j
+pymupdf
+python-docx
+pytesseract
+pillow
+pypdf
+odfpy

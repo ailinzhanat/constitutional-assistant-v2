@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Judicial Analyst — внутренний инструмент</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1C1F22;
+    --bg-2:#24282C;
+    --panel:#2C3136;
+    --panel-2:#353B42;
+    --accent:#5B8AA6;
+    --accent-bright:#7BAAC7;
+    --ok:#5F9E7E;
+    --warn:#C99A4A;
+    --danger:#B0554A;
+    --text:#E4E6E8;
+    --text-dim:#8B929A;
+    --text-faint:#5C636B;
+    --radius:2px;
+    --sans:"IBM Plex Sans", sans-serif;
+    --cond:"IBM Plex Sans Condensed", sans-serif;
+    --mono:"IBM Plex Mono", monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 24px 80px;}
+
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid #3A3F45;padding-bottom:18px;margin-bottom:28px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:34px;height:34px;border:1.5px solid var(--accent);border-radius:3px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-weight:600;color:var(--accent-bright);font-size:13px;
+  }
+  .brand h1{font-family:var(--cond);font-weight:700;font-size:19px;margin:0;letter-spacing:.02em;}
+  .brand p{margin:2px 0 0;font-size:12px;color:var(--text-dim);font-family:var(--mono);}
+
+  .badge{
+    font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+    padding:5px 10px;border:1px solid var(--accent);color:var(--accent-bright);
+    border-radius:20px;text-transform:uppercase;
+  }
+
+  .hitl-banner{
+    background:var(--panel);border-left:3px solid var(--warn);
+    padding:12px 16px;margin-bottom:24px;font-size:13px;color:var(--text-dim);
+    border-radius:0 var(--radius) var(--radius) 0;
+  }
+  .hitl-banner b{color:var(--warn);}
+
+  #gate{max-width:420px;margin:80px auto;text-align:center;}
+  #gate .panel{background:var(--panel);padding:36px 32px;border-radius:var(--radius);}
+  #gate h2{font-family:var(--cond);font-size:20px;margin:0 0 8px;}
+  #gate p{font-size:13px;color:var(--text-dim);margin:0 0 22px;}
+  #gate input{
+    width:100%;font-family:var(--mono);font-size:15px;letter-spacing:.05em;
+    background:var(--bg-2);border:1px solid #3A3F45;color:var(--text);
+    padding:12px 14px;border-radius:var(--radius);margin-bottom:14px;text-align:center;
+  }
+  #gate input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  #app{display:none;}
+  #app.visible{display:block;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;}
+  @media (max-width:860px){.grid{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--panel);border-radius:var(--radius);
+    padding:24px 26px;
+  }
+  .panel h2{
+    font-family:var(--cond);font-weight:700;font-size:16px;margin:0 0 4px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .panel h2 .n{font-family:var(--mono);color:var(--accent-bright);font-size:13px;}
+  .panel .sub{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
+
+  label.field{display:block;font-size:11px;font-weight:600;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--text-dim);margin:0 0 6px;}
+  textarea, input[type=text]{
+    width:100%;font-family:var(--sans);font-size:13.5px;color:var(--text);
+    background:var(--bg-2);border:1px solid #3A3F45;border-radius:var(--radius);
+    padding:10px 12px;resize:vertical;
+  }
+  textarea:focus, input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  textarea{min-height:160px;line-height:1.5;margin-bottom:14px;}
+
+  .filerow{
+    border:1.5px dashed #3A3F45;border-radius:var(--radius);
+    padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  }
+  .filerow input[type=file]{font-size:12.5px;color:var(--text-dim);}
+
+  .btn{
+    font-family:var(--sans);font-weight:600;font-size:13.5px;
+    padding:10px 18px;border-radius:var(--radius);border:none;cursor:pointer;
+    background:var(--accent);color:#12181C;
+    transition:background .15s;
+  }
+  .btn:hover:not(:disabled){background:var(--accent-bright);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .row{display:flex;gap:10px;margin-bottom:14px;}
+  .row > *{flex:1;}
+
+  .status-msg{font-size:12.5px;margin-top:10px;color:var(--text-dim);}
+  .status-msg.error{color:var(--danger);}
+
+  .result{margin-top:20px;padding-top:18px;border-top:1px solid #3A3F45;}
+  .result .k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--text-faint);display:block;margin-bottom:4px;}
+  .result .v{font-size:13.5px;margin:0 0 14px;line-height:1.55;}
+  .flags{list-style:none;margin:0;padding:0;}
+  .flags li{
+    font-size:13px;padding:8px 10px;background:rgba(201,154,74,0.1);
+    border-left:2px solid var(--warn);margin-bottom:6px;border-radius:0 2px 2px 0;
+  }
+  .flags.empty li{border-left-color:var(--ok);background:rgba(95,158,126,0.1);}
+
+  .precedent-card{
+    background:var(--panel-2);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;
+  }
+  .precedent-card .meta{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-bottom:6px;}
+  .precedent-card .summary{font-size:13px;line-height:1.5;}
+  .precedent-card .articles{margin-top:8px;}
+  .chip{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;
+    padding:2px 8px;background:rgba(91,138,166,0.15);color:var(--accent-bright);
+    border-radius:10px;margin-right:6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div id="gate">
+    <div class="panel">
+      <h2>Judicial Analyst</h2>
+      <p>Внутренний инструмент. Доступ только для судей и уполномоченных сотрудников.</p>
+      <input type="text" id="accessCode" placeholder="Код доступа" autocomplete="off">
+      <button class="btn" id="btnUnlock" style="width:100%;">Войти</button>
+      <div class="status-msg error" id="gateError"></div>
+    </div>
+  </div>
+
+  <div id="app">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">JA</div>
+        <div>
+          <h1>Judicial Analyst</h1>
+          <p>internal · restricted access</p>
+        </div>
+      </div>
+      <span class="badge">● authenticated</span>
+    </header>
+
+    <div class="hitl-banner">
+      <b>Human-in-the-loop:</b> система формирует только вспомогательные материалы (справку и поиск прецедентов).
+      Все решения по существу дела принимает судья единолично.
+    </div>
+
+    <div class="grid">
+
+      <div class="panel">
+        <h2><span class="n">01</span> Справка по делу</h2>
+        <p class="sub">Нейтральное изложение фактов, аргументов сторон и конституционных вопросов.</p>
+
+        <div class="filerow">
+          <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.odt,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.gif,.webp">
+          <span id="fileChip" style="font-family:'IBM Plex Mono';font-size:11px;color:var(--text-dim);"></span>
+        </div>
+
+        <label class="field">Текст дела</label>
+        <textarea id="caseText" placeholder="Вставьте текст дела или загрузите документ выше…"></textarea>
+
+        <button class="btn" id="btnSummary">Сформировать справку</button>
+        <div class="status-msg" id="summaryStatus"></div>
+
+        <div class="result" id="summaryResult" style="display:none;"></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="n">02</span> Поиск прецедентов</h2>
+        <p class="sub">Поиск по базе знаний: похожие решения, статьи, срок действия.</p>
+
+        <label class="field">Ключевое слово</label>
+        <div class="row">
+          <input type="text" id="keyword" placeholder="например: информац, срок, прозрачн">
+          <input type="text" id="caseTypeFilter" placeholder="тип дела (необязательно)">
+        </div>
+
+        <button class="btn" id="btnSearch">Искать</button>
+        <div class="status-msg" id="searchStatus"></div>
+
+        <div class="result" id="searchResult" style="display:none;"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ⚠️ ПОСЛЕ ДЕПЛОЯ НА RENDER: замените строку ниже на реальный адрес backend,
+// например "https://constitutional-assistant-api.onrender.com"
+// Для локальной разработки оставьте как есть.
+const API_BASE = "http://127.0.0.1:8000";
+let accessCode = "";
+
+document.getElementById("btnUnlock").addEventListener("click", async ()=>{
+  const code = document.getElementById("accessCode").value.trim();
+  const errEl = document.getElementById("gateError");
+  errEl.textContent = "";
+
+  if(!code){ errEl.textContent = "Введите код доступа"; return; }
+
+  try{
+    const res = await fetch(`${API_BASE}/api/judicial/search-precedents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Judicial-Code": code },
+      body: JSON.stringify({ keyword: "__auth_check__" })
+    });
+    if(res.status === 401){
+      errEl.textContent = "Неверный код доступа";
+      return;
+    }
+    accessCode = code;
+    document.getElementById("gate").style.display = "none";
+    document.getElementById("app").classList.add("visible");
+  }catch(err){
+    errEl.textContent = "Не удалось подключиться к серверу. Проверьте, что backend запущен.";
+  }
+});
+
+document.getElementById("accessCode").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter") document.getElementById("btnUnlock").click();
+});
+
+document.getElementById("fileInput").addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const chip = document.getElementById("fileChip");
+  chip.textContent = "Обработка файла…";
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try{
+    const res = await fetch(`${API_BASE}/api/upload-document`, { method:"POST", body: formData });
+    const data = await res.json();
+    if(!res.ok || !data.success) throw new Error(data.detail || "parse failed");
+    document.getElementById("caseText").value = data.text;
+    chip.textContent = `Извлечено: ${data.text_length} симв. (${data.detected_language})`;
+  }catch(err){
+    chip.textContent = "Не удалось распознать файл";
+  }
+});
+
+document.getElementById("btnSummary").addEventListener("click", async ()=>{
+  const caseText = document.getElementById("caseText").value.trim();
+  const statusEl = document.getElementById("summaryStatus");
+  const resultEl = document.getElementById("summaryResult");
+  const btn = document.getElementById("btnSummary");
+
+  if(!caseText){ statusEl.className="status-msg error"; statusEl.textContent="Введите текст дела"; return; }
+
+  btn.disabled = true;
+  statusEl.className = "status-msg";
+  statusEl.textContent = "Формирование справки… (до 2 минут)";
+  resultEl.style.display = "none";
+
+  try{
+    const res = await fetch(`${API_BASE}/api/judicial/summary`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Judicial-Code":accessCode},
+      body: JSON.stringify({ case_text: caseText, language: "RU" })
+    });
+    const data = await res.json();
+    btn.disabled = false;
+    statusEl.textContent = "";
+
+    if(!res.ok){
+      statusEl.className = "status-msg error";
+      statusEl.textContent = data.detail || "Ошибка запроса";
+      return;
+    }
+
+    const flags = data.procedural_flags || [];
+    const flagsHtml = flags.length
+      ? `<ul class="flags">${flags.map(f=>`<li>${escapeHtml(f)}</li>`).join("")}</ul>`
+      : `<ul class="flags empty"><li>Явных процедурных проблем не выявлено</li></ul>`;
+
+    resultEl.innerHTML = `
+      <span class="k">Фактические обстоятельства</span>
+      <p class="v">${escapeHtml(data.key_facts || "—")}</p>
+      <span class="k">Аргументы сторон</span>
+      <p class="v">${escapeHtml(data.legal_arguments || "—")}</p>
+      <span class="k">Конституционные вопросы</span>
+      <p class="v">${escapeHtml(data.constitutional_issues || "—")}</p>
+      <span class="k">Процедурные флаги (для проверки судьёй)</span>
+      ${flagsHtml}
+    `;
+    resultEl.style.display = "block";
+  }catch(err){
+    btn.disabled = false;
+    statusEl.className = "status-msg error";
+    statusEl.textContent = "Не удалось подключиться к серверу";
+  }
+});
+
+document.getElementById("btnSearch").addEventListener("click", async ()=>{
+  const keyword = document.getElementById("keyword").value.trim();
+  const caseType = document.getElementById("caseTypeFilter").value.trim() || null;
+  const statusEl = document.getElementById("searchStatus");
+  const resultEl = document.getElementById("searchResult");
+
+  if(!keyword){ statusEl.className="status-msg error"; statusEl.textContent="Введите ключевое слово"; return; }
+
+  statusEl.className = "status-msg";
+  statusEl.textContent = "Поиск…";
+  resultEl.style.display = "none";
+
+  try{
+    const res = await fetch(`${API_BASE}/api/judicial/search-precedents`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Judicial-Code":accessCode},
+      body: JSON.stringify({ keyword, case_type: caseType })
+    });
+    const data = await res.json();
+    statusEl.textContent = "";
+
+    if(!res.ok){
+      statusEl.className = "status-msg error";
+      statusEl.textContent = data.detail || "Ошибка запроса";
+      return;
+    }
+
+    if(!data.results || data.results.length === 0){
+      resultEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Ничего не найдено по этому ключевому слову.</p>`;
+    }else{
+      resultEl.innerHTML = data.results.map(r => `
+        <div class="precedent-card">
+          <div class="meta">${escapeHtml(r.court || "—")} · ${escapeHtml(r.date || "—")} · ${escapeHtml(r.precedent_strength || "")}</div>
+          <div class="summary">${escapeHtml(r.summary || "—")}</div>
+          <div class="articles">${(r.cited_articles||[]).map(a=>`<span class="chip">${escapeHtml(a)}</span>`).join("")}</div>
+        </div>
+      `).join("");
+    }
+    resultEl.style.display = "block";
+  }catch(err){
+    statusEl.className = "status-msg error";
+    statusEl.textContent = "Не удалось подключиться к серверу";
+  }
+});
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
