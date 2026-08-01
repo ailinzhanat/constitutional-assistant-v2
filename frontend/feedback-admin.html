@@ -70,10 +70,8 @@
 </div>
 
 <script>
-// ⚠️ ПОСЛЕ ДЕПЛОЯ НА RENDER: замените строку ниже на реальный адрес backend,
-// например "https://constitutional-assistant-api.onrender.com"
-// Для локальной разработки оставьте как есть.
-const API_BASE = "http://127.0.0.1:8000";
+// Backend задеплоен на Render.
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
 
 document.getElementById("btnEnter").addEventListener("click", load);
 document.getElementById("code").addEventListener("keydown", e => { if(e.key==="Enter") load(); });
