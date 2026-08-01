@@ -3,31 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Constitutional Assistant</title>
+<title>Constitutional Assistant — обращение в Конституционный Суд РК</title>
+<meta name="description" content="Пилотный ИИ-ассистент, который помогает гражданам Казахстана подготовить обращение в Конституционный Суд РК по статьям 44 и 45 Конституционного закона.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#12203A;
-    --ink-2:#1B2C4F;
-    --ink-3:#243A63;
-    --paper:#ECEAE3;
-    --paper-2:#E1DFD6;
-    --seal:#B8934A;
-    --seal-bright:#D4AC63;
-    --patina:#3F7D73;
-    --ink-text:#E8E6DF;
-    --ink-text-dim:#9AA6BE;
-    --slate-text:#4A5164;
-    --slate-dim:#82889A;
-    --danger:#A6493D;
+    --ink:#12203A; --ink-2:#1B2C4F; --ink-3:#243A63;
+    --paper:#ECEAE3; --paper-2:#E1DFD6;
+    --seal:#B8934A; --seal-bright:#D4AC63; --patina:#3F7D73;
+    --ink-text:#E8E6DF; --ink-text-dim:#9AA6BE;
+    --slate-text:#4A5164; --slate-dim:#82889A; --danger:#A6493D;
     --radius:2px;
-    --serif:"IBM Plex Sans Condensed", sans-serif;
-    --sans:"IBM Plex Sans", sans-serif;
+    --serif:"Fraunces", serif;
+    --sans:"Inter", sans-serif;
     --mono:"IBM Plex Mono", monospace;
   }
-
   *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--ink);
@@ -37,539 +31,361 @@
     color:var(--ink-text);
     font-family:var(--sans);
     min-height:100vh;
-    line-height:1.5;
+    line-height:1.55;
   }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
 
-  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px;}
-
-  /* ---------- HEADER ---------- */
+  /* header */
   header{
-    display:flex;align-items:flex-start;justify-content:space-between;
-    gap:20px;flex-wrap:wrap;
-    border-bottom:1px solid rgba(232,230,223,0.14);
-    padding-bottom:22px;margin-bottom:36px;
+    position:sticky;top:0;z-index:20;
+    background:rgba(18,32,58,0.88);backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(232,230,223,0.1);
   }
-  .brand{display:flex;align-items:center;gap:14px;}
-  .brand svg{flex-shrink:0;}
-  .brand h1{
-    font-family:var(--serif);
-    font-weight:700;
-    font-size:22px;
-    letter-spacing:0.2px;
-    margin:0;
-    color:var(--ink-text);
-  }
-  .brand p{margin:2px 0 0;font-size:13px;color:var(--ink-text-dim);}
+  .bar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;max-width:1080px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;}
+  .brand h1{font-family:var(--serif);font-weight:700;font-size:16.5px;margin:0;color:var(--ink-text);}
+  .brand small{display:block;font-size:11px;color:var(--ink-text-dim);margin-top:1px;}
+  nav{display:flex;gap:22px;}
+  nav a{color:var(--ink-text-dim);text-decoration:none;font-size:13.5px;transition:color .15s;}
+  nav a:hover{color:var(--ink-text);}
+  @media (max-width:700px){ nav{display:none;} }
 
   .langswitch{display:flex;gap:2px;background:rgba(255,255,255,0.05);padding:3px;border-radius:3px;border:1px solid rgba(232,230,223,0.14);}
   .langswitch button{
-    font-family:var(--mono);font-size:12px;letter-spacing:0.06em;
-    padding:7px 12px;background:transparent;border:none;color:var(--ink-text-dim);
+    font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;
+    padding:6px 11px;background:transparent;border:none;color:var(--ink-text-dim);
     cursor:pointer;border-radius:2px;transition:background .15s, color .15s;
   }
   .langswitch button.active{background:var(--seal);color:var(--ink);font-weight:600;}
   .langswitch button:hover:not(.active){color:var(--ink-text);}
 
-  /* ---------- LAYOUT: steps rail + content ---------- */
-  .layout{display:grid;grid-template-columns:220px 1fr;gap:36px;align-items:start;}
-  @media (max-width:820px){ .layout{grid-template-columns:1fr;} .rail{display:flex;flex-direction:row;gap:10px;overflow-x:auto;} }
-
-  .rail{display:flex;flex-direction:column;gap:4px;position:sticky;top:24px;}
-  .step-tab{
-    display:flex;align-items:center;gap:12px;
-    padding:14px 12px;border-radius:var(--radius);
-    border-left:2px solid transparent;
-    cursor:default;opacity:0.45;transition:opacity .2s, border-color .2s;
+  /* hero */
+  .hero{padding:76px 0 60px;position:relative;overflow:hidden;}
+  .hero-watermark{
+    position:absolute;right:-80px;top:-60px;width:460px;height:460px;
+    color:var(--seal);opacity:0.06;pointer-events:none;
   }
-  .step-tab.active{opacity:1;border-left-color:var(--seal);background:rgba(255,255,255,0.03);}
-  .step-tab.done{opacity:0.85;}
-  .step-num{
-    font-family:var(--mono);font-size:13px;font-weight:600;
-    width:26px;height:26px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    border:1.5px solid var(--ink-text-dim);color:var(--ink-text-dim);
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--seal-bright);margin:0 0 16px;
   }
-  .step-tab.active .step-num{border-color:var(--seal);color:var(--seal-bright);}
-  .step-tab.done .step-num{border-color:var(--patina);color:var(--patina);background:rgba(63,125,115,0.12);}
-  .step-label{font-size:14px;color:var(--ink-text-dim);}
-  .step-tab.active .step-label{color:var(--ink-text);font-weight:500;}
-
-  /* ---------- CARDS ---------- */
-  .card{
-    background:var(--paper);
-    color:var(--slate-text);
-    border-radius:var(--radius);
-    padding:32px 34px;
-    box-shadow:0 18px 40px -20px rgba(0,0,0,0.5);
-    position:relative;
+  h2{font-family:var(--serif);font-weight:600;color:var(--ink-text);letter-spacing:-0.01em;}
+  .hero h1{
+    font-family:var(--serif);font-weight:600;font-size:clamp(32px,4.8vw,52px);
+    line-height:1.1;margin:0 0 24px;max-width:740px;color:var(--ink-text);letter-spacing:-0.01em;
   }
-  .card + .card{margin-top:22px;}
-  .card h2{
-    font-family:var(--serif);font-weight:700;font-size:20px;
-    margin:0 0 6px;color:#1A2333;
+  .hero h1 em{color:var(--seal-bright);font-style:italic;font-weight:500;}
+  .hero-lead{font-family:var(--sans);font-size:16.5px;color:var(--ink-text-dim);max-width:600px;margin:0 0 34px;line-height:1.7;}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+
+  /* reveal on scroll */
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1;transform:none;}
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1;transform:none;transition:none;}
   }
-  .card .sub{font-size:13.5px;color:var(--slate-dim);margin:0 0 22px;}
-
-  .panel{display:none;}
-  .panel.visible{display:block;animation:fade .35s ease;}
-  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
-
-  /* consent text box */
-  .consent-box{
-    background:var(--paper-2);border:1px solid rgba(0,0,0,0.08);
-    border-radius:var(--radius);padding:20px 22px;
-    max-height:280px;overflow-y:auto;
-    font-size:13.5px;line-height:1.65;white-space:pre-wrap;
-    margin-bottom:20px;color:#333A47;
-  }
-
-  label.field{display:block;font-size:12.5px;font-weight:600;letter-spacing:.03em;
-    text-transform:uppercase;color:var(--slate-dim);margin:0 0 6px;}
-  input[type=text], textarea{
-    width:100%;font-family:var(--sans);font-size:14.5px;color:#1A2333;
-    background:#fff;border:1px solid rgba(0,0,0,0.14);border-radius:var(--radius);
-    padding:11px 13px;resize:vertical;
-  }
-  input[type=text]:focus, textarea:focus{outline:2px solid var(--seal);outline-offset:1px;}
-  textarea{min-height:130px;line-height:1.5;}
-
-  .checkline{display:flex;align-items:flex-start;gap:10px;margin:18px 0 22px;font-size:13.5px;}
-  .checkline input{margin-top:3px;width:16px;height:16px;accent-color:var(--seal);}
 
   .btn{
-    font-family:var(--sans);font-weight:600;font-size:14px;
-    padding:12px 22px;border-radius:var(--radius);border:none;cursor:pointer;
-    background:var(--seal);color:#1A1204;
-    display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--sans);font-weight:600;font-size:14.5px;
+    padding:13px 26px;border-radius:var(--radius);border:none;cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;text-decoration:none;
     transition:background .15s, transform .1s;
   }
-  .btn:hover:not(:disabled){background:var(--seal-bright);}
-  .btn:active:not(:disabled){transform:translateY(1px);}
-  .btn:disabled{opacity:0.4;cursor:not-allowed;}
-  .btn.secondary{background:transparent;border:1.5px solid rgba(0,0,0,0.18);color:var(--slate-text);}
-  .btn.secondary:hover{border-color:var(--slate-text);}
+  .btn-primary{background:var(--seal);color:#1A1204;}
+  .btn-primary:hover{background:var(--seal-bright);}
+  .btn-ghost{background:transparent;border:1.5px solid rgba(232,230,223,0.25);color:var(--ink-text);}
+  .btn-ghost:hover{border-color:var(--ink-text);}
 
-  .filerow{
-    border:1.5px dashed rgba(0,0,0,0.2);border-radius:var(--radius);
-    padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:18px;
-    background:rgba(255,255,255,0.4);
+  /* stats */
+  .stats{padding:56px 0;border-top:1px solid rgba(232,230,223,0.08);}
+  .stats h2{font-size:24px;max-width:600px;margin:0 0 34px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+  @media (max-width:820px){ .stat-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:480px){ .stat-grid{grid-template-columns:1fr;} }
+  .stat-card{background:var(--ink-2);border-radius:var(--radius);padding:22px 20px;}
+  .stat-number{
+    display:block;font-family:var(--serif);font-weight:700;font-size:34px;
+    color:var(--seal-bright);margin-bottom:8px;
   }
-  .filerow input[type=file]{font-size:13px;}
-  .chip{
-    font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;
-    background:rgba(63,125,115,0.14);color:var(--patina);font-weight:600;
-    letter-spacing:.03em;
-  }
+  .stat-number small{font-size:19px;}
+  .stat-label{font-family:var(--sans);font-size:13.5px;color:var(--ink-text-dim);line-height:1.55;letter-spacing:-0.005em;}
+  .source-note{font-family:var(--sans);font-size:12px;color:var(--ink-text-dim);opacity:0.65;margin-top:22px;letter-spacing:0.01em;}
 
-  .extract-preview{
-    margin-top:14px;background:var(--paper-2);border-radius:var(--radius);
-    padding:14px 16px;font-size:12.5px;color:#3A4150;max-height:140px;overflow-y:auto;
-    white-space:pre-wrap;border:1px solid rgba(0,0,0,0.06);
+  /* how it works */
+  .how{padding:56px 0;border-top:1px solid rgba(232,230,223,0.08);}
+  .how h2{font-size:24px;max-width:560px;margin:0 0 34px;}
+  .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:18px;}
+  @media (max-width:900px){ .steps{grid-template-columns:1fr 1fr;} }
+  @media (max-width:520px){ .steps{grid-template-columns:1fr;} }
+  .step{background:var(--paper);color:var(--slate-text);border-radius:var(--radius);padding:22px 20px;}
+  .step-num{
+    font-family:var(--mono);font-weight:600;font-size:12px;color:var(--seal);
+    display:block;margin-bottom:10px;
   }
+  .step h3{font-family:var(--serif);font-weight:600;font-size:17.5px;margin:0 0 9px;color:#1A2333;letter-spacing:-0.01em;}
+  .step p{font-family:var(--sans);font-size:13.5px;color:var(--slate-dim);margin:0;line-height:1.6;letter-spacing:-0.005em;}
 
-  .status-msg{font-size:13px;margin-top:12px;}
-  .status-msg.error{color:var(--danger);}
-  .status-msg.ok{color:var(--patina);}
+  /* trust / features */
+  .trust{padding:56px 0;border-top:1px solid rgba(232,230,223,0.08);}
+  .trust h2{font-size:24px;max-width:560px;margin:0 0 30px;}
+  .trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  @media (max-width:760px){ .trust-grid{grid-template-columns:1fr;} }
+  .trust-card{padding:6px 0;}
+  .trust-card .k{font-family:var(--mono);font-size:11px;color:var(--patina);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:8px;}
+  .trust-card p{font-family:var(--sans);font-size:14px;color:var(--ink-text-dim);margin:0;line-height:1.65;letter-spacing:-0.003em;}
 
-  /* seal stamp */
-  .seal-stamp{
-    position:absolute;top:26px;right:30px;width:64px;height:64px;
-    opacity:0;transform:scale(1.6) rotate(-18deg);
-    transition:opacity .35s ease, transform .35s cubic-bezier(.2,1.4,.4,1);
-    pointer-events:none;
-  }
-  .seal-stamp.show{opacity:1;transform:scale(1) rotate(-8deg);}
-  @media (prefers-reduced-motion: reduce){
-    .seal-stamp{transition:opacity .2s ease;transform:none;}
-    .seal-stamp.show{transform:rotate(-8deg);}
-  }
+  /* cta */
+  .cta{padding:64px 0 76px;text-align:center;border-top:1px solid rgba(232,230,223,0.08);}
+  .cta h2{font-size:26px;max-width:520px;margin:0 auto 14px;}
+  .cta p{color:var(--ink-text-dim);max-width:480px;margin:0 auto 28px;font-size:14.5px;}
 
-  .result-box{
-    background:var(--ink-2);color:var(--ink-text);border-radius:var(--radius);
-    padding:22px 24px;font-size:14px;line-height:1.7;
-  }
-  .result-box .k{color:var(--ink-text-dim);font-family:var(--mono);font-size:11.5px;
-    text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;}
-  .result-box .v{margin:0 0 16px;}
-  .result-box .v:last-child{margin-bottom:0;}
-  .notice{
-    margin-top:18px;padding:14px 16px;border-left:3px solid var(--seal);
-    background:rgba(184,147,74,0.08);font-size:13px;color:var(--slate-dim);
-    border-radius:0 var(--radius) var(--radius) 0;
-  }
-
-  .actions{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
-
-  footer{margin-top:56px;padding-top:22px;border-top:1px solid rgba(232,230,223,0.1);
-    font-size:12px;color:var(--ink-text-dim);text-align:center;}
-
-  /* ---------- FEEDBACK WIDGET (bottom-right) ---------- */
-  #fbButton{
-    position:fixed;right:22px;bottom:22px;z-index:60;
-    display:flex;align-items:center;gap:9px;
-    background:var(--seal);color:#1A1204;
-    border:none;border-radius:24px;padding:12px 18px;
-    font-family:var(--sans);font-weight:600;font-size:13.5px;
-    cursor:pointer;box-shadow:0 10px 26px -10px rgba(0,0,0,0.6);
-    transition:background .15s, transform .1s;
-  }
-  #fbButton:hover{background:var(--seal-bright);}
-  #fbButton:active{transform:translateY(1px);}
-
-  #fbPanel{
-    position:fixed;right:22px;bottom:22px;z-index:61;
-    width:340px;max-width:calc(100vw - 44px);
-    background:var(--paper);color:var(--slate-text);
-    border-radius:var(--radius);
-    box-shadow:0 24px 50px -18px rgba(0,0,0,0.65);
-    padding:22px 22px 20px;
-    display:none;
-  }
-  #fbPanel.open{display:block;animation:fade .25s ease;}
-  #fbPanel h3{
-    font-family:var(--serif);font-weight:700;font-size:16px;
-    margin:0 0 4px;color:#1A2333;padding-right:24px;
-  }
-  #fbPanel .fbsub{font-size:12.5px;color:var(--slate-dim);margin:0 0 16px;}
-  #fbClose{
-    position:absolute;top:16px;right:16px;
-    background:none;border:none;cursor:pointer;
-    font-size:19px;line-height:1;color:var(--slate-dim);padding:0;
-  }
-  #fbClose:hover{color:var(--slate-text);}
-  #fbPanel textarea{min-height:96px;margin-bottom:10px;}
-  #fbPanel input[type=text]{margin-bottom:12px;}
-  #fbStatus{font-size:12.5px;margin-top:10px;}
-  #fbStatus.ok{color:var(--patina);}
-  #fbStatus.error{color:var(--danger);}
-  @media (max-width:480px){
-    #fbPanel{right:12px;left:12px;width:auto;bottom:12px;}
-    #fbButton{right:12px;bottom:12px;}
-  }
+  footer{border-top:1px solid rgba(232,230,223,0.1);padding:28px 0;text-align:center;}
+  footer p{font-size:12px;color:var(--ink-text-dim);margin:0;max-width:600px;margin:0 auto;}
+  footer .fbrand{font-family:var(--mono);font-size:11px;color:var(--seal-bright);margin-bottom:8px;}
 </style>
 </head>
 <body>
 
-<div class="wrap">
-
-  <header>
-    <div class="brand">
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="18" stroke="#B8934A" stroke-width="1.5"/>
-        <circle cx="20" cy="20" r="13" stroke="#B8934A" stroke-width="1"/>
-        <path d="M20 10 L22.5 17 L30 17 L24 21.5 L26 29 L20 24.5 L14 29 L16 21.5 L10 17 L17.5 17 Z" fill="#B8934A" opacity="0.85"/>
+<header>
+  <div class="bar">
+    <a class="brand" href="#top">
+      <svg width="30" height="30" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="#B8934A" stroke-width="1.2"/>
+        <circle cx="20" cy="20" r="13" stroke="#B8934A" stroke-width="0.8"/>
+        <g stroke="#B8934A" stroke-width="1" stroke-linecap="round">
+          <line x1="20" y1="3" x2="20" y2="6"/>
+          <line x1="20" y1="34" x2="20" y2="37"/>
+          <line x1="3" y1="20" x2="6" y2="20"/>
+          <line x1="34" y1="20" x2="37" y2="20"/>
+          <line x1="8" y1="8" x2="10.1" y2="10.1"/>
+          <line x1="29.9" y1="29.9" x2="32" y2="32"/>
+          <line x1="8" y1="32" x2="10.1" y2="29.9"/>
+          <line x1="29.9" y1="10.1" x2="32" y2="8"/>
+        </g>
+        <path d="M13.8 20.6L17.5 24.4L26.3 15.6" stroke="#B8934A" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <div>
+      <span>
         <h1 data-t="brandTitle">Constitutional Assistant</h1>
-        <p data-t="brandSub">Қазақстан Республикасының Конституциялық Сотына өтініш</p>
-      </div>
-    </div>
+        <small data-t="brandSub">Пилотный проект</small>
+      </span>
+    </a>
+    <nav>
+      <a href="#problem" data-t="navProblem">Проблема</a>
+      <a href="#how" data-t="navHow">Как это работает</a>
+      <a href="#trust" data-t="navTrust">Доверие</a>
+    </nav>
     <div class="langswitch" id="langswitch">
       <button data-lang="KZ">ҚАЗ</button>
       <button data-lang="RU" class="active">РУС</button>
       <button data-lang="EN">ENG</button>
     </div>
-  </header>
-
-  <div class="layout">
-    <nav class="rail" id="rail">
-      <div class="step-tab active" data-step="1">
-        <span class="step-num">1</span>
-        <span class="step-label" data-t="stepConsent">Келісім</span>
-      </div>
-      <div class="step-tab" data-step="2">
-        <span class="step-num">2</span>
-        <span class="step-label" data-t="stepDescribe">Өтініш</span>
-      </div>
-      <div class="step-tab" data-step="3">
-        <span class="step-num">3</span>
-        <span class="step-label" data-t="stepResult">Нәтиже</span>
-      </div>
-    </nav>
-
-    <main>
-      <!-- STEP 1: CONSENT -->
-      <section class="panel visible" id="panel-1">
-        <div class="card">
-          <svg class="seal-stamp" id="seal1" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="29" stroke="#3F7D73" stroke-width="2.5"/>
-            <circle cx="32" cy="32" r="21" stroke="#3F7D73" stroke-width="1.2"/>
-            <text x="32" y="37" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#3F7D73" font-weight="700">OK</text>
-          </svg>
-          <h2 data-t="consentTitle">Дербес деректерді өңдеуге келісім</h2>
-          <p class="sub" data-t="consentSub">Заң №94-V. Жалғастыру үшін мәтінмен танысып, келісіміңізді растаңыз.</p>
-
-          <div class="consent-box" id="consentText">…</div>
-
-          <label class="field" data-t="fieldName">Аты-жөні (міндетті емес)</label>
-          <input type="text" id="fullName" placeholder="" style="margin-bottom:18px;">
-
-          <div class="checkline">
-            <input type="checkbox" id="agreeBox">
-            <label for="agreeBox" data-t="agreeLabel">Мен келісім мәтінімен таныстым және өз еркіммен, саналы түрде келісім беремін</label>
-          </div>
-
-          <div class="actions">
-            <button class="btn" id="btnConsent" disabled data-t="btnAgree">Мен келісемін</button>
-          </div>
-          <div class="status-msg" id="consentStatus"></div>
-        </div>
-      </section>
-
-      <!-- STEP 2: DESCRIBE -->
-      <section class="panel" id="panel-2">
-        <div class="card">
-          <svg class="seal-stamp" id="seal2" viewBox="0 0 64 64" fill="none">
-            <circle cx="32" cy="32" r="29" stroke="#3F7D73" stroke-width="2.5"/>
-            <circle cx="32" cy="32" r="21" stroke="#3F7D73" stroke-width="1.2"/>
-            <text x="32" y="37" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#3F7D73" font-weight="700">OK</text>
-          </svg>
-          <h2 data-t="describeTitle">Мәселеңізді сипаттаңыз</h2>
-          <p class="sub" data-t="describeSub">Тілді анықтау автоматты түрде жүреді. Сот актісі бар болса, оны жүктеп, мәтінін тексеруге болады.</p>
-
-          <div class="filerow">
-            <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.odt,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.gif,.webp">
-            <span class="chip" id="fileChip" style="display:none;"></span>
-          </div>
-          <div class="extract-preview" id="extractPreview" style="display:none;"></div>
-          <div class="actions" id="insertRow" style="display:none;margin-bottom:18px;">
-            <button class="btn secondary" id="btnInsertExtract" data-t="btnInsert">Мәтінді өтінішке қосу</button>
-          </div>
-
-          <label class="field" data-t="fieldProblem">Мәселенің сипаттамасы</label>
-          <textarea id="problemText" placeholder=""></textarea>
-
-          <div class="actions" style="margin-top:20px;">
-            <button class="btn" id="btnSubmit" data-t="btnSubmit">Жіберу</button>
-          </div>
-          <div class="status-msg" id="describeStatus"></div>
-        </div>
-      </section>
-
-      <!-- STEP 3: RESULT -->
-      <section class="panel" id="panel-3">
-        <div class="card">
-          <h2 data-t="resultTitle">Талдау нәтижесі</h2>
-          <p class="sub" data-t="resultSub">Жүйенің қазіргі жауабы. Толық құқықтық талдау мен өтініш жобасы келесі кезеңде қосылады.</p>
-
-          <div class="result-box" id="resultBox">…</div>
-
-          <div class="notice" data-t="resultNotice">
-            Бұл — пилоттық нұсқа. Заң негіздемесі мен өтініш жобасын автоматты жасау (Llama + Gemini) келесі кезеңде іске қосылады.
-          </div>
-
-          <div class="actions" style="margin-top:20px;">
-            <button class="btn secondary" id="btnRestart" data-t="btnRestart">Басынан бастау</button>
-          </div>
-        </div>
-      </section>
-    </main>
   </div>
+</header>
 
-  <footer data-t="footerNote">
-    Деректер Қазақстан Республикасының аумағында орналасқан серверлерде өңделеді («жабық контур» қағидаты).
-  </footer>
-</div>
+<main id="top">
 
-<!-- ---------- FEEDBACK WIDGET ---------- -->
-<button id="fbButton" type="button">
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M2 3.5h12v8H6.5L3.5 14v-2.5H2z" stroke="#1A1204" stroke-width="1.6" stroke-linejoin="round"/>
-  </svg>
-  <span data-t="fbButton">Кері байланыс</span>
-</button>
+  <section class="hero">
+    <svg class="hero-watermark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1"/>
+      <circle cx="32" cy="32" r="23" stroke="currentColor" stroke-width="0.6"/>
+      <g stroke="currentColor" stroke-width="1" stroke-linecap="round">
+        <line x1="32" y1="4" x2="32" y2="10"/><line x1="32" y1="54" x2="32" y2="60"/>
+        <line x1="4" y1="32" x2="10" y2="32"/><line x1="54" y1="32" x2="60" y2="32"/>
+        <line x1="13.5" y1="13.5" x2="17.5" y2="17.5"/><line x1="46.5" y1="46.5" x2="50.5" y2="50.5"/>
+        <line x1="13.5" y1="50.5" x2="17.5" y2="46.5"/><line x1="46.5" y1="17.5" x2="50.5" y2="13.5"/>
+      </g>
+      <path d="M22 33L28 39L42 25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="wrap">
+      <p class="eyebrow reveal" data-t="heroEyebrow">Конституционный Суд Республики Казахстан</p>
+      <h1 class="reveal" data-t-html="heroTitle">9 из 10 обращений<br>отклоняют <em>до того</em>,<br>как их услышат.</h1>
+      <p class="hero-lead reveal" data-t="heroLead">Не потому, что люди не правы по существу — а потому, что юридическая форма обращения слишком сложна без подготовки. Constitutional Assistant проводит гражданина через процесс шаг за шагом и сразу честно говорит, если обращение стоит подать в другой суд.</p>
+      <div class="hero-actions reveal">
+        <a class="btn btn-primary" href="appeal.html" data-t="ctaStart">Начать обращение →</a>
+        <a class="btn btn-ghost" href="#how" data-t="ctaHow">Как это устроено</a>
+      </div>
+    </div>
+  </section>
 
-<div id="fbPanel" role="dialog" aria-modal="false">
-  <button id="fbClose" type="button" aria-label="Close">&times;</button>
-  <h3 data-t="fbTitle">Кері байланыс</h3>
-  <p class="fbsub" data-t="fbSub">Сайттың жұмысы туралы пікіріңізді жазыңыз.</p>
+  <section class="stats" id="problem">
+    <div class="wrap">
+      <p class="eyebrow reveal" data-t="statsEyebrow">Масштаб проблемы</p>
+      <h2 class="reveal" data-t="statsTitle">Спрос на конституционную защиту высокий — доступ к ней практически нет.</h2>
+      <div class="stat-grid">
+        <div class="stat-card reveal">
+          <span class="stat-number">90<small>%+</small></span>
+          <span class="stat-label" data-t="stat1">обращений отклоняются по формальным основаниям</span>
+        </div>
+        <div class="stat-card reveal">
+          <span class="stat-number">11&nbsp;595</span>
+          <span class="stat-label" data-t="stat2">обращений подано за 2023 — июль 2025</span>
+        </div>
+        <div class="stat-card reveal">
+          <span class="stat-number">46<small>%</small></span>
+          <span class="stat-label" data-t="stat3">пытаются обжаловать решение суда, а не акт — вне юрисдикции КС</span>
+        </div>
+        <div class="stat-card reveal">
+          <span class="stat-number">60<small>%+</small></span>
+          <span class="stat-label" data-t="stat4">не могут указать конкретную нарушенную статью Конституции</span>
+        </div>
+      </div>
+      <p class="source-note reveal" data-t="statsSource">По данным Конституционного Суда РК, 2023 — июль 2025.</p>
+    </div>
+  </section>
 
-  <label class="field" data-t="fbMessageLabel">Сіздің хабарламаңыз</label>
-  <textarea id="fbMessage" placeholder=""></textarea>
+  <section class="how" id="how">
+    <div class="wrap">
+      <p class="eyebrow reveal" data-t="howEyebrow">Принцип работы</p>
+      <h2 class="reveal" data-t="howTitle">Четыре простых шага.</h2>
+      <ol class="steps">
+        <li class="step reveal">
+          <span class="step-num">01</span>
+          <h3 data-t="step1Title">Согласие на данные</h3>
+          <p data-t="step1Text">Прозрачное согласие на обработку персональных данных, по Закону №94-V — прежде чем что-либо собирается.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-num">02</span>
+          <h3 data-t="step2Title">Опишите проблему</h3>
+          <p data-t="step2Text">Своими словами, на любом из трёх языков. Можно приложить судебный акт — система сама распознает текст.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-num">03</span>
+          <h3 data-t="step3Title">Проверка юрисдикции</h3>
+          <p data-t="step3Text">Система сразу честно скажет, если обращение не по адресу — вместо документа, обречённого на отказ.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-num">04</span>
+          <h3 data-t="step4Title">Черновик обращения</h3>
+          <p data-t="step4Text">Структурированный текст со ссылками на статьи закона — готовый для проверки юристом перед подачей.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
 
-  <label class="field" data-t="fbContactLabel">Байланыс (міндетті емес)</label>
-  <input type="text" id="fbContact" placeholder="">
+  <section class="trust" id="trust">
+    <div class="wrap">
+      <p class="eyebrow reveal" data-t="trustEyebrow">Важно понимать</p>
+      <h2 class="reveal" data-t="trustTitle">Это пилотная версия — честно об ограничениях.</h2>
+      <div class="trust-grid">
+        <div class="trust-card reveal">
+          <span class="k" data-t="trust1k">Не замена юристу</span>
+          <p data-t="trust1p">Черновик нужно проверить перед подачей — по возможности с юристом. Система помогает подготовиться, а не выносит решений.</p>
+        </div>
+        <div class="trust-card reveal">
+          <span class="k" data-t="trust2k">Минимум данных</span>
+          <p data-t="trust2p">Собирается только то, что необходимо для составления обращения. ФИО в самом обращении заменяется на плейсхолдеры.</p>
+        </div>
+        <div class="trust-card reveal">
+          <span class="k" data-t="trust3k">Не официальный сервис</span>
+          <p data-t="trust3p">Это исследовательский пилот, не ресурс Конституционного Суда РК или государственных органов Казахстана.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <button class="btn" id="fbSend" data-t="fbSend" style="width:100%;">Жіберу</button>
-  <div id="fbStatus"></div>
-</div>
+  <section class="cta">
+    <div class="wrap">
+      <h2 class="reveal" data-t="ctaTitle">Готовы попробовать?</h2>
+      <p class="reveal" data-t="ctaText">Весь процесс займёт несколько минут. Ваши данные обрабатываются на серверах в закрытом контуре согласно Закону №94-V.</p>
+      <a class="btn btn-primary" href="appeal.html" data-t="ctaStart2">Начать обращение →</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="fbrand">Constitutional Assistant</p>
+    <p data-t="footerNote">Пилотная версия по исследовательской концепции «AI-based access to constitutional proceedings». Не является официальным ресурсом государственных органов Республики Казахстан.</p>
+  </div>
+</footer>
 
 <script>
-// Backend задеплоен на Render.
-const API_BASE = "https://constitutional-assistant-api2.onrender.com";
-
-/* ---------------- TRANSLATIONS ---------------- */
 const I18N = {
   KZ: {
-    brandTitle:"Constitutional Assistant",
-    brandSub:"Қазақстан Республикасының Конституциялық Сотына өтініш",
-    stepConsent:"Келісім", stepDescribe:"Өтініш", stepResult:"Нәтиже",
-    consentTitle:"Дербес деректерді өңдеуге келісім",
-    consentSub:"Заң №94-V. Жалғастыру үшін мәтінмен танысып, келісіміңізді растаңыз.",
-    fieldName:"Аты-жөні (міндетті емес)",
-    agreeLabel:"Мен келісім мәтінімен таныстым және өз еркіммен, саналы түрде келісім беремін",
-    btnAgree:"Мен келісемін",
-    describeTitle:"Мәселеңізді сипаттаңыз",
-    describeSub:"Тілді анықтау автоматты түрде жүреді. Сот актісі бар болса, оны жүктеп, мәтінін тексеруге болады.",
-    fieldProblem:"Мәселенің сипаттамасы",
-    btnInsert:"Мәтінді өтінішке қосу",
-    btnSubmit:"Жіберу",
-    resultTitle:"Талдау нәтижесі",
-    resultSub:"Жүйенің қазіргі жауабы. Толық құқықтық талдау мен өтініш жобасы келесі кезеңде қосылады.",
-    resultNotice:"Талдау мен өтініш жобасын білім қорына сүйене отырып жасанды интеллект жасайды. Бұл — жоба, оны беру алдында тексеріп, қажет болса заңгерге көрсетіңіз.",
-    btnRestart:"Басынан бастау",
-    footerNote:"Деректер Қазақстан Республикасының аумағында орналасқан серверлерде өңделеді («жабық контур» қағидаты).",
-    fbButton:"Кері байланыс",
-    fbTitle:"Кері байланыс",
-    fbSub:"Сайттың жұмысы туралы пікіріңізді жазыңыз.",
-    fbMessageLabel:"Сіздің хабарламаңыз",
-    fbContactLabel:"Байланыс (міндетті емес)",
-    fbMessagePlaceholder:"Не ұнады, не жақсартуға болады…",
-    fbContactPlaceholder:"Email немесе телефон",
-    fbSend:"Жіберу",
-    fbSending:"Жіберілуде…",
-    fbThanks:"Рақмет! Пікіріңіз жіберілді.",
-    fbEmpty:"Хабарлама мәтінін енгізіңіз.",
-    fbError:"Жіберу мүмкін болмады. Кейінірек қайталап көріңіз.",
-    consentLoading:"Жүктелуде…",
-    consentDownload:"Растауды жүктеп алу",
-    consentDone:"Келісім тіркелді.",
-    consentError:"Қате орын алды. Қайталап көріңіз.",
-    namePlaceholder:"Мыс.: Асан Асанов",
-    problemPlaceholder:"Мәселеңізді осы жерге жазыңыз…",
-    fileParsing:"Файл өңделуде…",
-    fileError:"Файлды тану мүмкін болмады.",
-    langDetected:"Анықталған тіл",
-    resultLoading:"Жіберілуде…",
-    needAgree:"Жалғастыру үшін алдымен келісім беріңіз керек.",
-    needText:"Мәселенің сипаттамасын енгізіңіз.",
-    labelJurisdiction:"Құзыретке жату",
-    jurisdictionYes:"Иә, жатады",
-    jurisdictionNo:"Жоқ / анық емес",
-    labelViolation:"Анықталған бұзушылық",
-    noViolationFound:"нақты бұзушылық табылмады",
-    labelCaseType:"Іс түрі",
-    labelReasoning:"Жүйенің негіздемесі",
-    labelRedirect:"Қайда жүгінген жөн",
-    labelAppealText:"Өтініш жобасы",
-    generatingNote:"Llama талдап, жобаны құрастыруда. Бұл 2–3 минутқа дейін алуы мүмкін…",
-    noAppealGenerated:"Өтініш жобасын құрастыру мүмкін болмады.",
+    brandTitle:"Конституциялық ассистент", brandSub:"Пилоттық жоба",
+    navProblem:"Мәселе", navHow:"Қалай жұмыс істейді", navTrust:"Сенім",
+    heroEyebrow:"Қазақстан Республикасының Конституциялық Соты",
+    heroTitle:'10 өтініштің 9-ы<br>тыңдалмай тұрып<br><em>қабылданбайды</em>.',
+    heroLead:"Адамдар дұрыс емес болғандықтан емес — өтініштің заңды формасы дайындықсыз адам үшін тым күрделі болғандықтан. Constitutional Assistant азаматты қадам сайын өткізеді және өтініш басқа сотқа тиесілі болса, бірден адал айтады.",
+    ctaStart:"Өтінішті бастау →", ctaHow:"Қалай жұмыс істейді",
+    statsEyebrow:"Мәселенің ауқымы",
+    statsTitle:"Конституциялық қорғауға сұраныс жоғары — оған қолжетімділік дерлік жоқ.",
+    stat1:"өтініштер формалды негіздер бойынша қабылданбайды",
+    stat2:"өтініш 2023 — 2025 шілде аралығында берілді",
+    stat3:"сот шешімін, актіні емес, дауласуға тырысады — ҚС құзыретінен тыс",
+    stat4:"бұзылған нақты Конституция бабын көрсете алмайды",
+    statsSource:"ҚР Конституциялық Сотының деректері бойынша, 2023 — 2025 шілде.",
+    howEyebrow:"Жұмыс принципі", howTitle:"Төрт қарапайым қадам.",
+    step1Title:"Деректерге келісім", step1Text:"№94-V Заңына сәйкес дербес деректерді өңдеуге ашық келісім — ештеңе жиналмас бұрын.",
+    step2Title:"Мәселені сипаттаңыз", step2Text:"Өз сөзіңізбен, үш тілдің кез келгенінде. Сот актісін тіркеуге болады — жүйе мәтінді өзі таниды.",
+    step3Title:"Құзыретті тексеру", step3Text:"Өтініш дұрыс мекенге жатпаса, жүйе бірден адал айтады — бас тартылатын құжат орнына.",
+    step4Title:"Өтініш жобасы", step4Text:"Заң баптарына сілтемелері бар құрылымдалған мәтін — берер алдында тексеруге дайын.",
+    trustEyebrow:"Түсіну маңызды", trustTitle:"Бұл — пилоттық нұсқа. Шектеулер туралы адал айтамыз.",
+    trust1k:"Заңгерді алмастырмайды", trust1p:"Жобаны беру алдында тексеру керек — мүмкіндігінше заңгермен бірге. Жүйе дайындалуға көмектеседі, шешім шығармайды.",
+    trust2k:"Ең аз дерек", trust2p:"Тек өтінішті құрастыру үшін қажетті дерек жиналады. Өтініштегі аты-жөні орынбасарларға ауыстырылады.",
+    trust3k:"Ресми қызмет емес", trust3p:"Бұл — зерттеу пилоты, Қазақстан Республикасының Конституциялық Соты немесе мемлекеттік органдардың ресурсы емес.",
+    ctaTitle:"Байқап көргіңіз келе ме?", ctaText:"Бүкіл процесс бірнеше минут алады. Деректеріңіз №94-V Заңына сәйкес жабық контурда өңделеді.",
+    ctaStart2:"Өтінішті бастау →",
+    footerNote:"Dr. Assel Bekenova зерттеу тұжырымдамасы бойынша пилоттық нұсқа. Қазақстан Республикасының мемлекеттік органдарының ресми ресурсы емес.",
   },
   RU: {
-    brandTitle:"Constitutional Assistant",
-    brandSub:"Обращение в Конституционный Суд Республики Казахстан",
-    stepConsent:"Согласие", stepDescribe:"Обращение", stepResult:"Результат",
-    consentTitle:"Согласие на обработку персональных данных",
-    consentSub:"Закон №94-V. Для продолжения ознакомьтесь с текстом и подтвердите согласие.",
-    fieldName:"ФИО (необязательно)",
-    agreeLabel:"Я ознакомлен(а) с текстом согласия и даю его добровольно и осознанно",
-    btnAgree:"Я согласен(на)",
-    describeTitle:"Опишите вашу проблему",
-    describeSub:"Язык определяется автоматически. Если есть судебный акт — загрузите его, чтобы проверить извлечённый текст.",
-    fieldProblem:"Описание проблемы",
-    btnInsert:"Добавить текст в обращение",
-    btnSubmit:"Отправить",
-    resultTitle:"Результат анализа",
-    resultSub:"Текущий ответ системы. Полный правовой анализ и черновик обращения будут добавлены на следующем этапе.",
-    resultNotice:"Анализ и черновик обращения формируются ИИ на основе базы знаний. Это черновик — перед подачей проверьте его и при необходимости покажите юристу.",
-    btnRestart:"Начать заново",
-    footerNote:"Данные обрабатываются на серверах, расположенных на территории Республики Казахстан (принцип «закрытого контура»).",
-    fbButton:"Обратная связь",
-    fbTitle:"Обратная связь",
-    fbSub:"Напишите, что думаете о работе сайта.",
-    fbMessageLabel:"Ваше сообщение",
-    fbContactLabel:"Контакт (необязательно)",
-    fbMessagePlaceholder:"Что понравилось, что можно улучшить…",
-    fbContactPlaceholder:"Email или телефон",
-    fbSend:"Отправить",
-    fbSending:"Отправка…",
-    fbThanks:"Спасибо! Ваш отзыв отправлен.",
-    fbEmpty:"Введите текст сообщения.",
-    fbError:"Не удалось отправить. Попробуйте позже.",
-    consentLoading:"Загрузка…",
-    consentDownload:"Скачать подтверждение",
-    consentDone:"Согласие зафиксировано.",
-    consentError:"Произошла ошибка. Попробуйте ещё раз.",
-    namePlaceholder:"Например: Асан Асанов",
-    problemPlaceholder:"Опишите вашу проблему здесь…",
-    fileParsing:"Файл обрабатывается…",
-    fileError:"Не удалось распознать файл.",
-    langDetected:"Определённый язык",
-    resultLoading:"Отправка…",
-    needAgree:"Чтобы продолжить, сначала дайте согласие.",
-    needText:"Введите описание проблемы.",
-    labelJurisdiction:"Относится к юрисдикции",
-    jurisdictionYes:"Да, относится",
-    jurisdictionNo:"Нет / требует уточнения",
-    labelViolation:"Определённое нарушение",
-    noViolationFound:"конкретное нарушение не найдено",
-    labelCaseType:"Тип дела",
-    labelReasoning:"Обоснование системы",
-    labelRedirect:"Куда обратиться",
-    labelAppealText:"Черновик обращения",
-    generatingNote:"Llama анализирует и составляет черновик. Это может занять до 2–3 минут…",
-    noAppealGenerated:"Не удалось сформировать черновик обращения.",
+    brandTitle:"Конституционный ассистент", brandSub:"Пилотный проект",
+    navProblem:"Проблема", navHow:"Как это работает", navTrust:"Доверие",
+    heroEyebrow:"Конституционный Суд Республики Казахстан",
+    heroTitle:'9 из 10 обращений<br>отклоняют <em>до того</em>,<br>как их услышат.',
+    heroLead:"Не потому, что люди не правы по существу — а потому, что юридическая форма обращения слишком сложна без подготовки. Constitutional Assistant проводит гражданина через процесс шаг за шагом и сразу честно говорит, если обращение стоит подать в другой суд.",
+    ctaStart:"Начать обращение →", ctaHow:"Как это устроено",
+    statsEyebrow:"Масштаб проблемы",
+    statsTitle:"Спрос на конституционную защиту высокий — доступ к ней практически нет.",
+    stat1:"обращений отклоняются по формальным основаниям",
+    stat2:"обращений подано за 2023 — июль 2025",
+    stat3:"пытаются обжаловать решение суда, а не акт — вне юрисдикции КС",
+    stat4:"не могут указать конкретную нарушенную статью Конституции",
+    statsSource:"По данным Конституционного Суда РК, 2023 — июль 2025.",
+    howEyebrow:"Принцип работы", howTitle:"Четыре простых шага.",
+    step1Title:"Согласие на данные", step1Text:"Прозрачное согласие на обработку персональных данных, по Закону №94-V — прежде чем что-либо собирается.",
+    step2Title:"Опишите проблему", step2Text:"Своими словами, на любом из трёх языков. Можно приложить судебный акт — система сама распознает текст.",
+    step3Title:"Проверка юрисдикции", step3Text:"Система сразу честно скажет, если обращение не по адресу — вместо документа, обречённого на отказ.",
+    step4Title:"Черновик обращения", step4Text:"Структурированный текст со ссылками на статьи закона — готовый для проверки юристом перед подачей.",
+    trustEyebrow:"Важно понимать", trustTitle:"Это пилотная версия — честно об ограничениях.",
+    trust1k:"Не замена юристу", trust1p:"Черновик нужно проверить перед подачей — по возможности с юристом. Система помогает подготовиться, а не выносит решений.",
+    trust2k:"Минимум данных", trust2p:"Собирается только то, что необходимо для составления обращения. ФИО в самом обращении заменяется на плейсхолдеры.",
+    trust3k:"Не официальный сервис", trust3p:"Это исследовательский пилот, не ресурс Конституционного Суда РК или государственных органов Казахстана.",
+    ctaTitle:"Готовы попробовать?", ctaText:"Весь процесс займёт несколько минут. Ваши данные обрабатываются на серверах в закрытом контуре согласно Закону №94-V.",
+    ctaStart2:"Начать обращение →",
+    footerNote:"Пилотная версия по исследовательской концепции «AI-based access to constitutional proceedings». Не является официальным ресурсом государственных органов Республики Казахстан.",
   },
   EN: {
-    brandTitle:"Constitutional Assistant",
-    brandSub:"Appeal to the Constitutional Court of the Republic of Kazakhstan",
-    stepConsent:"Consent", stepDescribe:"Appeal", stepResult:"Result",
-    consentTitle:"Consent to personal data processing",
-    consentSub:"Law No. 94-V. Please read the text and confirm your consent to continue.",
-    fieldName:"Full name (optional)",
-    agreeLabel:"I have read the consent text and give it voluntarily and consciously",
-    btnAgree:"I agree",
-    describeTitle:"Describe your problem",
-    describeSub:"Language is detected automatically. If you have a court document, upload it to check the extracted text.",
-    fieldProblem:"Problem description",
-    btnInsert:"Add text to the appeal",
-    btnSubmit:"Submit",
-    resultTitle:"Analysis result",
-    resultSub:"Current system response. Full legal analysis and a draft appeal will be added in the next stage.",
-    resultNotice:"The analysis and draft appeal are generated by AI based on the knowledge base. This is a draft — review it before filing and consult a lawyer if needed.",
-    btnRestart:"Start over",
-    footerNote:"Data is processed on servers located within the Republic of Kazakhstan (closed-loop principle).",
-    fbButton:"Feedback",
-    fbTitle:"Feedback",
-    fbSub:"Tell us what you think about this site.",
-    fbMessageLabel:"Your message",
-    fbContactLabel:"Contact (optional)",
-    fbMessagePlaceholder:"What worked well, what could be better…",
-    fbContactPlaceholder:"Email or phone",
-    fbSend:"Send",
-    fbSending:"Sending…",
-    fbThanks:"Thank you! Your feedback has been sent.",
-    fbEmpty:"Please enter a message.",
-    fbError:"Could not send. Please try again later.",
-    consentLoading:"Loading…",
-    consentDownload:"Download confirmation",
-    consentDone:"Consent recorded.",
-    consentError:"Something went wrong. Please try again.",
-    namePlaceholder:"e.g. John Smith",
-    problemPlaceholder:"Describe your problem here…",
-    fileParsing:"Processing file…",
-    fileError:"Could not recognize the file.",
-    langDetected:"Detected language",
-    resultLoading:"Submitting…",
-    needAgree:"Please give consent before continuing.",
-    needText:"Please enter a problem description.",
-    labelJurisdiction:"Within jurisdiction",
-    jurisdictionYes:"Yes",
-    jurisdictionNo:"No / unclear",
-    labelViolation:"Identified violation",
-    noViolationFound:"no specific violation found",
-    labelCaseType:"Case type",
-    labelReasoning:"System reasoning",
-    labelRedirect:"Where to go instead",
-    labelAppealText:"Draft appeal",
-    generatingNote:"Llama is analyzing and drafting. This may take up to 2–3 minutes…",
-    noAppealGenerated:"Could not generate a draft appeal.",
+    brandTitle:"Constitutional Assistant", brandSub:"Pilot project",
+    navProblem:"The problem", navHow:"How it works", navTrust:"Trust",
+    heroEyebrow:"Constitutional Court of the Republic of Kazakhstan",
+    heroTitle:'9 out of 10 appeals<br>are rejected <em>before</em><br>they are heard.',
+    heroLead:"Not because people are wrong on the merits — but because the legal form of an appeal is too complex without preparation. Constitutional Assistant guides citizens through the process step by step, and tells them honestly upfront if their appeal belongs in a different court.",
+    ctaStart:"Start an appeal →", ctaHow:"How it works",
+    statsEyebrow:"Scale of the problem",
+    statsTitle:"Demand for constitutional protection is high — access to it is nearly nonexistent.",
+    stat1:"of appeals are rejected on formal grounds",
+    stat2:"appeals filed between 2023 and July 2025",
+    stat3:"try to appeal a court ruling rather than an act — outside the Court's jurisdiction",
+    stat4:"cannot cite the specific constitutional article that was violated",
+    statsSource:"Based on Constitutional Court of Kazakhstan data, 2023 — July 2025.",
+    howEyebrow:"How it works", howTitle:"Four simple steps.",
+    step1Title:"Data consent", step1Text:"Transparent consent to personal data processing, under Law No. 94-V — before anything is collected.",
+    step2Title:"Describe your problem", step2Text:"In your own words, in any of three languages. You can attach a court document — the system reads it automatically.",
+    step3Title:"Jurisdiction check", step3Text:"If the appeal doesn't belong here, the system says so honestly right away — instead of a document doomed to rejection.",
+    step4Title:"Draft appeal", step4Text:"A structured text with references to relevant articles — ready for a lawyer's review before filing.",
+    trustEyebrow:"Worth knowing", trustTitle:"This is a pilot version — an honest note on its limits.",
+    trust1k:"Not a replacement for a lawyer", trust1p:"The draft should be reviewed before filing — ideally with a lawyer. The system helps you prepare, it doesn't make decisions.",
+    trust2k:"Minimal data", trust2p:"Only what's necessary to draft the appeal is collected. Names in the appeal itself are replaced with placeholders.",
+    trust3k:"Not an official service", trust3p:"This is a research pilot, not a resource of the Constitutional Court of Kazakhstan or any government body.",
+    ctaTitle:"Ready to try it?", ctaText:"The whole process takes a few minutes. Your data is processed on closed-loop servers under Law No. 94-V.",
+    ctaStart2:"Start an appeal →",
+    footerNote:"A pilot version based on the research concept \"AI-based access to constitutional proceedings.\" Not an official resource of any Kazakhstani government body.",
   }
 };
 
 let currentLang = "RU";
-let consentId = null;
-let extractedText = "";
 
 function applyTranslations(){
   const dict = I18N[currentLang];
@@ -577,304 +393,39 @@ function applyTranslations(){
     const key = el.getAttribute("data-t");
     if(dict[key]) el.textContent = dict[key];
   });
-  document.getElementById("fullName").placeholder = dict.namePlaceholder;
-  document.getElementById("problemText").placeholder = dict.problemPlaceholder;
-  document.getElementById("fbMessage").placeholder = dict.fbMessagePlaceholder;
-  document.getElementById("fbContact").placeholder = dict.fbContactPlaceholder;
-}
-
-function setLang(lang){
-  currentLang = lang;
-  document.querySelectorAll(".langswitch button").forEach(b=>{
-    b.classList.toggle("active", b.dataset.lang === lang);
+  document.querySelectorAll("[data-t-html]").forEach(el=>{
+    const key = el.getAttribute("data-t-html");
+    if(dict[key]) el.innerHTML = dict[key];
   });
-  applyTranslations();
-  loadConsentText();
 }
 
 document.getElementById("langswitch").addEventListener("click", (e)=>{
   const btn = e.target.closest("button[data-lang]");
   if(!btn) return;
-  setLang(btn.dataset.lang);
-});
-
-/* ---------------- STEP NAVIGATION ---------------- */
-function goToStep(n){
-  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("visible"));
-  document.getElementById("panel-"+n).classList.add("visible");
-  document.querySelectorAll(".step-tab").forEach(t=>{
-    const step = parseInt(t.dataset.step);
-    t.classList.toggle("active", step === n);
-    t.classList.toggle("done", step < n);
+  currentLang = btn.dataset.lang;
+  document.querySelectorAll(".langswitch button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.lang === currentLang);
   });
-}
-
-/* ---------------- STEP 1: CONSENT ---------------- */
-async function loadConsentText(){
-  const box = document.getElementById("consentText");
-  box.textContent = I18N[currentLang].consentLoading;
-  try{
-    const res = await fetch(`${API_BASE}/api/consent-text?language=${currentLang}`);
-    const data = await res.json();
-    box.textContent = data.text;
-  }catch(err){
-    box.textContent = I18N[currentLang].consentError;
-  }
-}
-
-document.getElementById("agreeBox").addEventListener("change",(e)=>{
-  document.getElementById("btnConsent").disabled = !e.target.checked;
+  applyTranslations();
 });
 
-document.getElementById("btnConsent").addEventListener("click", async ()=>{
-  const dict = I18N[currentLang];
-  const statusEl = document.getElementById("consentStatus");
-  const fullName = document.getElementById("fullName").value.trim();
-  statusEl.className = "status-msg";
-  statusEl.textContent = dict.consentLoading;
-
-  try{
-    const res = await fetch(`${API_BASE}/api/consent`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ full_name: fullName || null, language: currentLang })
-    });
-    if(!res.ok) throw new Error("consent failed");
-    const data = await res.json();
-    consentId = data.consent_id;
-
-    statusEl.className = "status-msg ok";
-    statusEl.innerHTML = `${dict.consentDone} <a href="${API_BASE}/api/consent/${consentId}/download" target="_blank" style="color:inherit;">${dict.consentDownload}</a>`;
-
-    const seal = document.getElementById("seal1");
-    seal.classList.add("show");
-
-    setTimeout(()=>{ goToStep(2); }, 700);
-  }catch(err){
-    statusEl.className = "status-msg error";
-    statusEl.textContent = dict.consentError;
-  }
-});
-
-/* ---------------- STEP 2: DESCRIBE + UPLOAD ---------------- */
-document.getElementById("fileInput").addEventListener("change", async (e)=>{
-  const dict = I18N[currentLang];
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const chip = document.getElementById("fileChip");
-  const preview = document.getElementById("extractPreview");
-  const insertRow = document.getElementById("insertRow");
-  const statusEl = document.getElementById("describeStatus");
-
-  chip.style.display = "inline-block";
-  chip.textContent = dict.fileParsing;
-  preview.style.display = "none";
-  insertRow.style.display = "none";
-  statusEl.className = "status-msg";
-  statusEl.textContent = "";
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try{
-    const res = await fetch(`${API_BASE}/api/upload-document`, { method:"POST", body: formData });
-    const data = await res.json();
-    if(!res.ok || !data.success) throw new Error(data.detail || "parse failed");
-
-    extractedText = data.text;
-    chip.textContent = `${dict.langDetected}: ${data.detected_language} · ${data.text_length} симв.`;
-    preview.style.display = "block";
-    preview.textContent = data.text.slice(0, 600) + (data.text.length > 600 ? "…" : "");
-    insertRow.style.display = "flex";
-  }catch(err){
-    chip.textContent = dict.fileError;
-  }
-});
-
-document.getElementById("btnInsertExtract").addEventListener("click", ()=>{
-  const ta = document.getElementById("problemText");
-  ta.value = (ta.value ? ta.value + "\n\n" : "") + extractedText;
-});
-
-document.getElementById("btnSubmit").addEventListener("click", async ()=>{
-  const dict = I18N[currentLang];
-  const statusEl = document.getElementById("describeStatus");
-  const problemText = document.getElementById("problemText").value.trim();
-
-  if(!consentId){
-    statusEl.className = "status-msg error";
-    statusEl.textContent = dict.needAgree;
-    return;
-  }
-  if(!problemText){
-    statusEl.className = "status-msg error";
-    statusEl.textContent = dict.needText;
-    return;
-  }
-
-  statusEl.className = "status-msg";
-  statusEl.textContent = dict.generatingNote;
-  const submitBtn = document.getElementById("btnSubmit");
-  submitBtn.disabled = true;
-
-  try{
-    const res = await fetch(`${API_BASE}/generate-appeal`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ problem_description: problemText })
-    });
-    const data = await res.json();
-
-    submitBtn.disabled = false;
-    statusEl.textContent = "";
-    renderResult(data);
-    document.getElementById("seal2").classList.add("show");
-    setTimeout(()=>{ goToStep(3); }, 500);
-  }catch(err){
-    submitBtn.disabled = false;
-    statusEl.className = "status-msg error";
-    statusEl.textContent = dict.consentError;
-  }
-});
-
-function renderResult(data){
-  const box = document.getElementById("resultBox");
-  const dict = I18N[currentLang];
-
-  if(data.status === "not_applicable"){
-    box.innerHTML = `
-      <span class="k">${dict.langDetected}</span>
-      <p class="v">${data.language || "—"}</p>
-
-      <span class="k">${dict.labelJurisdiction}</span>
-      <p class="v" style="color:#D98C6B;font-weight:600;">${dict.jurisdictionNo}</p>
-
-      <span class="k">${dict.labelReasoning}</span>
-      <p class="v">${data.reasoning || "—"}</p>
-
-      <span class="k">${dict.labelRedirect}</span>
-      <p class="v">${escapeHtml(data.redirect_detail || data.message || "")}</p>
-    `;
-    return;
-  }
-
-  const jurisdictionLabel = data.within_jurisdiction === true ? dict.jurisdictionYes
-    : data.within_jurisdiction === false ? dict.jurisdictionNo
-    : "—";
-
-  const violationLabel = data.violation_id || dict.noViolationFound;
-  const appealHtml = data.appeal_text
-    ? `<p class="v" style="white-space:pre-wrap;">${escapeHtml(data.appeal_text)}</p>`
-    : `<p class="v">${dict.noAppealGenerated}${data.generation_error ? " (" + escapeHtml(data.generation_error) + ")" : ""}</p>`;
-
-  box.innerHTML = `
-    <span class="k">${dict.langDetected}</span>
-    <p class="v">${data.language || "—"}</p>
-
-    <span class="k">${dict.labelJurisdiction}</span>
-    <p class="v">${jurisdictionLabel}</p>
-
-    <span class="k">${dict.labelViolation}</span>
-    <p class="v">${violationLabel}</p>
-
-    <span class="k">${dict.labelCaseType}</span>
-    <p class="v">${data.case_type || "—"}</p>
-
-    <span class="k">${dict.labelReasoning}</span>
-    <p class="v">${data.reasoning || "—"}</p>
-
-    <span class="k">${dict.labelAppealText}</span>
-    ${appealHtml}
-  `;
-}
-
-function escapeHtml(str){
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-document.getElementById("btnRestart").addEventListener("click", ()=>{
-  document.getElementById("problemText").value = "";
-  document.getElementById("describeStatus").textContent = "";
-  document.getElementById("fileChip").style.display = "none";
-  document.getElementById("extractPreview").style.display = "none";
-  document.getElementById("insertRow").style.display = "none";
-  document.getElementById("fileInput").value = "";
-  extractedText = "";
-  goToStep(2);
-});
-
-/* ---------------- FEEDBACK WIDGET ---------------- */
-const fbButton = document.getElementById("fbButton");
-const fbPanel  = document.getElementById("fbPanel");
-
-function openFeedback(){
-  fbPanel.classList.add("open");
-  fbButton.style.display = "none";
-  document.getElementById("fbMessage").focus();
-}
-function closeFeedback(){
-  fbPanel.classList.remove("open");
-  fbButton.style.display = "flex";
-}
-
-fbButton.addEventListener("click", openFeedback);
-document.getElementById("fbClose").addEventListener("click", closeFeedback);
-
-document.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape" && fbPanel.classList.contains("open")) closeFeedback();
-});
-
-document.getElementById("fbSend").addEventListener("click", async ()=>{
-  const dict = I18N[currentLang];
-  const msgEl = document.getElementById("fbMessage");
-  const contactEl = document.getElementById("fbContact");
-  const statusEl = document.getElementById("fbStatus");
-  const sendBtn = document.getElementById("fbSend");
-
-  const message = msgEl.value.trim();
-  if(!message){
-    statusEl.className = "error";
-    statusEl.textContent = dict.fbEmpty;
-    return;
-  }
-
-  sendBtn.disabled = true;
-  statusEl.className = "";
-  statusEl.textContent = dict.fbSending;
-
-  try{
-    const res = await fetch(`${API_BASE}/api/feedback`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        message: message,
-        contact: contactEl.value.trim() || null,
-        language: currentLang,
-        page: "citizen"
-      })
-    });
-    sendBtn.disabled = false;
-
-    if(!res.ok) throw new Error("send failed");
-
-    statusEl.className = "ok";
-    statusEl.textContent = dict.fbThanks;
-    msgEl.value = "";
-    contactEl.value = "";
-    setTimeout(()=>{ closeFeedback(); statusEl.textContent = ""; }, 1800);
-  }catch(err){
-    sendBtn.disabled = false;
-    statusEl.className = "error";
-    statusEl.textContent = dict.fbError;
-  }
-});
-
-/* ---------------- INIT ---------------- */
 applyTranslations();
-loadConsentText();
+
+// Плавное появление блоков при прокрутке
+const revealEls = document.querySelectorAll(".reveal");
+if ("IntersectionObserver" in window) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+  revealEls.forEach(el => io.observe(el));
+} else {
+  revealEls.forEach(el => el.classList.add("in"));
+}
 </script>
 </body>
 </html>
