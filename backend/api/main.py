@@ -15,6 +15,7 @@ from fastapi.responses import PlainTextResponse
 from parser import parse_file, get_supported_formats, clean_text, truncate_text
 from i18n import detect_language, normalize_language, t, SUPPORTED_LANGUAGES
 from consent import get_consent_text, record_consent, get_consent_record, generate_consent_document
+from gov_redirect import find_relevant_organs, format_redirect_message
 # --- Выбор движка генерации ---
 # Groq (облачный, для деплоя) — по умолчанию. Чтобы вернуться к локальной Llama,
 # закомментируйте 2 строки Groq и раскомментируйте 2 строки llama.
@@ -405,6 +406,8 @@ async def generate_appeal(request: ProblemRequest):
     # самому уметь цитировать статью Конституции, чтобы получить помощь — в этом и есть смысл
     # инструмента.
     if within_jurisdiction is False and not violation_id:
+        redirect_info = find_relevant_organs(request.problem_description, driver)
+        redirect_msg = format_redirect_message(redirect_info, lang=language)
         return {
             "status": "not_applicable",
             "language": language,
@@ -413,7 +416,8 @@ async def generate_appeal(request: ProblemRequest):
             "case_type": case_type,
             "reasoning": reasoning,
             "message": t("jurisdiction_check_failed", language),
-            "redirect_detail": t("jurisdiction_redirect_detail", language),
+            "redirect_detail": redirect_msg,
+            "suggested_organs": redirect_info.get("organs", []),
             "appeal_text": None,
         }
 
