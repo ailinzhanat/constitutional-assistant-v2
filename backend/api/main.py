@@ -57,26 +57,21 @@ NEO4J_URI = os.getenv("NEO4J_URI", "neo4j+s://8b6c1184.databases.neo4j.io")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 
-# Внутренний доступ для судей/сотрудников (простое кодовое слово для пилота —
-# в реальном развёртывании должно быть заменено полноценной системой авторизации)
-JUDICIAL_ACCESS_CODE = os.getenv("JUDICIAL_ACCESS_CODE", "judge-pilot-2026")
-
-# Код для просмотра отзывов пользователей (только для владельца проекта)
-ADMIN_ACCESS_CODE = os.getenv("ADMIN_ACCESS_CODE", "admin-2026")
+# Внутренний доступ для судей/сотрудников — значение задаётся только через .env на Render
+JUDICIAL_ACCESS_CODE = os.getenv("JUDICIAL_ACCESS_CODE")
+# Код для просмотра отзывов — значение задаётся только через .env на Render
+ADMIN_ACCESS_CODE = os.getenv("ADMIN_ACCESS_CODE")
 
 def check_admin_access(x_admin_code: Optional[str] = Header(None)):
-    """Проверка доступа к просмотру отзывов."""
-    if x_admin_code != ADMIN_ACCESS_CODE:
+    if not ADMIN_ACCESS_CODE or x_admin_code != ADMIN_ACCESS_CODE:
         raise HTTPException(status_code=401, detail="Неверный код доступа администратора")
     return True
 
-
 def check_judicial_access(x_judicial_code: Optional[str] = Header(None)):
-    """Проверка доступа к внутренним функциям Judicial Analyst по кодовому слову."""
-    if x_judicial_code != JUDICIAL_ACCESS_CODE:
+    if not JUDICIAL_ACCESS_CODE or x_judicial_code != JUDICIAL_ACCESS_CODE:
         raise HTTPException(status_code=401, detail="Неверный код доступа для внутреннего инструмента судьи")
     return True
-
+    
 def get_driver():
     from neo4j import GraphDatabase
     uris_to_try = [
