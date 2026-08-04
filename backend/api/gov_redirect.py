@@ -209,11 +209,11 @@ def format_redirect_message(redirect_info: dict, lang: str = "ru") -> str:
     Форматирует сообщение о перенаправлении для пользователя.
     """
     if lang == "kz":
-        header = "⚠️ Бұл мәселе Конституциялық Соттың құзыретіне жатпайды."
+        header = ""
         advice = redirect_info.get("advice_kz", "")
         organs_header = "📋 Мына органдарға жүгінуді ұсынамыз:"
     else:
-        header = "⚠️ Данный вопрос не относится к компетенции Конституционного Суда."
+        header = ""
         advice = redirect_info.get("advice_ru", "")
         organs_header = "📋 Рекомендуем обратиться:"
     
