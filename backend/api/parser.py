@@ -16,6 +16,47 @@ from typing import Optional
 from fastapi import UploadFile
 
 # ============================================================================
+# ОГРАНИЧЕНИЯ БЕЗОПАСНОСТИ
+# ============================================================================
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 МБ
+
+# Магические байты для проверки реального типа файла
+# (расширение можно подделать, содержимое — нельзя)
+MAGIC_BYTES = {
+    b"%PDF": "pdf",
+    b"PK\x03\x04": "zip",       # docx / odt (оба — ZIP-архивы)
+    b"\xff\xd8\xff": "jpeg",
+    b"\x89PNG": "png",
+    b"GIF8": "gif",
+    b"BM": "bmp",
+    b"II*\x00": "tiff",         # TIFF little-endian
+    b"MM\x00*": "tiff",         # TIFF big-endian
+    b"RIFF": "webp",             # WebP начинается с RIFF
+}
+
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".docx", ".doc", ".txt", ".odt",
+    ".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".gif", ".webp"
+}
+
+def detect_magic(content: bytes) -> Optional[str]:
+    """Определяет реальный тип файла по магическим байтам."""
+    for magic, filetype in MAGIC_BYTES.items():
+        if content[:len(magic)] == magic:
+            return filetype
+    # TXT не имеет магических байт — проверим, что это валидный текст
+    try:
+        content[:512].decode("utf-8")
+        return "txt"
+    except UnicodeDecodeError:
+        try:
+            content[:512].decode("cp1251")
+            return "txt"
+        except UnicodeDecodeError:
+            return None
+
+# ============================================================================
 # ОСНОВНАЯ ФУНКЦИЯ ПАРСИНГА
 # ============================================================================
 
@@ -32,49 +73,78 @@ async def parse_file(file: UploadFile) -> dict:
         - success: True/False
         - error: описание ошибки (если есть)
     """
-    
-    filename = file.filename.lower()
+    filename = file.filename or ""
+    ext = Path(filename.lower()).suffix
+
+    # Проверка расширения
+    if ext not in ALLOWED_EXTENSIONS:
+        return {
+            "text": "", "file_type": "unknown", "pages": 0, "success": False,
+            "error": f"Формат файла не поддерживается: {filename}"
+        }
+
     content = await file.read()
-    
+
+    # Проверка размера
+    if len(content) > MAX_FILE_SIZE:
+        return {
+            "text": "", "file_type": "unknown", "pages": 0, "success": False,
+            "error": f"Файл слишком большой: {len(content) // 1024 // 1024} МБ. Максимум — 10 МБ."
+        }
+
+    if len(content) == 0:
+        return {
+            "text": "", "file_type": "unknown", "pages": 0, "success": False,
+            "error": "Файл пустой."
+        }
+
+    # Проверка реального типа по содержимому
+    magic_type = detect_magic(content)
+
+    # Сопоставляем расширение с ожидаемым магическим типом
+    ext_to_magic = {
+        ".pdf": {"pdf"},
+        ".docx": {"zip"},
+        ".doc": {"zip", None},   # старый .doc не имеет стандартных байт
+        ".odt": {"zip"},
+        ".txt": {"txt"},
+        ".jpg": {"jpeg"}, ".jpeg": {"jpeg"},
+        ".png": {"png"},
+        ".tiff": {"tiff"}, ".tif": {"tiff"},
+        ".bmp": {"bmp"},
+        ".gif": {"gif"},
+        ".webp": {"webp"},
+    }
+
+    allowed_magic = ext_to_magic.get(ext, set())
+    if magic_type not in allowed_magic and ext != ".doc":
+        return {
+            "text": "", "file_type": "unknown", "pages": 0, "success": False,
+            "error": f"Содержимое файла не соответствует расширению {ext}. Возможно, файл повреждён или переименован."
+        }
+
     try:
-        # PDF файлы
-        if filename.endswith('.pdf'):
+        if ext == ".pdf":
             return await parse_pdf(content, filename)
-        
-        # Word файлы
-        elif filename.endswith('.docx'):
+        elif ext == ".docx":
             return await parse_docx(content, filename)
-        
-        elif filename.endswith('.doc'):
+        elif ext == ".doc":
             return await parse_doc(content, filename)
-        
-        # Текстовые файлы
-        elif filename.endswith('.txt'):
+        elif ext == ".txt":
             return await parse_txt(content, filename)
-        
-        # OpenDocument
-        elif filename.endswith('.odt'):
+        elif ext == ".odt":
             return await parse_odt(content, filename)
-        
-        # Изображения (OCR)
-        elif filename.endswith(('.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.gif', '.webp')):
+        elif ext in (".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".gif", ".webp"):
             return await parse_image_ocr(content, filename)
-        
         else:
             return {
-                "text": "",
-                "file_type": "unknown",
-                "pages": 0,
-                "success": False,
+                "text": "", "file_type": "unknown", "pages": 0, "success": False,
                 "error": f"Формат файла не поддерживается: {filename}"
             }
-    
+
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "error",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "error", "pages": 0, "success": False,
             "error": f"Ошибка при обработке файла: {str(e)}"
         }
 
@@ -117,15 +187,11 @@ async def parse_pdf(content: bytes, filename: str) -> dict:
         }
     
     except ImportError:
-        # Если PyMuPDF не установлен — пробуем PyPDF2
         return await parse_pdf_fallback(content, filename)
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "pdf",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "pdf", "pages": 0, "success": False,
             "error": f"Ошибка PDF: {str(e)}"
         }
 
@@ -153,10 +219,7 @@ async def parse_pdf_fallback(content: bytes, filename: str) -> dict:
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "pdf",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "pdf", "pages": 0, "success": False,
             "error": f"Ошибка PDF (fallback): {str(e)}"
         }
 
@@ -196,18 +259,15 @@ async def parse_docx(content: bytes, filename: str) -> dict:
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "docx",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "docx", "pages": 0, "success": False,
             "error": f"Ошибка DOCX: {str(e)}"
         }
 
 async def parse_doc(content: bytes, filename: str) -> dict:
     """Парсит .doc файл (старый Word формат)."""
     
+    tmp_path = None
     try:
-        # Пробуем через textract
         import textract
         
         with tempfile.NamedTemporaryFile(suffix='.doc', delete=False) as tmp:
@@ -215,7 +275,6 @@ async def parse_doc(content: bytes, filename: str) -> dict:
             tmp_path = tmp.name
         
         text = textract.process(tmp_path).decode('utf-8')
-        os.unlink(tmp_path)
         
         return {
             "text": text,
@@ -227,12 +286,12 @@ async def parse_doc(content: bytes, filename: str) -> dict:
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "doc",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "doc", "pages": 0, "success": False,
             "error": f"Ошибка DOC: {str(e)}. Попробуйте конвертировать в .docx"
         }
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 # ============================================================================
 # ТЕКСТОВЫЙ ПАРСЕР
@@ -242,7 +301,6 @@ async def parse_txt(content: bytes, filename: str) -> dict:
     """Парсит .txt файл."""
     
     try:
-        # Пробуем разные кодировки
         for encoding in ['utf-8', 'cp1251', 'latin-1']:
             try:
                 text = content.decode(encoding)
@@ -256,7 +314,6 @@ async def parse_txt(content: bytes, filename: str) -> dict:
             except UnicodeDecodeError:
                 continue
         
-        # Если ничего не сработало
         text = content.decode('utf-8', errors='replace')
         return {
             "text": text,
@@ -268,10 +325,7 @@ async def parse_txt(content: bytes, filename: str) -> dict:
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "txt",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "txt", "pages": 0, "success": False,
             "error": f"Ошибка TXT: {str(e)}"
         }
 
@@ -282,6 +336,7 @@ async def parse_txt(content: bytes, filename: str) -> dict:
 async def parse_odt(content: bytes, filename: str) -> dict:
     """Парсит .odt файл (OpenDocument)."""
     
+    tmp_path = None
     try:
         from odf.opendocument import load
         from odf.text import P
@@ -292,7 +347,6 @@ async def parse_odt(content: bytes, filename: str) -> dict:
             tmp_path = tmp.name
         
         doc = load(tmp_path)
-        os.unlink(tmp_path)
         
         text_parts = []
         for para in doc.getElementsByType(P):
@@ -310,12 +364,12 @@ async def parse_odt(content: bytes, filename: str) -> dict:
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "odt",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "odt", "pages": 0, "success": False,
             "error": f"Ошибка ODT: {str(e)}"
         }
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 # ============================================================================
 # OCR ПАРСЕР (для изображений и сканов)
@@ -347,19 +401,13 @@ async def parse_image_ocr(content: bytes, filename: str) -> dict:
     
     except ImportError:
         return {
-            "text": "",
-            "file_type": "image",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "image", "pages": 0, "success": False,
             "error": "OCR не установлен. Выполните: pip install pytesseract pillow && установите Tesseract OCR"
         }
     
     except Exception as e:
         return {
-            "text": "",
-            "file_type": "image",
-            "pages": 0,
-            "success": False,
+            "text": "", "file_type": "image", "pages": 0, "success": False,
             "error": f"Ошибка OCR: {str(e)}"
         }
 
@@ -370,7 +418,6 @@ async def ocr_page(page) -> str:
         import pytesseract
         from PIL import Image
         
-        # Конвертируем страницу PDF в изображение
         pix = page.get_pixmap(dpi=300)
         img_data = pix.tobytes("png")
         image = Image.open(io.BytesIO(img_data))
@@ -393,17 +440,8 @@ async def ocr_page(page) -> str:
 def get_supported_formats() -> list:
     """Возвращает список поддерживаемых форматов."""
     return [
-        ".pdf",
-        ".docx",
-        ".doc", 
-        ".txt",
-        ".odt",
-        ".jpg", ".jpeg",
-        ".png",
-        ".tiff", ".tif",
-        ".bmp",
-        ".gif",
-        ".webp"
+        ".pdf", ".docx", ".doc", ".txt", ".odt",
+        ".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".gif", ".webp"
     ]
 
 def clean_text(text: str) -> str:
@@ -412,11 +450,8 @@ def clean_text(text: str) -> str:
     if not text:
         return ""
     
-    # Убираем лишние пробелы и переносы
     lines = [line.strip() for line in text.split('\n')]
     lines = [line for line in lines if line]
-    
-    # Убираем повторяющиеся пустые строки
     cleaned = '\n'.join(lines)
     
     return cleaned
