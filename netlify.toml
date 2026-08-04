@@ -1,0 +1,32 @@
+[build]
+  publish = "frontend"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://constitutional-assistant-api2.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/generate-appeal"
+  to = "https://constitutional-assistant-api2.onrender.com/generate-appeal"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "https://constitutional-assistant-api2.onrender.com/health"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/languages"
+  to = "https://constitutional-assistant-api2.onrender.com/languages"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/supported-formats"
+  to = "https://constitutional-assistant-api2.onrender.com/supported-formats"
+  status = 200
+  force = true
