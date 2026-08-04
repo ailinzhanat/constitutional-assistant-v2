@@ -120,7 +120,54 @@ KEYWORD_ROUTING = {
     },
 }
 
+# Регионы → ссылки на местные органы
+REGION_LINKS = {
+    "акмолинск": {"name": "Акимат Акмолинской области", "link": "https://www.gov.kz/memleket/entities/aqmola", "region": "Акмолинская область"},
+    "кокшетау": {"name": "Акимат Акмолинской области", "link": "https://www.gov.kz/memleket/entities/aqmola", "region": "Акмолинская область"},
+    "актюбинск": {"name": "Акимат Актюбинской области", "link": "https://www.gov.kz/memleket/entities/aktobe", "region": "Актюбинская область"},
+    "актобе": {"name": "Акимат Актюбинской области", "link": "https://www.gov.kz/memleket/entities/aktobe", "region": "Актюбинская область"},
+    "алматинск": {"name": "Акимат Алматинской области", "link": "https://www.gov.kz/memleket/entities/almaty-region", "region": "Алматинская область"},
+    "атырауск": {"name": "Акимат Атырауской области", "link": "https://www.gov.kz/memleket/entities/atyrau", "region": "Атырауская область"},
+    "атырау": {"name": "Акимат Атырауской области", "link": "https://www.gov.kz/memleket/entities/atyrau", "region": "Атырауская область"},
+    "восточно-казахстанск": {"name": "Акимат ВКО", "link": "https://www.gov.kz/memleket/entities/ekr", "region": "ВКО"},
+    "усть-каменогорск": {"name": "Акимат ВКО", "link": "https://www.gov.kz/memleket/entities/ekr", "region": "ВКО"},
+    "жамбылск": {"name": "Акимат Жамбылской области", "link": "https://www.gov.kz/memleket/entities/zhambyl", "region": "Жамбылская область"},
+    "тараз": {"name": "Акимат Жамбылской области", "link": "https://www.gov.kz/memleket/entities/zhambyl", "region": "Жамбылская область"},
+    "западно-казахстанск": {"name": "Акимат ЗКО", "link": "https://www.gov.kz/memleket/entities/bko", "region": "ЗКО"},
+    "уральск": {"name": "Акимат ЗКО", "link": "https://www.gov.kz/memleket/entities/bko", "region": "ЗКО"},
+    "карагандинск": {"name": "Акимат Карагандинской области", "link": "https://www.gov.kz/memleket/entities/karaganda", "region": "Карагандинская область"},
+    "караганд": {"name": "Акимат Карагандинской области", "link": "https://www.gov.kz/memleket/entities/karaganda", "region": "Карагандинская область"},
+    "костанайск": {"name": "Акимат Костанайской области", "link": "https://www.gov.kz/memleket/entities/kostanay", "region": "Костанайская область"},
+    "костанай": {"name": "Акимат Костанайской области", "link": "https://www.gov.kz/memleket/entities/kostanay", "region": "Костанайская область"},
+    "кызылординск": {"name": "Акимат Кызылординской области", "link": "https://www.gov.kz/memleket/entities/kyzylorda", "region": "Кызылординская область"},
+    "кызылорд": {"name": "Акимат Кызылординской области", "link": "https://www.gov.kz/memleket/entities/kyzylorda", "region": "Кызылординская область"},
+    "мангистауск": {"name": "Акимат Мангистауской области", "link": "https://www.gov.kz/memleket/entities/mangystau", "region": "Мангистауская область"},
+    "актау": {"name": "Акимат Мангистауской области", "link": "https://www.gov.kz/memleket/entities/mangystau", "region": "Мангистауская область"},
+    "павлодарск": {"name": "Акимат Павлодарской области", "link": "https://www.gov.kz/memleket/entities/pavlodar", "region": "Павлодарская область"},
+    "павлодар": {"name": "Акимат Павлодарской области", "link": "https://www.gov.kz/memleket/entities/pavlodar", "region": "Павлодарская область"},
+    "северо-казахстанск": {"name": "Акимат СКО", "link": "https://www.gov.kz/memleket/entities/sko", "region": "СКО"},
+    "петропавловск": {"name": "Акимат СКО", "link": "https://www.gov.kz/memleket/entities/sko", "region": "СКО"},
+    "туркестанск": {"name": "Акимат Туркестанской области", "link": "https://www.gov.kz/memleket/entities/ontustik", "region": "Туркестанская область"},
+    "туркестан": {"name": "Акимат Туркестанской области", "link": "https://www.gov.kz/memleket/entities/ontustik", "region": "Туркестанская область"},
+    "улытау": {"name": "Акимат области Улытау", "link": "https://www.gov.kz/memleket/entities/ulytau", "region": "Область Улытау"},
+    "жезказган": {"name": "Акимат области Улытау", "link": "https://www.gov.kz/memleket/entities/ulytau", "region": "Область Улытау"},
+    "жетісу": {"name": "Акимат области Жетісу", "link": "https://www.gov.kz/memleket/entities/zhetisu", "region": "Область Жетісу"},
+    "жетису": {"name": "Акимат области Жетісу", "link": "https://www.gov.kz/memleket/entities/zhetisu", "region": "Область Жетісу"},
+    "талдыкорган": {"name": "Акимат области Жетісу", "link": "https://www.gov.kz/memleket/entities/zhetisu", "region": "Область Жетісу"},
+    "абай": {"name": "Акимат области Абай", "link": "https://www.gov.kz/memleket/entities/abay", "region": "Область Абай"},
+    "семей": {"name": "Акимат области Абай", "link": "https://www.gov.kz/memleket/entities/abay", "region": "Область Абай"},
+    "астан": {"name": "Акимат г. Астана", "link": "https://www.gov.kz/memleket/entities/astana", "region": "г. Астана"},
+    "нур-султан": {"name": "Акимат г. Астана", "link": "https://www.gov.kz/memleket/entities/astana", "region": "г. Астана"},
+    "алматы": {"name": "Акимат г. Алматы", "link": "https://www.gov.kz/memleket/entities/almaty", "region": "г. Алматы"},
+    "шымкент": {"name": "Акимат г. Шымкент", "link": "https://www.gov.kz/memleket/entities/shymkent", "region": "г. Шымкент"},
+}
 
+def detect_region(text_lower: str) -> dict:
+    """Определяет регион из текста и возвращает информацию о местном акимате."""
+    for keyword, info in REGION_LINKS.items():
+        if keyword in text_lower:
+            return info
+    return None
 def find_relevant_organs(user_text: str, neo4j_driver=None) -> dict:
     """
     Ищет подходящие госорганы по тексту обращения.
@@ -154,6 +201,9 @@ def find_relevant_organs(user_text: str, neo4j_driver=None) -> dict:
             {"name": "Национальный центр по правам человека (Омбудсмен)", "competence": "Защита прав и свобод человека", "link": "https://www.gov.kz/memleket/entities/ombudsman"},
             {"name": "Органы прокуратуры РК", "competence": "Надзор за законностью, защита прав граждан", "link": "https://www.gov.kz/memleket/entities/prokuror"},
         ]
+        region_info = detect_region(text_lower)
+        if region_info:
+            default_organs.insert(0, region_info)
         return {
             "organs": default_organs,
             "advice_ru": "Выберите орган, соответствующий вашему вопросу:",
@@ -201,6 +251,11 @@ def find_relevant_organs(user_text: str, neo4j_driver=None) -> dict:
         if route.get("advice_kz"):
             advice_parts_kz.append(route["advice_kz"])
     
+    # Добавляем региональный орган, если упомянут регион
+    region_info = detect_region(text_lower)
+    if region_info and region_info["name"] not in seen_organs:
+        result_organs.append(region_info)
+
     return {
         "organs": result_organs,
         "advice_ru": " ".join(advice_parts_ru) if advice_parts_ru else "",
