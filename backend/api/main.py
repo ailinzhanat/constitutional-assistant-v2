@@ -3,7 +3,7 @@ Constitutional Assistant - Unified FastAPI Server
 С поддержкой загрузки файлов (PDF, Word, сканы, фото) и 3 языков (KZ/RU/EN)
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Header, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
@@ -11,6 +11,10 @@ import os
 from dotenv import load_dotenv
 
 from fastapi.responses import PlainTextResponse
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from parser import parse_file, get_supported_formats, clean_text, truncate_text
 from i18n import detect_language, normalize_language, t, SUPPORTED_LANGUAGES
@@ -30,11 +34,22 @@ load_dotenv()
 
 app = FastAPI(title="Constitutional Assistant")
 
+# --- Rate Limiter ---
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# --- CORS: только наш фронтенд (не все подряд) ---
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://constitutional-assistantkz.netlify.app"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -231,13 +246,14 @@ async def consent_text(language: str = "RU"):
     }
 
 @app.post("/api/consent")
-async def give_consent(request: ConsentRequest):
+@limiter.limit("10/minute")
+async def give_consent(request: Request, body: ConsentRequest):
     """
     Фиксирует факт согласия гражданина на обработку персональных данных.
     Возвращает consent_id, который можно использовать для скачивания подтверждения.
     """
-    lang = normalize_language(request.language)
-    record = record_consent(full_name=request.full_name, language=lang)
+    lang = normalize_language(body.language)
+    record = record_consent(full_name=body.full_name, language=lang)
     return {
         "status": "success",
         "message": t("consent_given", lang),
@@ -266,19 +282,21 @@ async def download_consent(consent_id: str):
 # ============================================================================
 
 @app.post("/api/judicial/summary")
-async def judicial_summary(request: JudicialSummaryRequest, _auth: bool = Depends(check_judicial_access)):
+@limiter.limit("20/minute")
+async def judicial_summary(request: Request, body: JudicialSummaryRequest, _auth: bool = Depends(check_judicial_access)):
     """
     Составляет нейтральную справку (Spravka) по материалам дела: факты,
     правовые аргументы, конституционные вопросы, процедурные флаги для проверки судьёй.
     Human-in-the-loop: результат — вспомогательный материал, решение всегда за судьёй.
     """
-    result = generate_case_summary(request.case_text, language=request.language)
+    result = generate_case_summary(body.case_text, language=body.language)
     if not result.get("success"):
         raise HTTPException(status_code=502, detail=result.get("error", "Не удалось составить справку"))
     return result
 
 @app.post("/api/judicial/search-precedents")
-async def judicial_search_precedents(request: JudicialPrecedentSearchRequest, _auth: bool = Depends(check_judicial_access)):
+@limiter.limit("30/minute")
+async def judicial_search_precedents(request: Request, body: JudicialPrecedentSearchRequest, _auth: bool = Depends(check_judicial_access)):
     """Поиск прецедентов (решений) в базе знаний по ключевому слову."""
     global driver
     if driver is None:
@@ -286,7 +304,7 @@ async def judicial_search_precedents(request: JudicialPrecedentSearchRequest, _a
     if driver is None:
         raise HTTPException(status_code=500, detail="Нет подключения к Neo4j")
     try:
-        results = search_precedents(driver, request.keyword, request.case_type)
+        results = search_precedents(driver, body.keyword, body.case_type)
         return {"results": results, "count": len(results)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка поиска прецедентов: {str(e)}")
@@ -297,13 +315,14 @@ async def judicial_search_precedents(request: JudicialPrecedentSearchRequest, _a
 # ============================================================================
 
 @app.post("/api/feedback")
-async def submit_feedback(request: FeedbackRequest):
+@limiter.limit("3/minute")
+async def submit_feedback(request: Request, body: FeedbackRequest):
     """Приём отзыва о работе сайта. Доступно всем пользователям."""
     result = save_feedback(
-        message=request.message,
-        contact=request.contact,
-        language=request.language,
-        page=request.page,
+        message=body.message,
+        contact=body.contact,
+        language=body.language,
+        page=body.page,
     )
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Не удалось сохранить отзыв"))
@@ -316,7 +335,8 @@ async def get_feedback(_auth: bool = Depends(check_admin_access)):
     return {"count": count_feedback(), "items": items}
 
 @app.post("/api/upload-document")
-async def upload_document(file: UploadFile = File(...)):
+@limiter.limit("10/minute")
+async def upload_document(request: Request, file: UploadFile = File(...)):
     """
     Загрузка и парсинг документа (судебный акт, жалоба и т.д.)
     Поддерживает: PDF, Word, сканы/фото (OCR), TXT, ODT
@@ -370,7 +390,8 @@ async def get_template_structure(request: TemplateStructureRequest):
         raise HTTPException(status_code=500, detail=f"Neo4j query error: {str(e)}")
 
 @app.post("/generate-appeal")
-async def generate_appeal(request: ProblemRequest):
+@limiter.limit("5/minute")
+async def generate_appeal(request: Request, body: ProblemRequest):
     """
     Полный пайплайн генерации обращения:
     1. Определение языка (автоматически, если не передан явно)
@@ -378,10 +399,10 @@ async def generate_appeal(request: ProblemRequest):
     3. Получение правового контекста из Neo4j (если найдено нарушение)
     4. Генерация текста обращения через Llama на основе контекста
     """
-    language = normalize_language(request.language) if request.language else detect_language(request.problem_description)
+    language = normalize_language(body.language) if body.language else detect_language(body.problem_description)
 
     # Шаг 1: анализ жалобы через Llama
-    analysis = analyze_complaint(request.problem_description)
+    analysis = analyze_complaint(body.problem_description)
 
     if not analysis.get("success"):
         return {
@@ -406,7 +427,7 @@ async def generate_appeal(request: ProblemRequest):
     # самому уметь цитировать статью Конституции, чтобы получить помощь — в этом и есть смысл
     # инструмента.
     if within_jurisdiction is False and not violation_id:
-        redirect_info = find_relevant_organs(request.problem_description, driver)
+        redirect_info = find_relevant_organs(body.problem_description, driver)
         redirect_msg = format_redirect_message(redirect_info, lang=language)
         return {
             "status": "not_applicable",
@@ -438,7 +459,7 @@ async def generate_appeal(request: ProblemRequest):
 
     # Шаг 3: генерация текста обращения через Llama
     generation = generate_appeal_text(
-        complaint_text=request.problem_description,
+        complaint_text=body.problem_description,
         language=language,
         case_type=case_type,
         reasoning=reasoning,
