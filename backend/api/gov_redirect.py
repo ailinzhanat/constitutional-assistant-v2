@@ -144,37 +144,16 @@ def find_relevant_organs(user_text: str, neo4j_driver=None) -> dict:
             matched.append(route)
     
     if not matched:
-        default_organs = []
-        if neo4j_driver:
-            try:
-                with neo4j_driver.session() as session:
-                    result = session.run(
-                        "MATCH (g:GovOrgan) WHERE g.type IN ['ministry','agency','ombudsman','security_service'] "
-                        "AND g.region IS NULL "
-                        "RETURN g.name, g.link, g.competence, g.type_ru ORDER BY g.type, g.name"
-                    )
-                    for record in result:
-                        default_organs.append({
-                            "name": record["g.name"],
-                            "link": record.get("g.link", ""),
-                            "competence": record.get("g.competence", ""),
-                            "category": record.get("g.type_ru", ""),
-                        })
-            except Exception:
-                pass
-
-        if not default_organs:
-            default_organs = [
-                {"name": "Министерство юстиции РК", "competence": "Правовое обеспечение, регистрация, нотариат, адвокатура", "link": "https://www.gov.kz/memleket/entities/minjust"},
-                {"name": "Министерство внутренних дел РК", "competence": "Общественный порядок, миграция, документирование", "link": "https://www.gov.kz/memleket/entities/mvd"},
-                {"name": "Министерство труда и социальной защиты населения РК", "competence": "Трудовые отношения, пенсии, пособия, соцзащита", "link": "https://www.gov.kz/memleket/entities/enbek"},
-                {"name": "Министерство здравоохранения РК", "competence": "Здравоохранение, медицина", "link": "https://www.gov.kz/memleket/entities/dsm"},
-                {"name": "Министерство финансов РК", "competence": "Налоги, бюджет, таможня", "link": "https://www.gov.kz/memleket/entities/minfin"},
-                {"name": "Министерство просвещения РК", "competence": "Школьное образование", "link": "https://www.gov.kz/memleket/entities/edu"},
-                {"name": "Национальный центр по правам человека (Омбудсмен)", "competence": "Защита прав и свобод человека", "link": "https://www.gov.kz/memleket/entities/ombudsman"},
-                {"name": "Органы прокуратуры РК", "competence": "Надзор за законностью, защита прав граждан", "link": "https://www.gov.kz/memleket/entities/prokuror"},
-            ]
-
+        default_organs = [
+            {"name": "Министерство юстиции РК", "competence": "Правовое обеспечение, регистрация, нотариат, адвокатура", "link": "https://www.gov.kz/memleket/entities/minjust"},
+            {"name": "Министерство внутренних дел РК", "competence": "Общественный порядок, миграция, документирование", "link": "https://www.gov.kz/memleket/entities/mvd"},
+            {"name": "Министерство труда и социальной защиты населения РК", "competence": "Трудовые отношения, пенсии, пособия, соцзащита", "link": "https://www.gov.kz/memleket/entities/enbek"},
+            {"name": "Министерство здравоохранения РК", "competence": "Здравоохранение, медицина", "link": "https://www.gov.kz/memleket/entities/dsm"},
+            {"name": "Министерство финансов РК", "competence": "Налоги, бюджет, таможня", "link": "https://www.gov.kz/memleket/entities/minfin"},
+            {"name": "Министерство просвещения РК", "competence": "Школьное образование", "link": "https://www.gov.kz/memleket/entities/edu"},
+            {"name": "Национальный центр по правам человека (Омбудсмен)", "competence": "Защита прав и свобод человека", "link": "https://www.gov.kz/memleket/entities/ombudsman"},
+            {"name": "Органы прокуратуры РК", "competence": "Надзор за законностью, защита прав граждан", "link": "https://www.gov.kz/memleket/entities/prokuror"},
+        ]
         return {
             "organs": default_organs,
             "advice_ru": "Выберите орган, соответствующий вашему вопросу:",
