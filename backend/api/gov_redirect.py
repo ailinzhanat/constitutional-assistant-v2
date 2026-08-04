@@ -171,24 +171,28 @@ def find_relevant_organs(user_text: str, neo4j_driver=None) -> dict:
                 seen_organs.add(organ_name)
                 organ_info = {"name": organ_name}
                 
-                # Если Neo4j доступен — подтянуть ссылку
-                if neo4j_driver:
-                    try:
-                        with neo4j_driver.session() as session:
-                            result = session.run(
-                                "MATCH (g:GovOrgan) WHERE g.name CONTAINS $name "
-                                "RETURN g.name, g.link, g.competence LIMIT 1",
-                                name=organ_name[:30]
-                            )
-                            record = result.single()
-                            if record:
-                                organ_info["name"] = record["g.name"]
-                                if record["g.link"]:
-                                    organ_info["link"] = record["g.link"]
-                                if record["g.competence"]:
-                                    organ_info["competence"] = record["g.competence"]
-                    except Exception:
-                        pass
+                # Встроенные ссылки (не зависят от Neo4j)
+                ORGAN_LINKS = {
+                    "Министерство труда и социальной защиты населения": "https://www.gov.kz/memleket/entities/enbek",
+                    "Министерство здравоохранения РК": "https://www.gov.kz/memleket/entities/dsm",
+                    "Министерство просвещения": "https://www.gov.kz/memleket/entities/edu",
+                    "Министерство науки и высшего образования": "https://www.gov.kz/memleket/entities/science",
+                    "Министерство промышленности и строительства РК": "https://www.gov.kz/memleket/entities/mps",
+                    "Министерство финансов РК": "https://www.gov.kz/memleket/entities/minfin",
+                    "Министерство внутренних дел РК": "https://www.gov.kz/memleket/entities/mvd",
+                    "Министерство экологии и природных ресурсов РК": "https://www.gov.kz/memleket/entities/ecogeo",
+                    "Министерство торговли и интеграции РК": "https://www.gov.kz/memleket/entities/mti",
+                    "Министерство транспорта РК": "https://www.gov.kz/memleket/entities/transport",
+                    "Министерство энергетики РК": "https://www.gov.kz/memleket/entities/energo",
+                    "Агентство РК по делам государственной службы": "https://www.gov.kz/memleket/entities/qyzmet",
+                    "Национальный центр по правам человека (Омбудсмен)": "https://www.gov.kz/memleket/entities/ombudsman",
+                    "Уполномоченный по правам ребёнка РК": "https://www.gov.kz/memleket/entities/balauakil",
+                    "Центральная избирательная комиссия РК": "https://www.gov.kz/memleket/entities/election",
+                    "Органы прокуратуры РК": "https://www.gov.kz/memleket/entities/prokuror",
+                }
+                
+                if organ_name in ORGAN_LINKS:
+                    organ_info["link"] = ORGAN_LINKS[organ_name]
                 
                 result_organs.append(organ_info)
         
