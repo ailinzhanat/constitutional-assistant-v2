@@ -3,7 +3,7 @@ Constitutional Assistant - Unified FastAPI Server
 С поддержкой загрузки файлов (PDF, Word, сканы, фото) и 3 языков (KZ/RU/EN)
 """
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Header, Depends, Request
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
@@ -386,7 +386,16 @@ async def get_template_structure(request: TemplateStructureRequest):
 
 @app.post("/generate-appeal")
 @limiter.limit("5/minute")
-async def generate_appeal(request: Request, body: ProblemRequest):
+async def generate_appeal(
+    request: Request,
+    text: Optional[str] = Form(None),
+    problem_description: Optional[str] = Form(None),
+    language: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+):
+    # Поддержка и FormData, и JSON
+    problem_text = text or problem_description or ""
+    body = ProblemRequest(problem_description=problem_text, language=language)
     """
     Полный пайплайн генерации обращения:
     1. Определение языка (автоматически, если не передан явно)
