@@ -99,7 +99,7 @@ II. Сущность обращения, позиция лица, подающе
 наименование закона или иного нормативного правового акта].
 
 Свои интересы при рассмотрении данного обращения в Конституционном Суде буду представлять
-[лично / через представителя [ФИО представителя]].
+{representative_line}.
 
 Перечень прилагаемых документов:
 1) копия текста закона и иного НПА, указанного в обращении;
@@ -162,6 +162,7 @@ def generate_appeal_text(
     reasoning: Optional[str] = None,
     violation_data: Optional[Dict[str, Any]] = None,
     template_data: Optional[Dict[str, Any]] = None,
+    is_representative: bool = False,
     api_key: Optional[str] = None,
     timeout: int = 60,
 ) -> Dict[str, Any]:
@@ -179,12 +180,19 @@ def generate_appeal_text(
             "error": "GEMINI_API_KEY не найден в переменных окружения (.env)",
         }
 
+    representative_line = (
+        "через представителя [ФИО представителя]"
+        if is_representative
+        else "лично"
+    )
+
     prompt = GENERATION_PROMPT_TEMPLATE.format(
         language=language,
         complaint_text=complaint_text,
         case_type=case_type or "не определён",
         reasoning=reasoning or "не указано",
         legal_context=_format_legal_context(violation_data),
+        representative_line=representative_line,
     )
 
     try:
