@@ -801,6 +801,7 @@ async function stepGenerate() {
     var formData = new FormData();
     formData.append("text", userDescription);
     formData.append("language", lang);
+    formData.append("is_representative", isRepresentative ? "true" : "false");
     if (userFile) formData.append("file", userFile);
 
     var resp = await fetch(API_BASE + "/generate-appeal", {
