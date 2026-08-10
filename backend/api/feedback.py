@@ -1,8 +1,11 @@
 """
 Constitutional Assistant - Модуль обратной связи
 Хранит два типа записей в feedback.jsonl:
-  - type="feedback"  обычный текстовый отзыв (старый формат)
+  - type="feedback"  обычный текстовый отзыв
   - type="survey"    структурированный опросник (17 вопросов)
+
+Ответы опросника ДОПОЛНИТЕЛЬНО пишутся в Google Sheets
+чтобы не терялись при каждом деплое на Render.
 """
 import json
 import os
@@ -20,7 +23,7 @@ def save_feedback(
     language: str = "RU",
     page: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Сохраняет текстовый отзыв пользователя (старый формат)."""
+    """Сохраняет текстовый отзыв пользователя."""
     if not message or not message.strip():
         return {"success": False, "error": "Текст отзыва не может быть пустым"}
     record = {
@@ -41,28 +44,45 @@ def save_feedback(
 
 
 def save_survey(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Сохраняет структурированный ответ на опросник (17 вопросов)."""
+    """
+    Сохраняет структурированный ответ на опросник.
+    1. Пишет в локальный feedback.jsonl (быстро, всегда)
+    2. Пишет в Google Sheets (постоянное хранилище)
+    """
+    survey_id = str(uuid.uuid4())
     record = {
         "type": "survey",
-        "survey_id": str(uuid.uuid4()),
+        "survey_id": survey_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "data": data,
     }
+
+    # 1. Локальный файл
     try:
         with open(FEEDBACK_FILE, "a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
-        return {"success": True, "survey_id": record["survey_id"], "error": None}
     except Exception as e:
-        return {"success": False, "error": f"Не удалось сохранить опросник: {str(e)}"}
+        print(f"⚠️ Local save failed: {e}")
+
+    # 2. Google Sheets
+    try:
+        from sheets_writer import write_survey_to_sheets
+        sheets_result = write_survey_to_sheets(data)
+        if not sheets_result.get("success"):
+            print(f"⚠️ Sheets write failed: {sheets_result.get('error')}")
+    except Exception as e:
+        print(f"⚠️ Sheets import/write error: {e}")
+
+    return {"success": True, "survey_id": survey_id, "error": None}
 
 
 def list_feedback(limit: int = 200) -> List[Dict[str, Any]]:
-    """Возвращает текстовые отзывы (type=feedback), новые сверху."""
+    """Возвращает текстовые отзывы, новые сверху."""
     return _load_by_type("feedback", limit)
 
 
 def list_surveys(limit: int = 500) -> List[Dict[str, Any]]:
-    """Возвращает ответы на опросник (type=survey), новые сверху."""
+    """Возвращает ответы на опросник из локального файла, новые сверху."""
     return _load_by_type("survey", limit)
 
 
@@ -78,7 +98,6 @@ def _load_by_type(record_type: str, limit: int) -> List[Dict[str, Any]]:
                     continue
                 try:
                     rec = json.loads(line)
-                    # совместимость со старыми записями без поля type
                     if rec.get("type", "feedback") == record_type:
                         records.append(rec)
                 except json.JSONDecodeError:
@@ -90,10 +109,8 @@ def _load_by_type(record_type: str, limit: int) -> List[Dict[str, Any]]:
 
 
 def count_feedback() -> int:
-    """Общее количество текстовых отзывов."""
     return len(_load_by_type("feedback", 99999))
 
 
 def count_surveys() -> int:
-    """Общее количество ответов на опросник."""
     return len(_load_by_type("survey", 99999))
