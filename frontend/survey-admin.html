@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Статистика опросника — Constitutional Assistant</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0D1B2A; --navy-light: #152238; --gold: #C8A23C; --gold-hover: #DBBA5A;
+  --bg: #F5F3EF; --bg-white: #FFFFFF; --text: #1A1A1A;
+  --text-light: #F0EDE8; --text-secondary: #6B6355; --text-muted: #9A9084;
+  --border: #DDD8D0; --green: #3DA66E; --red: #C44B4B; --blue: #0A7B83;
+  --radius: 12px; --radius-sm: 8px; --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+}
+html, body { min-height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; }
+
+/* HEADER */
+.header { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--navy); position:sticky; top:0; z-index:100; }
+.header-left { display:flex; align-items:center; gap:12px; }
+.header-logo { width:36px; height:36px; }
+.header-title { font-family:var(--font-serif); font-size:16px; font-weight:700; color:var(--bg-white); }
+.header-sub { font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:0.5px; }
+
+/* LOGIN */
+.login-wrap { max-width:400px; margin:80px auto; padding:0 20px; }
+.login-card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); padding:32px; box-shadow:var(--shadow); }
+.login-card h2 { font-family:var(--font-serif); font-weight:normal; font-size:22px; margin-bottom:20px; color:var(--text); }
+.login-card input {
+  width:100%; padding:11px 14px; border:1.5px solid var(--border);
+  border-radius:var(--radius-sm); font-size:14px; font-family:var(--font);
+  background:var(--bg); color:var(--text); margin-bottom:12px;
+}
+.login-card input:focus { outline:none; border-color:var(--navy); }
+.btn { background:var(--navy); color:var(--bg-white); border:none; border-radius:var(--radius-sm); padding:11px 28px; font-size:14px; font-weight:600; font-family:var(--font); cursor:pointer; transition:background .15s; }
+.btn:hover { background:var(--navy-light); }
+.btn-gold { background:var(--gold); color:var(--navy); }
+.btn-gold:hover { background:var(--gold-hover); }
+.error-msg { color:var(--red); font-size:13px; margin-top:8px; display:none; }
+
+/* DASHBOARD */
+.dash { max-width:960px; margin:0 auto; padding:28px 20px 64px; display:none; }
+
+/* STAT CARDS */
+.stat-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card { background:var(--navy); color:var(--text-light); border-radius:var(--radius-sm); padding:18px 20px; box-shadow:var(--shadow); }
+.stat-card .num { font-family:var(--font-serif); font-size:36px; color:var(--gold); line-height:1; }
+.stat-card .lbl { font-size:12px; color:rgba(255,255,255,0.5); margin-top:6px; text-transform:uppercase; letter-spacing:0.06em; }
+
+/* SECTION */
+.section { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:20px; box-shadow:var(--shadow); overflow:hidden; }
+.section-head { background:var(--navy); color:var(--gold); padding:10px 18px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; display:flex; justify-content:space-between; align-items:center; }
+.section-body { padding:20px; }
+
+/* BAR CHART */
+.bar-group { margin-bottom:12px; }
+.bar-label { font-size:13px; color:var(--text-secondary); margin-bottom:4px; display:flex; justify-content:space-between; }
+.bar-label span { font-weight:600; color:var(--text); }
+.bar-track { height:10px; background:var(--bg); border-radius:5px; overflow:hidden; }
+.bar-fill { height:100%; background:var(--navy); border-radius:5px; transition:width .4s; }
+.bar-fill.gold { background:var(--gold); }
+.bar-fill.blue { background:var(--blue); }
+
+/* SCALE GRID */
+.scale-grid { display:flex; flex-direction:column; gap:10px; }
+.scale-item { display:grid; grid-template-columns:1fr 160px 48px; gap:12px; align-items:center; }
+.scale-item .q-text { font-size:13px; color:var(--text-secondary); }
+.scale-mini-bars { display:flex; gap:3px; align-items:flex-end; height:28px; }
+.scale-mini-bar { flex:1; background:var(--navy); border-radius:2px 2px 0 0; min-height:3px; }
+.scale-avg { font-size:14px; font-weight:700; color:var(--navy); text-align:right; }
+
+/* NPS */
+.nps-display { text-align:center; padding:12px 0; }
+.nps-score { font-family:var(--font-serif); font-size:56px; color:var(--navy); line-height:1; }
+.nps-label { font-size:13px; color:var(--text-muted); margin-top:6px; }
+.nps-breakdown { display:flex; gap:12px; margin-top:16px; justify-content:center; }
+.nps-seg { text-align:center; }
+.nps-seg .n { font-size:20px; font-weight:700; }
+.nps-seg .t { font-size:11px; color:var(--text-muted); text-transform:uppercase; }
+.promoter { color:var(--green); }
+.passive { color:var(--gold); }
+.detractor { color:var(--red); }
+
+/* OPEN ANSWERS */
+.open-list { display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; }
+.open-item { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; font-size:13.5px; color:var(--text); line-height:1.55; }
+.open-item .open-meta { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+
+/* TABLE */
+.tbl-wrap { overflow-x:auto; max-height:420px; overflow-y:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:var(--navy); color:var(--gold); padding:8px 12px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; position:sticky; top:0; }
+td { padding:9px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); vertical-align:top; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--bg); }
+
+/* CSV BUTTON */
+.toolbar { display:flex; gap:10px; align-items:center; margin-bottom:20px; }
+.toolbar span { font-size:13px; color:var(--text-muted); }
+
+/* FOOTER */
+.footer { text-align:center; padding:16px; font-size:11.5px; color:var(--text-muted); border-top:1px solid var(--border); background:var(--bg-white); }
+
+@media(max-width:600px) {
+  .scale-item { grid-template-columns:1fr 80px 40px; }
+  .stat-card .num { font-size:28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <svg class="header-logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="16.5" fill="none" stroke="#C8A23C" stroke-width="1"/>
+      <line x1="18" y1="7" x2="18" y2="27" stroke="#C8A23C" stroke-width="1" opacity="0.6"/>
+      <line x1="11" y1="13" x2="25" y2="13" stroke="#C8A23C" stroke-width="1"/>
+      <path d="M11 13 L9 19 Q11 21 13 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
+      <path d="M25 13 L23 19 Q25 21 27 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
+      <path d="M14 27 L22 27" stroke="#C8A23C" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="header-title">Статистика опросника</div>
+      <div class="header-sub">Constitutional Assistant · Admin</div>
+    </div>
+  </div>
+  <button class="btn btn-gold" id="logoutBtn" style="display:none;font-size:12px;padding:6px 14px" onclick="logout()">Выйти</button>
+</div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <h2>Вход в панель администратора</h2>
+    <input type="password" id="codeInput" placeholder="Код доступа" onkeydown="if(event.key==='Enter')login()">
+    <br>
+    <button class="btn" onclick="login()">Войти</button>
+    <div class="error-msg" id="loginError">Неверный код доступа</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dashboard">
+  <div class="toolbar">
+    <button class="btn" onclick="loadData()">↻ Обновить</button>
+    <button class="btn btn-gold" onclick="exportCSV()">↓ Скачать CSV</button>
+    <span id="lastUpdate"></span>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-row">
+    <div class="stat-card"><div class="num" id="statTotal">—</div><div class="lbl">Всего ответов</div></div>
+    <div class="stat-card"><div class="num" id="statAvgSat">—</div><div class="lbl">Средняя удовлетворённость (из 5)</div></div>
+    <div class="stat-card"><div class="num" id="statNps">—</div><div class="lbl">NPS (−100 до +100)</div></div>
+    <div class="stat-card"><div class="num" id="statLang">—</div><div class="lbl">Язык большинства</div></div>
+  </div>
+
+  <!-- ROLES -->
+  <div class="section">
+    <div class="section-head">Роль респондента (вопрос 1)</div>
+    <div class="section-body" id="rolesChart"></div>
+  </div>
+
+  <!-- PRIOR EXPERIENCE -->
+  <div class="section">
+    <div class="section-head">Предыдущий опыт обращений (вопрос 2)</div>
+    <div class="section-body" id="expChart"></div>
+  </div>
+
+  <!-- SCALE Q2-1..5 -->
+  <div class="section">
+    <div class="section-head">Удобство интерфейса — шкала 1–5 (вопросы 3–7 блока 2)</div>
+    <div class="section-body"><div class="scale-grid" id="scaleChart"></div></div>
+  </div>
+
+  <!-- SATISFACTION + NPS -->
+  <div class="section">
+    <div class="section-head">Удовлетворённость и NPS (вопросы 14–15)</div>
+    <div class="section-body" style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Удовлетворённость (1–5)</div>
+        <div id="satChart"></div>
+      </div>
+      <div>
+        <div class="nps-display">
+          <div class="nps-score" id="npsScore">—</div>
+          <div class="nps-label">Net Promoter Score</div>
+          <div class="nps-breakdown">
+            <div class="nps-seg promoter"><div class="n" id="npsPromoters">—</div><div class="t">Промоутеры<br>9–10</div></div>
+            <div class="nps-seg passive"><div class="n" id="npsPassives">—</div><div class="t">Нейтральные<br>7–8</div></div>
+            <div class="nps-seg detractor"><div class="n" id="npsDetractors">—</div><div class="t">Критики<br>0–6</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGAL VALUE -->
+  <div class="section">
+    <div class="section-head">Правовая польза (вопросы 7–10)</div>
+    <div class="section-body" id="legalChart"></div>
+  </div>
+
+  <!-- TIME -->
+  <div class="section">
+    <div class="section-head">Время обработки (вопрос 11)</div>
+    <div class="section-body" id="timeChart"></div>
+  </div>
+
+  <!-- OPEN Q16 -->
+  <div class="section">
+    <div class="section-head">Что улучшить? (вопрос 16) <span id="q16count" style="font-weight:normal;opacity:.6"></span></div>
+    <div class="section-body"><div class="open-list" id="q16list"></div></div>
+  </div>
+
+  <!-- OPEN Q17 -->
+  <div class="section">
+    <div class="section-head">Что понравилось? (вопрос 17) <span id="q17count" style="font-weight:normal;opacity:.6"></span></div>
+    <div class="section-body"><div class="open-list" id="q17list"></div></div>
+  </div>
+
+  <!-- RAW TABLE -->
+  <div class="section">
+    <div class="section-head">Все ответы (таблица)</div>
+    <div class="section-body" style="padding:0">
+      <div class="tbl-wrap"><table id="rawTable">
+        <thead><tr>
+          <th>Дата</th><th>Язык</th><th>Роль</th><th>Опыт</th>
+          <th>Уд-ть</th><th>NPS</th><th>Время</th><th>Что улучшить</th><th>Что понравилось</th>
+        </tr></thead>
+        <tbody id="rawBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Constitutional Assistant · Панель администратора · Данные конфиденциальны</div>
+
+<script>
+const API = "https://constitutional-assistant-api2.onrender.com";
+let adminCode = "";
+let allSurveys = [];
+
+function login() {
+  adminCode = document.getElementById("codeInput").value.trim();
+  if (!adminCode) return;
+  loadData();
+}
+function logout() {
+  adminCode = "";
+  document.getElementById("loginWrap").style.display = "";
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("logoutBtn").style.display = "none";
+  document.getElementById("codeInput").value = "";
+}
+
+async function loadData() {
+  try {
+    const r = await fetch(API + "/api/surveys", {
+      headers: { "X-Admin-Code": adminCode }
+    });
+    if (r.status === 401) {
+      document.getElementById("loginError").style.display = "block";
+      return;
+    }
+    const json = await r.json();
+    allSurveys = (json.items || []).map(function(item) {
+      return item.data || item;
+    });
+    document.getElementById("loginError").style.display = "none";
+    document.getElementById("loginWrap").style.display = "none";
+    document.getElementById("dashboard").style.display = "";
+    document.getElementById("logoutBtn").style.display = "";
+    document.getElementById("lastUpdate").textContent =
+      "Обновлено: " + new Date().toLocaleTimeString("ru-RU");
+    renderAll(allSurveys);
+  } catch(e) {
+    document.getElementById("loginError").textContent = "Ошибка соединения: " + e.message;
+    document.getElementById("loginError").style.display = "block";
+  }
+}
+
+function renderAll(data) {
+  var n = data.length;
+  document.getElementById("statTotal").textContent = n;
+
+  // Avg satisfaction
+  var sats = data.map(function(d){ return +d.q14; }).filter(function(v){ return v > 0; });
+  document.getElementById("statAvgSat").textContent =
+    sats.length ? (sats.reduce(function(a,b){return a+b;},0)/sats.length).toFixed(1) : "—";
+
+  // NPS
+  var npss = data.map(function(d){ return +d.q15; }).filter(function(v){ return !isNaN(v) && d !== ""; });
+  var npsVal = calcNPS(data);
+  document.getElementById("statNps").textContent = npsVal !== null ? npsVal : "—";
+  document.getElementById("npsScore").textContent = npsVal !== null ? npsVal : "—";
+
+  // Lang
+  var langs = freq(data.map(function(d){ return d.language||"—"; }));
+  var topLang = Object.entries(langs).sort(function(a,b){return b[1]-a[1];})[0];
+  document.getElementById("statLang").textContent = topLang ? topLang[0].toUpperCase() : "—";
+
+  renderBar("rolesChart", freq(data.map(function(d){return d.q1||"—";})), {
+    citizen:"Гражданин", lawyer:"Юрист/адвокат", academic:"Преподаватель", other:"Другое", "—":"Не указано"
+  });
+  renderBar("expChart", freq(data.map(function(d){return d.q2||"—";})), {
+    many:"Да, неоднократно", once:"Да, один раз", never:"Нет, впервые", "—":"Не указано"
+  });
+
+  renderScales(data);
+  renderSat(data);
+  renderNps(data);
+  renderLegal(data);
+  renderTime(data);
+  renderOpen("q16list","q16count", data, "q16", "Что улучшить");
+  renderOpen("q17list","q17count", data, "q17", "Что понравилось");
+  renderTable(data);
+}
+
+function freq(arr) {
+  return arr.reduce(function(acc,v){ acc[v]=(acc[v]||0)+1; return acc; }, {});
+}
+
+function calcNPS(data) {
+  var vals = data.map(function(d){ return +d.q15; }).filter(function(v){ return !isNaN(v) && String(d) !== ""; });
+  // re-filter properly
+  var vals2 = [];
+  data.forEach(function(d){
+    var v = parseFloat(d.q15);
+    if (!isNaN(v)) vals2.push(v);
+  });
+  if (!vals2.length) return null;
+  var promoters = vals2.filter(function(v){return v>=9;}).length;
+  var detractors = vals2.filter(function(v){return v<=6;}).length;
+  var total = vals2.length;
+  document.getElementById("npsPromoters").textContent = promoters;
+  document.getElementById("npsPassives").textContent = vals2.filter(function(v){return v>=7&&v<=8;}).length;
+  document.getElementById("npsDetractors").textContent = detractors;
+  return Math.round((promoters - detractors) / total * 100);
+}
+
+function renderBar(elId, freqMap, labels) {
+  var el = document.getElementById(elId);
+  var total = Object.values(freqMap).reduce(function(a,b){return a+b;},0) || 1;
+  var sorted = Object.entries(freqMap).sort(function(a,b){return b[1]-a[1];});
+  el.innerHTML = sorted.map(function(e){
+    var key = e[0], count = e[1];
+    var label = labels[key] || key;
+    var pct = Math.round(count/total*100);
+    return '<div class="bar-group">' +
+      '<div class="bar-label"><span>'+label+'</span> '+count+' ('+pct+'%)</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderScales(data) {
+  var labels = [
+    "Понятно, что нужно делать на каждом шаге",
+    "Вопросы ассистента понятны без юридической подготовки",
+    "Не пришлось обращаться за сторонней помощью",
+    "Загрузка актов и распознавание текста работали корректно",
+    "Интерфейс одинаково удобен на всех трёх языках"
+  ];
+  var el = document.getElementById("scaleChart");
+  el.innerHTML = labels.map(function(lbl, i) {
+    var key = "sc" + (i+1);
+    var vals = [];
+    data.forEach(function(d){ var v=+d[key]; if(v>=1&&v<=5) vals.push(v); });
+    var avg = vals.length ? (vals.reduce(function(a,b){return a+b;},0)/vals.length) : 0;
+    var dist = [1,2,3,4,5].map(function(n){ return vals.filter(function(v){return v===n;}).length; });
+    var maxD = Math.max.apply(null, dist) || 1;
+    var bars = dist.map(function(c,j){
+      return '<div class="scale-mini-bar" style="height:'+(Math.round(c/maxD*28)||2)+'px" title="'+(j+1)+': '+c+' чел."></div>';
+    }).join('');
+    return '<div class="scale-item">' +
+      '<span class="q-text">'+lbl+'</span>' +
+      '<div class="scale-mini-bars">'+bars+'</div>' +
+      '<span class="scale-avg">'+(avg?avg.toFixed(1):'—')+'</span>' +
+    '</div>';
+  }).join('');
+}
+
+function renderSat(data) {
+  var el = document.getElementById("satChart");
+  var f = {1:0,2:0,3:0,4:0,5:0};
+  data.forEach(function(d){ var v=+d.q14; if(v>=1&&v<=5) f[v]++; });
+  var total = Object.values(f).reduce(function(a,b){return a+b;},0)||1;
+  el.innerHTML = Object.entries(f).map(function(e){
+    var v=e[0], c=e[1], pct=Math.round(c/total*100);
+    return '<div class="bar-group">' +
+      '<div class="bar-label"><span>'+v+' ★</span> '+c+' ('+pct+'%)</div>' +
+      '<div class="bar-track"><div class="bar-fill gold" style="width:'+pct+'%"></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderNps(data) { calcNPS(data); }
+
+function renderLegal(data) {
+  var el = document.getElementById("legalChart");
+  var questions = [
+    { key:"q7", label:"Q7 Понял разницу обжалование vs оспаривание нормы", map:{yes:"Да",partial:"Частично",no:"Нет"} },
+    { key:"q8", label:"Q8 Ассистент верно определил компетенцию КС", map:{yes:"Да",no:"Нет",unsure:"Не уверен"} },
+    { key:"q10", label:"Q10 Помог подготовить черновик обоснования", map:{yes:"Полностью",partial:"Частично",no:"Нет",skip:"Не дошёл"} },
+  ];
+  el.innerHTML = questions.map(function(q) {
+    var f = freq(data.map(function(d){return d[q.key]||"—";}));
+    var total = Object.values(f).reduce(function(a,b){return a+b;},0)||1;
+    return '<div style="margin-bottom:16px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">'+q.label+'</div>' +
+      Object.entries(f).map(function(e){
+        var k=e[0],c=e[1],pct=Math.round(c/total*100);
+        var lbl = q.map[k]||k;
+        return '<div class="bar-group">' +
+          '<div class="bar-label"><span>'+lbl+'</span> '+c+' ('+pct+'%)</div>' +
+          '<div class="bar-track"><div class="bar-fill blue" style="width:'+pct+'%"></div></div>' +
+        '</div>';
+      }).join('') + '</div>';
+  }).join('');
+}
+
+function renderTime(data) {
+  renderBar("timeChart", freq(data.map(function(d){return d.q11||"—";})), {
+    u10:"До 10 мин", "10-20":"10–20 мин", "20-40":"20–40 мин", o40:"Более 40 мин", "—":"Не указано"
+  });
+}
+
+function renderOpen(listId, countId, data, key, label) {
+  var answers = data.map(function(d){ return { text: d[key], date: d.submitted_at||"" }; })
+    .filter(function(a){ return a.text && a.text.trim(); });
+  document.getElementById(countId).textContent = answers.length ? "("+answers.length+")" : "";
+  var el = document.getElementById(listId);
+  if (!answers.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Ответов пока нет</div>';
+    return;
+  }
+  el.innerHTML = answers.map(function(a){
+    var date = a.date ? new Date(a.date).toLocaleDateString("ru-RU") : "";
+    return '<div class="open-item">' +
+      (date ? '<div class="open-meta">'+date+'</div>' : '') +
+      escapeHtml(a.text) +
+    '</div>';
+  }).join('');
+}
+
+function renderTable(data) {
+  var roleMap = {citizen:"Гражданин",lawyer:"Юрист",academic:"Преподаватель",other:"Другое"};
+  var expMap = {many:"Неоднократно",once:"1 раз",never:"Впервые"};
+  var timeMap = {u10:"<10 мин","10-20":"10–20","20-40":"20–40",o40:">40"};
+  var tbody = document.getElementById("rawBody");
+  tbody.innerHTML = data.map(function(d){
+    var date = d.submitted_at ? new Date(d.submitted_at).toLocaleDateString("ru-RU") : "—";
+    return '<tr>' +
+      '<td>'+date+'</td>' +
+      '<td>'+(d.language||"—").toUpperCase()+'</td>' +
+      '<td>'+(roleMap[d.q1]||d.q1||"—")+'</td>' +
+      '<td>'+(expMap[d.q2]||d.q2||"—")+'</td>' +
+      '<td style="text-align:center;font-weight:700;color:var(--navy)">'+(d.q14||"—")+'</td>' +
+      '<td style="text-align:center;font-weight:700;color:var(--navy)">'+(d.q15||"—")+'</td>' +
+      '<td>'+(timeMap[d.q11]||d.q11||"—")+'</td>' +
+      '<td style="max-width:200px;word-break:break-word">'+escapeHtml((d.q16||"").substring(0,120))+'</td>' +
+      '<td style="max-width:200px;word-break:break-word">'+escapeHtml((d.q17||"").substring(0,120))+'</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function exportCSV() {
+  var headers = ["Дата","Язык","Роль","Опыт","Ш1","Ш2","Ш3","Ш4","Ш5","Юр-понимание","Компетенция","Черновик","Время","Оценка времени","Зависание","Удовлетворённость","NPS","Улучшить","Понравилось"];
+  var rows = allSurveys.map(function(d){
+    return [
+      d.submitted_at||"", d.language||"", d.q1||"", d.q2||"",
+      d.sc1||"",d.sc2||"",d.sc3||"",d.sc4||"",d.sc5||"",
+      d.q7||"",d.q8||"",d.q10||"",d.q11||"",d.q12||"",d.q13||"",
+      d.q14||"",d.q15||"",
+      (d.q16||"").replace(/\n/g," "), (d.q17||"").replace(/\n/g," ")
+    ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(",");
+  });
+  var csv = "\uFEFF" + headers.join(",") + "\n" + rows.join("\n");
+  var blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "survey_results_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function escapeHtml(str) {
+  return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+</script>
+</body>
+</html>
