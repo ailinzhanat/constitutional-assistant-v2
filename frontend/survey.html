@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Опросник — Constitutional Assistant</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0D1B2A;
+  --navy-light: #152238;
+  --blue: #0A7B83;
+  --gold: #C8A23C;
+  --gold-hover: #DBBA5A;
+  --bg: #F5F3EF;
+  --bg-white: #FFFFFF;
+  --text: #1A1A1A;
+  --text-light: #F0EDE8;
+  --text-secondary: #6B6355;
+  --text-muted: #9A9084;
+  --border: #DDD8D0;
+  --red-soft: #C44B4B;
+  --green-soft: #3DA66E;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+}
+
+html, body {
+  min-height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* ── HEADER (identical to chat.html) ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--navy);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { width: 36px; height: 36px; flex-shrink: 0; }
+.header-text { display: flex; flex-direction: column; }
+.header-title {
+  font-family: var(--font-serif);
+  font-size: 16px; font-weight: 700;
+  color: var(--bg-white); letter-spacing: 0.2px;
+  text-decoration: none;
+}
+.header-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.5px; }
+.lang-select { display: flex; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden; }
+.lang-btn {
+  border: none; background: transparent;
+  padding: 6px 12px; font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.15s;
+  text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font);
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+.lang-btn:last-child { border-right: none; }
+.lang-btn.active { background: var(--gold); color: var(--navy); }
+.lang-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); }
+
+/* ── LAYOUT ── */
+.page { max-width: 640px; margin: 0 auto; padding: 32px 20px 64px; }
+
+/* ── PAGE INTRO (styled like assistant bubble) ── */
+.intro-bubble {
+  background: var(--navy);
+  color: var(--text-light);
+  border-radius: var(--radius);
+  border-bottom-left-radius: 4px;
+  padding: 18px 20px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+.intro-bubble strong { color: var(--gold); font-weight: 600; }
+.intro-bubble .eyebrow {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--gold);
+  margin-bottom: 8px; font-family: var(--font);
+}
+
+/* ── BLOCK HEADER ── */
+.block { margin-bottom: 8px; }
+.block-header {
+  background: var(--navy);
+  color: var(--gold);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.block-body {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* ── QUESTION ── */
+.question { margin-bottom: 24px; }
+.question:last-child { margin-bottom: 0; }
+.q-label {
+  display: block;
+  font-size: 14px; color: var(--text);
+  margin-bottom: 12px; line-height: 1.5;
+}
+.q-num {
+  display: inline-block;
+  background: var(--navy); color: var(--gold);
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+  margin-right: 8px; letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+/* ── OPTIONS ── */
+.options { display: flex; flex-direction: column; gap: 8px; }
+.option-label {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 14px; color: var(--text-secondary);
+  background: var(--bg);
+}
+.option-label:hover { border-color: var(--navy); background: var(--bg-white); color: var(--text); }
+.option-label input[type="radio"],
+.option-label input[type="checkbox"] {
+  accent-color: var(--navy); width: 16px; height: 16px; flex-shrink: 0;
+}
+.option-label:has(input:checked) {
+  border-color: var(--navy); background: var(--navy);
+  color: var(--text-light);
+}
+
+/* ── SCALE TABLE ── */
+.scale-list { display: flex; flex-direction: column; gap: 0; }
+.scale-row-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.scale-row-item:last-child { border-bottom: none; }
+.scale-text { font-size: 13.5px; color: var(--text-secondary); flex: 1; }
+.scale-nums { display: flex; gap: 4px; flex-shrink: 0; }
+.scale-nums label {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  cursor: pointer;
+}
+.scale-nums label input { accent-color: var(--navy); }
+.scale-nums label span { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+/* ── NPS ── */
+.nps-wrap { margin-top: 4px; }
+.nps-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.nps-btn {
+  width: 42px; height: 42px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  color: var(--text-secondary); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  font-family: var(--font); transition: all 0.15s;
+}
+.nps-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--bg-white); }
+.nps-btn.selected { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+.nps-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 8px; font-size: 11px; color: var(--text-muted);
+}
+
+/* ── SAT BUTTONS (1-5) ── */
+.sat-row { display: flex; gap: 8px; margin-top: 4px; }
+.sat-btn {
+  flex: 1; height: 46px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  color: var(--text-secondary); border-radius: var(--radius-sm);
+  cursor: pointer; font-size: 15px; font-weight: 700;
+  font-family: var(--font); transition: all 0.15s;
+}
+.sat-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--bg-white); }
+.sat-btn.selected { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+
+/* ── TEXTAREA / SELECT ── */
+textarea, select {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 11px 14px;
+  transition: border-color 0.15s;
+  line-height: 1.55;
+}
+textarea { resize: vertical; min-height: 84px; }
+textarea:focus, select:focus { outline: none; border-color: var(--navy); background: var(--bg-white); }
+textarea::placeholder { color: var(--text-muted); }
+select { appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A9084' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+select option { background: var(--bg-white); }
+
+/* ── CONSENT BLOCK ── */
+.consent-block {
+  background: var(--bg-white);
+  border: 1.5px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 13.5px; color: var(--text-secondary); line-height: 1.65;
+}
+.consent-block strong { color: var(--text); }
+
+/* ── SUBMIT BUTTON ── */
+.submit-area { margin-top: 32px; text-align: center; }
+.btn-submit {
+  background: var(--navy); color: var(--text-light);
+  border: none; border-radius: var(--radius-sm);
+  padding: 14px 48px; font-family: var(--font);
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.2px;
+}
+.btn-submit:hover { background: var(--navy-light); }
+.btn-submit:active { transform: scale(.98); }
+.btn-submit:disabled { background: var(--text-muted); cursor: not-allowed; }
+.submit-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+
+/* ── SUCCESS ── */
+.success-screen {
+  display: none; max-width: 480px; margin: 60px auto;
+  text-align: center; padding: 0 20px;
+}
+.success-screen.show { display: block; }
+.success-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--navy); color: var(--gold);
+  font-size: 28px; display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 20px;
+}
+.success-screen h2 {
+  font-family: var(--font-serif); font-weight: normal;
+  font-size: 26px; margin-bottom: 14px; color: var(--text);
+}
+.success-screen p { color: var(--text-secondary); font-size: 14.5px; line-height: 1.65; }
+.home-link {
+  display: inline-block; margin-top: 24px;
+  padding: 11px 28px;
+  background: var(--navy); color: var(--text-light);
+  border-radius: var(--radius-sm); font-weight: 600;
+  font-size: 14px; text-decoration: none;
+  transition: background 0.15s;
+}
+.home-link:hover { background: var(--navy-light); }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 16px 20px;
+  font-size: 11.5px; color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-white);
+}
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); margin: 4px 0 20px; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 600px) {
+  .page { padding: 20px 14px 48px; }
+  .nps-btn { width: 34px; height: 34px; font-size: 12px; }
+  .sat-btn { height: 42px; font-size: 14px; }
+  .scale-row-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <svg class="header-logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="16.5" fill="none" stroke="#C8A23C" stroke-width="1"/>
+      <circle cx="18" cy="18" r="12.5" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.4"/>
+      <line x1="18" y1="7" x2="18" y2="27" stroke="#C8A23C" stroke-width="1" opacity="0.6"/>
+      <line x1="11" y1="13" x2="25" y2="13" stroke="#C8A23C" stroke-width="1"/>
+      <path d="M11 13 L9 19 Q11 21 13 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
+      <path d="M25 13 L23 19 Q25 21 27 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
+      <path d="M14 27 L22 27" stroke="#C8A23C" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M6 18 Q10 10, 18 7" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+      <path d="M30 18 Q26 10, 18 7" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+      <path d="M6 18 Q10 26, 18 29" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+      <path d="M30 18 Q26 26, 18 29" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+    </svg>
+    <div class="header-text">
+      <a href="index.html" class="header-title" data-i18n="siteTitle">Конституционный ассистент</a>
+      <span class="header-sub" data-i18n="headerSub">Пилотный проект</span>
+    </div>
+  </div>
+  <div class="lang-select">
+    <button class="lang-btn" data-lang="kk">ҚАЗ</button>
+    <button class="lang-btn active" data-lang="ru">РУС</button>
+    <button class="lang-btn" data-lang="en">ENG</button>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">✓</div>
+  <h2 id="successTitle">Спасибо за участие!</h2>
+  <p id="successText">Ваши ответы помогут сделать Constitutional Assistant понятнее и полезнее для граждан Республики Казахстан.</p>
+  <a href="index.html" class="home-link" id="homeLink">← На главную</a>
+</div>
+
+<!-- FORM -->
+<div id="formArea">
+  <div class="page">
+
+    <!-- INTRO BUBBLE -->
+    <div class="intro-bubble">
+      <div class="eyebrow" data-i18n="eyebrow">Исследование пилота</div>
+      <strong data-i18n="introTitle">Опросник: оценка Constitutional Assistant</strong><br>
+      <span data-i18n="introText">Опрос анонимный. Ответы используются только для доработки пилота.</span>
+    </div>
+
+    <form id="surveyForm" novalidate>
+
+      <!-- CONSENT -->
+      <div class="consent-block" id="consentBlock">
+        <p id="consentText"><strong>Согласие на обработку данных.</strong> Подтвердите согласие на обработку ваших ответов в обезличенном виде согласно Закону РК от 21 мая 2013 года №&nbsp;94-V «О персональных данных и их защите».</p>
+        <div class="options" style="margin-top:14px">
+          <label class="option-label">
+            <input type="radio" name="consent" value="yes" required>
+            <span data-i18n="consentYes">Да, согласен(на) — продолжить</span>
+          </label>
+          <label class="option-label">
+            <input type="radio" name="consent" value="no">
+            <span data-i18n="consentNo">Нет — завершить опрос</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- MAIN BLOCKS (hidden until consent) -->
+      <div id="mainContent" class="hidden">
+
+        <!-- BLOCK 1 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block1">Блок 1 — О респонденте</div>
+          <div class="block-body">
+            <div class="question">
+              <label class="q-label"><span class="q-num">01</span><span data-i18n="q1">Ваша роль:</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q1" value="citizen"><span data-i18n="q1a">Гражданин, обращавшийся за помощью в составлении обращения</span></label>
+                <label class="option-label"><input type="radio" name="q1" value="lawyer"><span data-i18n="q1b">Юрист / адвокат / юридический консультант</span></label>
+                <label class="option-label"><input type="radio" name="q1" value="academic"><span data-i18n="q1c">Преподаватель права / представитель научного сообщества</span></label>
+                <label class="option-label"><input type="radio" name="q1" value="other"><span data-i18n="q1d">Другое</span></label>
+              </div>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">02</span><span data-i18n="q2">Обращались ли вы раньше самостоятельно в Конституционный Суд РК или в суды общей юрисдикции?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q2" value="many"><span data-i18n="q2a">Да, неоднократно</span></label>
+                <label class="option-label"><input type="radio" name="q2" value="once"><span data-i18n="q2b">Да, один раз</span></label>
+                <label class="option-label"><input type="radio" name="q2" value="never"><span data-i18n="q2c">Нет, впервые сталкиваюсь с этим через интерфейс</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCK 2 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block2">Блок 2 — Удобство использования</div>
+          <div class="block-body">
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px" data-i18n="scaleHint">Оцените от 1 (совсем не согласен) до 5 (полностью согласен):</p>
+            <div class="scale-list" id="scaleList"></div>
+            <div class="question" style="margin-top:20px">
+              <label class="q-label"><span class="q-num">06</span><span data-i18n="q6">Что вызвало наибольшие затруднения при использовании интерфейса?</span></label>
+              <textarea name="q6" data-i18n-ph="q6ph" placeholder="Опишите свободно..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCK 3 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block3">Блок 3 — Правовая польза</div>
+          <div class="block-body">
+            <div class="question">
+              <label class="q-label"><span class="q-num">07</span><span data-i18n="q7">Помог ли ассистент понять разницу между обжалованием решения суда и оспариванием нормы закона?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q7" value="yes"><span data-i18n="q7a">Да, стало понятно</span></label>
+                <label class="option-label"><input type="radio" name="q7" value="partial"><span data-i18n="q7b">Частично понятно</span></label>
+                <label class="option-label"><input type="radio" name="q7" value="no"><span data-i18n="q7c">Нет, осталось непонятно</span></label>
+              </div>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">08</span><span data-i18n="q8">Ассистент верно определил, входит ли ваше обращение в компетенцию КС РК?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q8" value="yes"><span data-i18n="yes">Да</span></label>
+                <label class="option-label"><input type="radio" name="q8" value="no"><span data-i18n="no">Нет</span></label>
+                <label class="option-label"><input type="radio" name="q8" value="unsure"><span data-i18n="q8c">Не уверен(а) / затрудняюсь оценить</span></label>
+              </div>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">09</span><span data-i18n="q9">Если ассистент сообщил, что обращение вне компетенции КС — было ли понятно, куда обратиться дальше?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q9" value="clear"><span data-i18n="q9a">Да, чётко указано</span></label>
+                <label class="option-label"><input type="radio" name="q9" value="partial"><span data-i18n="q9b">Указано, но недостаточно подробно</span></label>
+                <label class="option-label"><input type="radio" name="q9" value="na"><span data-i18n="q9c">Не применимо (моё обращение было принято)</span></label>
+              </div>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">10</span><span data-i18n="q10">Помог ли сервис подготовить черновик правового обоснования?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q10" value="yes"><span data-i18n="q10a">Да, полностью</span></label>
+                <label class="option-label"><input type="radio" name="q10" value="partial"><span data-i18n="q10b">Частично, потребовалась доработка</span></label>
+                <label class="option-label"><input type="radio" name="q10" value="no"><span data-i18n="q10c">Нет</span></label>
+                <label class="option-label"><input type="radio" name="q10" value="skip"><span data-i18n="q10d">Не дошёл(шла) до этого шага</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCK 4 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block4">Блок 4 — Время обработки</div>
+          <div class="block-body">
+            <div class="question">
+              <label class="q-label" for="q11"><span class="q-num">11</span><span data-i18n="q11">Сколько времени заняло прохождение всех шагов?</span></label>
+              <select name="q11" id="q11">
+                <option value="" data-i18n="selPh">— выберите —</option>
+                <option value="u10" data-i18n="q11a">До 10 минут</option>
+                <option value="10-20" data-i18n="q11b">10–20 минут</option>
+                <option value="20-40" data-i18n="q11c">20–40 минут</option>
+                <option value="o40" data-i18n="q11d">Более 40 минут</option>
+              </select>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">12</span><span data-i18n="q12">Как вы оцениваете это время?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q12" value="faster"><span data-i18n="q12a">Быстрее, чем ожидал(а)</span></label>
+                <label class="option-label"><input type="radio" name="q12" value="ok"><span data-i18n="q12b">Соответствует ожиданиям</span></label>
+                <label class="option-label"><input type="radio" name="q12" value="slower"><span data-i18n="q12c">Дольше, чем ожидал(а)</span></label>
+              </div>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">13</span><span data-i18n="q13">Была ли система «зависания» или долгого ожидания?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q13" value="no"><span data-i18n="no">Нет</span></label>
+                <label class="option-label"><input type="radio" name="q13" value="yes"><span data-i18n="q13y">Да</span></label>
+              </div>
+              <textarea name="q13d" style="margin-top:10px" data-i18n-ph="q13ph" placeholder="На каком шаге? (необязательно)"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCK 5 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block5">Блок 5 — Удовлетворённость</div>
+          <div class="block-body">
+            <div class="question">
+              <label class="q-label"><span class="q-num">14</span><span data-i18n="q14">Насколько вы в целом удовлетворены опытом использования Constitutional Assistant?</span></label>
+              <div class="sat-row" id="satRow"></div>
+              <div class="nps-labels"><span data-i18n="q14lo">1 — совсем не удовлетворён(а)</span><span data-i18n="q14hi">5 — полностью удовлетворён(а)</span></div>
+              <input type="hidden" name="q14" id="q14val">
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">15</span><span data-i18n="q15">Насколько вероятно, что вы порекомендуете этот сервис? (0 — точно нет, 10 — точно да)</span></label>
+              <div class="nps-wrap">
+                <div class="nps-row" id="npsRow"></div>
+                <div class="nps-labels"><span data-i18n="q15lo">0 — точно не порекомендую</span><span data-i18n="q15hi">10 — точно порекомендую</span></div>
+              </div>
+              <input type="hidden" name="q15" id="q15val">
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">16</span><span data-i18n="q16">Что стоило бы улучшить в первую очередь?</span></label>
+              <textarea name="q16" data-i18n-ph="q16ph" placeholder="Опишите свободно..."></textarea>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">17</span><span data-i18n="q17">Что вам особенно понравилось в интерфейсе?</span></label>
+              <textarea name="q17" data-i18n-ph="q17ph" placeholder="Опишите свободно..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-area">
+          <button type="submit" class="btn-submit" id="submitBtn"><span data-i18n="submitBtn">Отправить ответы</span></button>
+          <p class="submit-note" data-i18n="submitNote">Ответы передаются анонимно</p>
+        </div>
+
+      </div><!-- /mainContent -->
+    </form>
+  </div><!-- /page -->
+</div><!-- /formArea -->
+
+<div class="footer">
+  <span data-i18n="footer">Пилотная версия · Не является официальным ресурсом государственных органов Республики Казахстан</span>
+</div>
+
+<script>
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
+
+const T = {
+  ru: {
+    siteTitle:"Конституционный ассистент", headerSub:"Пилотный проект",
+    eyebrow:"Исследование пилота", introTitle:"Опросник: оценка Constitutional Assistant",
+    introText:"Опрос анонимный. Ответы используются только для доработки пилота.",
+    consentYes:"Да, согласен(на) — продолжить", consentNo:"Нет — завершить опрос",
+    block1:"Блок 1 — О респонденте", block2:"Блок 2 — Удобство использования",
+    block3:"Блок 3 — Правовая польза", block4:"Блок 4 — Время обработки",
+    block5:"Блок 5 — Удовлетворённость",
+    q1:"Ваша роль:", q1a:"Гражданин, обращавшийся за помощью в составлении обращения",
+    q1b:"Юрист / адвокат / юридический консультант",
+    q1c:"Преподаватель права / представитель научного сообщества", q1d:"Другое",
+    q2:"Обращались ли вы раньше самостоятельно в Конституционный Суд РК или в суды общей юрисдикции?",
+    q2a:"Да, неоднократно", q2b:"Да, один раз", q2c:"Нет, впервые сталкиваюсь с этим через интерфейс",
+    scaleHint:"Оцените от 1 (совсем не согласен) до 5 (полностью согласен):",
+    scale:["Мне было понятно, что нужно делать на каждом шаге",
+           "Формулировки вопросов ассистента были понятны без юридической подготовки",
+           "Мне не пришлось обращаться за посторонней помощью",
+           "Загрузка судебных актов и распознавание текста сработали корректно",
+           "Интерфейс работал одинаково удобно на казахском / русском / английском"],
+    q6:"Что вызвало наибольшие затруднения при использовании интерфейса?", q6ph:"Опишите свободно...",
+    yes:"Да", no:"Нет",
+    q7:"Помог ли ассистент понять разницу между обжалованием решения суда и оспариванием нормы закона?",
+    q7a:"Да, стало понятно", q7b:"Частично понятно", q7c:"Нет, осталось непонятно",
+    q8:"Ассистент верно определил, входит ли ваше обращение в компетенцию КС РК?",
+    q8c:"Не уверен(а) / затрудняюсь оценить",
+    q9:"Если ассистент сообщил, что обращение вне компетенции КС — было ли понятно, куда обратиться?",
+    q9a:"Да, чётко указано", q9b:"Указано, но недостаточно подробно",
+    q9c:"Не применимо (моё обращение было принято)",
+    q10:"Помог ли сервис подготовить черновик правового обоснования?",
+    q10a:"Да, полностью", q10b:"Частично, потребовалась доработка",
+    q10c:"Нет", q10d:"Не дошёл(шла) до этого шага",
+    q11:"Сколько времени заняло прохождение всех шагов?",
+    selPh:"— выберите —", q11a:"До 10 минут", q11b:"10–20 минут", q11c:"20–40 минут", q11d:"Более 40 минут",
+    q12:"Как вы оцениваете это время?",
+    q12a:"Быстрее, чем ожидал(а)", q12b:"Соответствует ожиданиям", q12c:"Дольше, чем ожидал(а)",
+    q13:"Была ли система «зависания» или долгого ожидания?", q13y:"Да", q13ph:"На каком шаге? (необязательно)",
+    q14:"Насколько вы в целом удовлетворены опытом использования Constitutional Assistant?",
+    q14lo:"1 — совсем не удовлетворён(а)", q14hi:"5 — полностью удовлетворён(а)",
+    q15:"Насколько вероятно, что вы порекомендуете этот сервис? (0 — точно нет, 10 — точно да)",
+    q15lo:"0 — точно не порекомендую", q15hi:"10 — точно порекомендую",
+    q16:"Что стоило бы улучшить в первую очередь?", q16ph:"Опишите свободно...",
+    q17:"Что вам особенно понравилось в интерфейсе?", q17ph:"Опишите свободно...",
+    submitBtn:"Отправить ответы", submitNote:"Ответы передаются анонимно",
+    successTitle:"Спасибо за участие!", homeLink:"← На главную",
+    successText:"Ваши ответы помогут сделать Constitutional Assistant понятнее и полезнее для граждан Республики Казахстан.",
+    footer:"Пилотная версия · Не является официальным ресурсом государственных органов Республики Казахстан"
+  },
+  kk: {
+    siteTitle:"Конституциялық көмекші", headerSub:"Пилоттық жоба",
+    eyebrow:"Пилотты зерттеу", introTitle:"Сауалнама: Constitutional Assistant бағалау",
+    introText:"Сауалнама анонимді. Жауаптар тек пилотты жетілдіру үшін пайдаланылады.",
+    consentYes:"Иә, келісемін — жалғастыру", consentNo:"Жоқ — сауалнаманы аяқтау",
+    block1:"1-блок — Респондент туралы", block2:"2-блок — Пайдалану ыңғайлылығы",
+    block3:"3-блок — Заңдық пайда", block4:"4-блок — Өңдеу уақыты",
+    block5:"5-блок — Қанағаттану деңгейі",
+    q1:"Сіздің рөліңіз:", q1a:"Азамат (өтінішті жасауға көмек сұраған)",
+    q1b:"Заңгер / адвокат / заң консультанты",
+    q1c:"Құқық оқытушысы / ғылым өкілі", q1d:"Басқа",
+    q2:"Бұған дейін ҚР Конституциялық Сотына немесе жалпы соттарға жүгіндіңіз бе?",
+    q2a:"Иә, бірнеше рет", q2b:"Иә, бір рет", q2c:"Жоқ, алғаш рет",
+    scaleHint:"1-ден (мүлдем келіспеймін) 5-ке (толық келісемін) дейін бағалаңыз:",
+    scale:["Әр қадамда не істеу керектігін түсіндім",
+           "Ассистент сұрақтары заң дайындығынсыз түсінікті болды",
+           "Интерфейстен өту үшін сырттан көмек сұрауға тура келмеді",
+           "Сот актілерін жүктеу және мәтінді тану дұрыс жұмыс істеді",
+           "Интерфейс қазақша / орысша / ағылшынша бірдей ыңғайлы болды"],
+    q6:"Интерфейсті пайдалану кезінде қандай қиындықтар туындады?", q6ph:"Еркін сипаттаңыз...",
+    yes:"Иә", no:"Жоқ",
+    q7:"Ассистент сот шешімін шағымдау мен заң нормасын даулаудың айырмашылығын түсінуге көмектесті ме?",
+    q7a:"Иә, түсінікті болды", q7b:"Ішінара түсінікті", q7c:"Жоқ, түсінікті болмады",
+    q8:"Ассистент өтінішіңіздің КС құзыретіне жататынын дұрыс анықтады ма?",
+    q8c:"Сенімді емеспін",
+    q9:"Ассистент өтініш КС құзыретінен тыс деп хабарласа — одан әрі қайда жүгіну керектігі түсінікті болды ма?",
+    q9a:"Иә, нақты көрсетілді", q9b:"Көрсетілді, бірақ жеткіліксіз", q9c:"Қолданылмайды",
+    q10:"Қызмет заңдық негіздеменің жобасын дайындауға көмектесті ме?",
+    q10a:"Иә, толық", q10b:"Ішінара, өңдеу қажет болды", q10c:"Жоқ", q10d:"Осы қадамға жетпедім",
+    q11:"Барлық қадамдарынан өтуге қанша уақыт кетті?",
+    selPh:"— таңдаңыз —", q11a:"10 минутқа дейін", q11b:"10–20 минут", q11c:"20–40 минут", q11d:"40 минуттан астам",
+    q12:"Бұл уақытты қалай бағалайсыз?",
+    q12a:"Күткеннен жылдам", q12b:"Күтуге сәйкес", q12c:"Күткеннен ұзақ",
+    q13:"Жүйе «қатып қалған» немесе ұзақ күтуге мәжбүр еткен сәт болды ма?", q13y:"Иә", q13ph:"Қай қадамда? (міндетті емес)",
+    q14:"Constitutional Assistant пайдалану тәжірибесіне жалпы қаншалықты қанағаттандыңыз?",
+    q14lo:"1 — мүлдем қанағаттанбадым", q14hi:"5 — толық қанағаттандым",
+    q15:"Бұл қызметті таныстарыңызға ұсыну ықтималдығы қандай?",
+    q15lo:"0 — ұсынбаймын", q15hi:"10 — міндетті түрде ұсынамын",
+    q16:"Ең алдымен нені жақсарту керек?", q16ph:"Еркін сипаттаңыз...",
+    q17:"Интерфейстің қай жағы ұнады?", q17ph:"Еркін сипаттаңыз...",
+    submitBtn:"Жауаптарды жіберу", submitNote:"Жауаптар анонимді түрде жіберіледі",
+    successTitle:"Қатысқаныңыз үшін рахмет!", homeLink:"← Басты бетке",
+    successText:"Жауаптарыңыз Constitutional Assistant-ті Қазақстан Республикасы азаматтары үшін пайдалырақ етуге көмектеседі.",
+    footer:"Пилоттық нұсқа · Қазақстан Республикасы мемлекеттік органдарының ресми ресурсы емес"
+  },
+  en: {
+    siteTitle:"Constitutional Assistant", headerSub:"Pilot project",
+    eyebrow:"Pilot Research", introTitle:"Survey: Constitutional Assistant Evaluation",
+    introText:"This survey is anonymous. Responses are used solely to improve the pilot.",
+    consentYes:"Yes, I agree — continue", consentNo:"No — end the survey",
+    block1:"Block 1 — About You", block2:"Block 2 — Usability",
+    block3:"Block 3 — Legal Value", block4:"Block 4 — Processing Time",
+    block5:"Block 5 — Satisfaction",
+    q1:"Your role:", q1a:"Citizen who sought help drafting an appeal",
+    q1b:"Lawyer / attorney / legal consultant",
+    q1c:"Law professor / academic", q1d:"Other",
+    q2:"Have you previously submitted applications to the Constitutional Court or regular courts?",
+    q2a:"Yes, multiple times", q2b:"Yes, once", q2c:"No, this is my first time",
+    scaleHint:"Rate from 1 (strongly disagree) to 5 (strongly agree):",
+    scale:["I understood what to do at each step",
+           "The assistant's questions were clear without legal training",
+           "I did not need outside help to complete the interface",
+           "Uploading court documents and text recognition worked correctly",
+           "The interface worked equally well in Kazakh / Russian / English"],
+    q6:"What caused the most difficulty when using the interface?", q6ph:"Describe freely...",
+    yes:"Yes", no:"No",
+    q7:"Did the assistant help you understand the difference between appealing a court ruling and challenging a legal norm?",
+    q7a:"Yes, it became clear", q7b:"Partially clear", q7c:"No, it remained unclear",
+    q8:"Did the assistant correctly determine whether your appeal falls within the CC's jurisdiction?",
+    q8c:"Unsure / hard to assess",
+    q9:"If the assistant said your appeal was outside the CC's jurisdiction — was it clear where to go next?",
+    q9a:"Yes, clearly indicated", q9b:"Indicated but not in enough detail", q9c:"Not applicable (my appeal was accepted)",
+    q10:"Did the service help you prepare a draft legal justification?",
+    q10a:"Yes, fully", q10b:"Partially — revision was needed", q10c:"No", q10d:"I did not reach this step",
+    q11:"How long did it take to complete all steps?",
+    selPh:"— select —", q11a:"Under 10 minutes", q11b:"10–20 minutes", q11c:"20–40 minutes", q11d:"Over 40 minutes",
+    q12:"How would you rate that time?",
+    q12a:"Faster than expected", q12b:"As expected", q12c:"Slower than expected",
+    q13:"Were there moments when the system froze or made you wait?", q13y:"Yes", q13ph:"At which step? (optional)",
+    q14:"How satisfied are you overall with your Constitutional Assistant experience?",
+    q14lo:"1 — not satisfied at all", q14hi:"5 — fully satisfied",
+    q15:"How likely are you to recommend this service? (0 — definitely not, 10 — definitely yes)",
+    q15lo:"0 — definitely would not recommend", q15hi:"10 — definitely would recommend",
+    q16:"What should be improved first?", q16ph:"Describe freely...",
+    q17:"What did you especially like about the interface?", q17ph:"Describe freely...",
+    submitBtn:"Submit responses", submitNote:"Responses are submitted anonymously",
+    successTitle:"Thank you for participating!", homeLink:"← Back to home",
+    successText:"Your responses will help make Constitutional Assistant more useful for citizens of Kazakhstan.",
+    footer:"Pilot version · Not an official resource of state authorities of the Republic of Kazakhstan"
+  }
+};
+
+let lang = "ru";
+
+function t(k) { return T[lang][k] || k; }
+
+function applyLang() {
+  var l = T[lang];
+  document.querySelectorAll("[data-i18n]").forEach(function(el) {
+    var k = el.getAttribute("data-i18n");
+    if (l[k] !== undefined) el.textContent = l[k];
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(function(el) {
+    var k = el.getAttribute("data-i18n-ph");
+    if (l[k]) el.placeholder = l[k];
+  });
+  // select options
+  var sel = document.getElementById("q11");
+  var keys = ["selPh","q11a","q11b","q11c","q11d"];
+  Array.from(sel.options).forEach(function(o,i){ if(l[keys[i]]) o.textContent = l[keys[i]]; });
+  buildScale();
+  // success
+  var st = document.getElementById("successTitle");
+  var sp = document.getElementById("successText");
+  var hl = document.getElementById("homeLink");
+  if(st) st.textContent = l.successTitle;
+  if(sp) sp.textContent = l.successText;
+  if(hl) hl.textContent = l.homeLink;
+}
+
+function buildScale() {
+  var c = document.getElementById("scaleList");
+  if (!c) return;
+  c.innerHTML = "";
+  (T[lang].scale||[]).forEach(function(txt, i) {
+    var n = i+1;
+    var row = document.createElement("div");
+    row.className = "scale-row-item";
+    row.innerHTML = '<span class="scale-text">'+txt+'</span>' +
+      '<div class="scale-nums">' +
+      [1,2,3,4,5].map(function(v){
+        return '<label><input type="radio" name="sc'+n+'" value="'+v+'"><span>'+v+'</span></label>';
+      }).join('') + '</div>';
+    c.appendChild(row);
+  });
+}
+
+function buildSat() {
+  var r = document.getElementById("satRow");
+  for(var n=1;n<=5;n++) {
+    (function(n){
+      var b = document.createElement("button");
+      b.type="button"; b.className="sat-btn"; b.textContent=n;
+      b.onclick=function(){
+        document.querySelectorAll("#satRow .sat-btn").forEach(function(x){x.classList.remove("selected");});
+        b.classList.add("selected");
+        document.getElementById("q14val").value=n;
+      };
+      r.appendChild(b);
+    })(n);
+  }
+}
+
+function buildNps() {
+  var r = document.getElementById("npsRow");
+  for(var n=0;n<=10;n++) {
+    (function(n){
+      var b = document.createElement("button");
+      b.type="button"; b.className="nps-btn"; b.textContent=n;
+      b.onclick=function(){
+        document.querySelectorAll("#npsRow .nps-btn").forEach(function(x){x.classList.remove("selected");});
+        b.classList.add("selected");
+        document.getElementById("q15val").value=n;
+      };
+      r.appendChild(b);
+    })(n);
+  }
+}
+
+// Consent gate
+document.querySelectorAll('input[name="consent"]').forEach(function(r) {
+  r.addEventListener("change", function() {
+    if (r.value === "yes") {
+      document.getElementById("mainContent").classList.remove("hidden");
+    } else {
+      showSuccess();
+    }
+  });
+});
+
+// Submit
+document.getElementById("surveyForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  var fd = new FormData(e.target);
+  var data = Object.fromEntries(fd.entries());
+  for(var i=1;i<=5;i++) data["sc"+i] = fd.get("sc"+i)||"";
+  data.language = lang;
+  data.submitted_at = new Date().toISOString();
+
+  var btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+
+  try {
+    await fetch(API_BASE+"/api/feedback", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({type:"survey", data: data})
+    });
+  } catch(_) {}
+
+  showSuccess();
+});
+
+function showSuccess() {
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("successScreen").classList.add("show");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// Lang switcher
+document.querySelectorAll(".lang-btn").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll(".lang-btn").forEach(function(b){b.classList.remove("active");});
+    btn.classList.add("active");
+    lang = btn.dataset.lang;
+    applyLang();
+  });
+});
+
+buildScale();
+buildSat();
+buildNps();
+applyLang();
+</script>
+</body>
+</html>
