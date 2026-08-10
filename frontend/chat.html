@@ -43,7 +43,6 @@ html, body {
   background: var(--bg);
 }
 
-/* ── Header — dark, matches site ── */
 .header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 20px;
@@ -84,7 +83,6 @@ html, body {
 .lang-btn.active { background: var(--gold); color: var(--navy); }
 .lang-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); }
 
-/* ── Chat ── */
 .chat {
   flex: 1; overflow-y: auto;
   padding: 20px 20px 12px;
@@ -92,7 +90,6 @@ html, body {
   background: var(--bg);
 }
 
-/* ── Messages ── */
 .msg { max-width: 88%; margin-bottom: 12px; animation: msgIn 0.3s ease-out; }
 @keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 @media (prefers-reduced-motion:reduce) { .msg { animation:none; } }
@@ -104,14 +101,12 @@ html, body {
   border-radius: var(--radius);
   font-size: 14.5px; line-height: 1.6;
 }
-/* Assistant: dark navy card on light bg */
 .msg.assistant .msg-bubble {
   background: var(--navy);
   color: var(--text-light);
   border-bottom-left-radius: 4px;
   box-shadow: var(--shadow);
 }
-/* User: light card with gold accent */
 .msg.user .msg-bubble {
   background: var(--bg-white);
   color: var(--navy);
@@ -124,7 +119,6 @@ html, body {
 .msg-bubble p:last-child { margin-bottom: 0; }
 .msg-bubble strong { font-weight: 600; color: var(--gold); }
 
-/* Info blocks inside dark bubbles */
 .msg-info {
   background: rgba(10,123,131,0.15); border-left: 3px solid var(--blue);
   padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -145,7 +139,6 @@ html, body {
 }
 .msg-redirect a:hover, .msg-warning a:hover, .msg-info a:hover { color: var(--bg-white); }
 
-/* ── Typing ── */
 .typing {
   display: flex; gap: 5px; padding: 14px 18px;
   margin-bottom: 10px;
@@ -158,7 +151,6 @@ html, body {
 .typing span:nth-child(3) { animation-delay:0.4s; }
 @keyframes typingDot { 0%,60%,100%{opacity:.3;transform:scale(.85)} 30%{opacity:1;transform:scale(1)} }
 
-/* ── Action buttons ── */
 .actions { padding: 4px 20px 16px; flex-shrink: 0; }
 .action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .action-btn {
@@ -176,7 +168,6 @@ html, body {
 .action-btn.gold { background: var(--gold); color: var(--navy); border-color: var(--gold); }
 .action-btn.gold:hover { background: var(--gold-hover); border-color: var(--gold-hover); }
 
-/* ── Input ── */
 .input-area { padding: 4px 20px 16px; flex-shrink: 0; }
 .text-input {
   width: 100%; border: 2px solid var(--border); border-radius: var(--radius-sm);
@@ -196,7 +187,6 @@ html, body {
 .send-btn:hover { background: var(--navy-light); }
 .send-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
 
-/* ── Upload ── */
 .upload-zone {
   border: 2px dashed var(--border); border-radius: var(--radius-sm);
   padding: 24px; text-align: center; cursor: pointer; transition: all 0.15s;
@@ -209,18 +199,15 @@ html, body {
 .upload-filename { font-size: 13.5px; color: var(--green-soft); font-weight: 600; margin-top: 4px; }
 .file-input { display: none; }
 
-/* ── Consent ── */
 .consent-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; }
 .consent-row input[type="checkbox"] { margin-top:3px; width:18px; height:18px; accent-color:var(--navy); cursor:pointer; flex-shrink:0; }
 .consent-label { font-size:13.5px; color:var(--text); cursor:pointer; user-select:none; }
 
-/* ── Loading ── */
 .spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; padding:30px 0; }
 .spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,0.15); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .spinner-text { font-size:13.5px; color:var(--text-light); opacity:0.7; }
 
-/* ── Result ── */
 .result-box {
   background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-sm); padding: 16px; margin-top: 12px;
@@ -228,7 +215,6 @@ html, body {
   max-height: 400px; overflow-y: auto; color: var(--text-light);
 }
 
-/* ── Footer ── */
 .footer {
   padding: 10px 20px; text-align: center;
   font-size: 11.5px; color: var(--text-muted);
@@ -236,7 +222,6 @@ html, body {
   background: var(--bg-white);
 }
 
-/* ── Scrollbar ── */
 .chat::-webkit-scrollbar { width:6px; }
 .chat::-webkit-scrollbar-track { background:transparent; }
 .chat::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1); border-radius:3px; }
@@ -261,20 +246,14 @@ html, body {
 <div class="app">
   <div class="header">
     <div class="header-left">
-      <!-- Logo matching the site: circular ornament emblem -->
       <svg class="header-logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
         <circle cx="18" cy="18" r="16.5" fill="none" stroke="#C8A23C" stroke-width="1"/>
         <circle cx="18" cy="18" r="12.5" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.4"/>
-        <!-- Scales of justice stylized -->
         <line x1="18" y1="7" x2="18" y2="27" stroke="#C8A23C" stroke-width="1" opacity="0.6"/>
         <line x1="11" y1="13" x2="25" y2="13" stroke="#C8A23C" stroke-width="1"/>
-        <!-- Left pan -->
         <path d="M11 13 L9 19 Q11 21 13 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
-        <!-- Right pan -->
         <path d="M25 13 L23 19 Q25 21 27 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
-        <!-- Base -->
         <path d="M14 27 L22 27" stroke="#C8A23C" stroke-width="1.2" stroke-linecap="round"/>
-        <!-- Ornamental curves -->
         <path d="M6 18 Q10 10, 18 7" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
         <path d="M30 18 Q26 10, 18 7" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
         <path d="M6 18 Q10 26, 18 29" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
@@ -301,25 +280,10 @@ html, body {
 </div>
 
 <script>
-// ═══════════════════════════════════════════
-// Translations
-// ═══════════════════════════════════════════
 const T = {
-  header: {
-    kk: "Конституциялық көмекші",
-    ru: "Конституционный ассистент",
-    en: "Constitutional Assistant"
-  },
-  headerSub: {
-    kk: "Пилоттық жоба",
-    ru: "Пилотный проект",
-    en: "Pilot project"
-  },
-  footer: {
-    kk: "Пилоттық нұсқа · Ресми заң кеңесі емес",
-    ru: "Пилотная версия · Не является официальной юридической консультацией",
-    en: "Pilot version · Not official legal advice"
-  },
+  header: { kk: "Конституциялық көмекші", ru: "Конституционный ассистент", en: "Constitutional Assistant" },
+  headerSub: { kk: "Пилоттық жоба", ru: "Пилотный проект", en: "Pilot project" },
+  footer: { kk: "Пилоттық нұсқа · Ресми заң кеңесі емес", ru: "Пилотная версия · Не является официальной юридической консультацией", en: "Pilot version · Not official legal advice" },
   yes: { kk: "Иә", ru: "Да", en: "Yes" },
   no: { kk: "Жоқ", ru: "Нет", en: "No" },
   self: { kk: "Өз бетімше", ru: "Самостоятельно", en: "On my own" },
@@ -332,6 +296,17 @@ const T = {
   copy: { kk: "Көшіру", ru: "Скопировать", en: "Copy" },
   copied: { kk: "Көшірілді", ru: "Скопировано", en: "Copied" },
   goHome: { kk: "Басты бетке", ru: "На главную", en: "Home" },
+
+  surveyInvite: {
+    kk: "Сіздің пікіріңіз маңызды. Сервисті жақсарту үшін қысқа сауалнамадан өтуіңізді сұраймыз — бұл 3–5 минут алады.",
+    ru: "Ваше мнение важно для нас. Пройдите короткий опросник, чтобы помочь улучшить сервис — это займёт 3–5 минут.",
+    en: "Your feedback matters. Please take a short survey to help us improve — it takes 3–5 minutes."
+  },
+  surveyBtn: {
+    kk: "Сауалнамаға өту →",
+    ru: "Пройти опросник →",
+    en: "Take the survey →"
+  },
 
   greeting: {
     kk: "Сәлеметсіз бе! Мен — Конституциялық көмекші, Қазақстан Республикасының Конституциялық Сотына өтініш дайындауға көмектесетін пилоттық сервис.\n\nӨтініш «Қазақстан Республикасының Конституциялық Соты туралы» Конституциялық заңның 44 және 45-баптарының талаптарына сай болуы үшін бірнеше маңызды сұраққа жауап беріңіз.",
@@ -393,13 +368,13 @@ const T = {
   redirectNotKS: {
     kk: "Конституциялық Сот нақты сот шешімдерін қайта қарамайды және лауазымды тұлғалардың іс-әрекетін бағаламайды. КС тек заңдар мен НҚА-ның конституциялылығын тексереді.\n\n<strong>Сот шешіміне шағымдану үшін:</strong>\n• Азаматтық іс бойынша — апелляциялық тәртіп: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ҚР АПК-нің 401–403-баптары (ІПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Параграф</a>\n• Қылмыстық іс бойынша — апелляциялық тәртіп: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>ҚР ҚІЖК-нің 414-бабы (ІПС Әділет)</a>\n\n<strong>Лауазымды тұлғалардың іс-әрекетіне шағымдану үшін:</strong>\n• Әкімшілік талап арыз: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>ҚР ӘІПК-нің 3, 12-тараулары (ІПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Параграф</a>\n• Прокуратураға шағым: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>«Прокуратура туралы» Конституциялық заңның 29-бабы (ІПС Әділет)</a>",
     ru: "Конституционный Суд не пересматривает конкретные решения судов и не оценивает действия (бездействие) должностных лиц. КС проверяет только конституционность законов и иных НПА.\n\n<strong>Для обжалования судебного решения:</strong>\n• По гражданскому делу — апелляция: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ст. 401–403 ГПК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Параграф</a>\n• По уголовному делу — апелляция: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>ст. 414 УПК РК (ИПС Әділет)</a>\n\n<strong>Для жалобы на действия должностных лиц:</strong>\n• Административный иск: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>главы 3, 12 АППК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Параграф</a>\n• Жалоба в прокуратуру: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>ст. 29 Конституционного закона «О прокуратуре» (ИПС Әділет)</a>",
-    en: "The Constitutional Court does not review specific court decisions or evaluate actions of officials. The CC only reviews the constitutionality of laws and normative legal acts.\n\n<strong>To challenge a court decision:</strong>\n• Civil case — appeal: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>Art. 401–403, Civil Procedure Code (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Paragraph</a>\n• Criminal case — appeal: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>Art. 414, Criminal Procedure Code (Әділет)</a>\n\n<strong>To complain about officials' actions:</strong>\n• Administrative claim: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>Chapters 3, 12 of APPK (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Paragraph</a>\n• Complaint to the prosecutor: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>Art. 29 of the Constitutional Law «On the Prosecutor's Office» (Әділет)</a>"
+    en: "The Constitutional Court does not review specific court decisions or evaluate actions of officials. The CC only reviews the constitutionality of laws and normative legal acts.\n\n<strong>To challenge a court decision:</strong>\n• Civil case — appeal: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>Art. 401–403, Civil Procedure Code (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Paragraph</a>\n• Criminal case — appeal: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>Art. 414, Criminal Procedure Code (Әділет)</a>\n\n<strong>To complain about officials' actions:</strong>\n• Administrative claim: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>Chapters 3, 12 of APPK (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Paragraph</a>\n• Complaint to the prosecutor: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>Art. 29 of the Constitutional Law «On the Prosecutor's Office» (Әділet)</a>"
   },
 
   redirectUnclear: {
     kk: "Сіздің сипаттауыңыз бойынша обращение объектісін анықтау қиын. Конституциялық Сот тек заңдар мен НҚА-ның Конституцияға сәйкестігін тексереді (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Конституциялық заңның 23-бабы, Әділет</a>).\n\nЗаңгерге кеңес алуыңызды ұсынамыз — ол сіздің жағдайыңызға тиімді қорғау жолын анықтауға көмектеседі.\n\nСондай-ақ құқықтарыңызды қорғау тәртібін мына актілерден білуге болады:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ҚР Азаматтық процестік кодексі (Әділет)</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>ҚР ӘІПК (Әділет)</a>",
     ru: "По вашему описанию сложно определить предмет обращения. Конституционный Суд проверяет только конституционность законов и иных НПА (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>ст. 23 Конституционного закона, ИПС Әділет</a>).\n\nРекомендуем проконсультироваться с юристом — он поможет определить наиболее эффективный способ защиты ваших прав.\n\nОзнакомиться с порядком защиты прав можно в следующих актах:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ГПК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Параграф</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>АППК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Параграф</a>",
-    en: "Based on your description, it is difficult to determine the subject of the appeal. The Constitutional Court only reviews the constitutionality of laws and normative legal acts (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Art. 23 of the Constitutional Law, Әділет</a>).\n\nWe recommend consulting a lawyer to determine the best way to protect your rights.\n\nYou can learn about rights protection procedures in:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>Civil Procedure Code (Әділет)</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>APPK (Әділет)</a>"
+    en: "Based on your description, it is difficult to determine the subject of the appeal. The Constitutional Court only reviews the constitutionality of laws and normative legal acts (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Art. 23 of the Constitutional Law, Әділет</a>).\n\nWe recommend consulting a lawyer to determine the best way to protect your rights.\n\nYou can learn about rights protection procedures in:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>Civil Procedure Code (Әділет)</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>APPK (Әділet)</a>"
   },
 
   consentText: {
@@ -429,55 +404,18 @@ const T = {
     ru: "Если у вас есть судебные акты — приложите их (решение суда первой инстанции и, при наличии, апелляционной). Если пока нет на руках — можно продолжить без файла.\n\nФорматы: PDF, Word, изображение (JPG/PNG) или текстовый файл.",
     en: "If you have the judicial acts, please attach them (first instance decision and, if available, the appellate decision). If you don't have them yet, you can continue without a file.\n\nFormats: PDF, Word, image (JPG/PNG), or text file."
   },
-  uploadDrop: {
-    kk: "Файлды таңдау үшін басыңыз",
-    ru: "Нажмите, чтобы выбрать файл",
-    en: "Click to select a file"
-  },
-  uploadFormats: {
-    kk: "PDF, DOCX, JPG, PNG, TXT, ODT",
-    ru: "PDF, DOCX, JPG, PNG, TXT, ODT",
-    en: "PDF, DOCX, JPG, PNG, TXT, ODT"
-  },
+  uploadDrop: { kk: "Файлды таңдау үшін басыңыз", ru: "Нажмите, чтобы выбрать файл", en: "Click to select a file" },
+  uploadFormats: { kk: "PDF, DOCX, JPG, PNG, TXT, ODT", ru: "PDF, DOCX, JPG, PNG, TXT, ODT", en: "PDF, DOCX, JPG, PNG, TXT, ODT" },
+  skipUpload: { kk: "Файлсыз жалғастыру", ru: "Продолжить без файла", en: "Continue without file" },
 
-  skipUpload: {
-    kk: "Файлсыз жалғастыру",
-    ru: "Продолжить без файла",
-    en: "Continue without file"
-  },
+  processing: { kk: "Өтінішіңіз талданып жатыр... Бір минутқа дейін созылуы мүмкін.", ru: "Анализирую обращение... Это может занять до минуты.", en: "Analyzing your appeal... This may take up to a minute." },
+  waking: { kk: "Сервер жүктеліп жатыр (тегін хостинг), күте тұрыңыз...", ru: "Сервер просыпается (бесплатный хостинг), подождите...", en: "Server is waking up (free hosting), please wait..." },
 
-  processing: {
-    kk: "Өтінішіңіз талданып жатыр... Бір минутқа дейін созылуы мүмкін.",
-    ru: "Анализирую обращение... Это может занять до минуты.",
-    en: "Analyzing your appeal... This may take up to a minute."
-  },
-  waking: {
-    kk: "Сервер жүктеліп жатыр (тегін хостинг), күте тұрыңыз...",
-    ru: "Сервер просыпается (бесплатный хостинг), подождите...",
-    en: "Server is waking up (free hosting), please wait..."
-  },
-
-  resultIntro: {
-    kk: "Міне сіздің өтініш жобаңыз. Юристке тексертуден кейін пайдалануға болады.",
-    ru: "Вот черновик вашего обращения. Его можно использовать после проверки юристом.",
-    en: "Here is your draft appeal. It can be used after review by a lawyer."
-  },
-  resultRedirect: {
-    kk: "Талдау нәтижесі бойынша бұл мәселе Конституциялық Соттың құзыретіне жатпайды.",
-    ru: "По результатам анализа данный вопрос не относится к компетенции Конституционного Суда.",
-    en: "Based on the analysis, this issue does not fall within the competence of the Constitutional Court."
-  },
-
-  errorGeneric: {
-    kk: "Қате пайда болды. Кейінірек қайталап көріңіз.",
-    ru: "Произошла ошибка. Попробуйте позже.",
-    en: "An error occurred. Please try again later."
-  }
+  resultIntro: { kk: "Міне сіздің өтініш жобаңыз. Юристке тексертуден кейін пайдалануға болады.", ru: "Вот черновик вашего обращения. Его можно использовать после проверки юристом.", en: "Here is your draft appeal. It can be used after review by a lawyer." },
+  resultRedirect: { kk: "Талдау нәтижесі бойынша бұл мәселе Конституциялық Соттың құзыретіне жатпайды.", ru: "По результатам анализа данный вопрос не относится к компетенции Конституционного Суда.", en: "Based on the analysis, this issue does not fall within the competence of the Constitutional Court." },
+  errorGeneric: { kk: "Қате пайда болды. Кейінірек қайталап көріңіз.", ru: "Произошла ошибка. Попробуйте позже.", en: "An error occurred. Please try again later." }
 };
 
-// ═══════════════════════════════════════════
-// State
-// ═══════════════════════════════════════════
 const API_BASE = "https://constitutional-assistant-api2.onrender.com";
 let lang = "ru";
 let isRepresentative = false;
@@ -487,17 +425,12 @@ let userFile = null;
 const chatEl = document.getElementById("chat");
 const actionZone = document.getElementById("action-zone");
 
-// ═══════════════════════════════════════════
-// Helpers
-// ═══════════════════════════════════════════
 function t(key) { return (T[key] && T[key][lang]) || key; }
 
-function scrollBottom() {
-  requestAnimationFrame(() => { chatEl.scrollTop = chatEl.scrollHeight; });
-}
+function scrollBottom() { requestAnimationFrame(function() { chatEl.scrollTop = chatEl.scrollHeight; }); }
 
 function addMsg(role, html) {
-  const div = document.createElement("div");
+  var div = document.createElement("div");
   div.className = "msg " + role;
   div.innerHTML = '<div class="msg-bubble">' + html + '</div>';
   chatEl.appendChild(div);
@@ -505,27 +438,24 @@ function addMsg(role, html) {
 }
 
 function showTyping() {
-  const div = document.createElement("div");
+  var div = document.createElement("div");
   div.className = "typing"; div.id = "typing-indicator";
   div.innerHTML = "<span></span><span></span><span></span>";
   chatEl.appendChild(div);
   scrollBottom();
 }
-function hideTyping() {
-  const el = document.getElementById("typing-indicator");
-  if (el) el.remove();
-}
+function hideTyping() { var el = document.getElementById("typing-indicator"); if (el) el.remove(); }
 
 function clearActions() { actionZone.innerHTML = ""; }
 
 function showButtons(buttons) {
   clearActions();
-  const wrap = document.createElement("div");
+  var wrap = document.createElement("div");
   wrap.className = "actions";
-  const row = document.createElement("div");
+  var row = document.createElement("div");
   row.className = "action-buttons";
   buttons.forEach(function(b) {
-    const btn = document.createElement("button");
+    var btn = document.createElement("button");
     btn.className = "action-btn" + (b.cls ? " " + b.cls : "");
     btn.textContent = b.label;
     btn.onclick = function() { btn.blur(); b.action(); };
@@ -562,10 +492,25 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
-// ═══════════════════════════════════════════
-// Flow
-// ═══════════════════════════════════════════
+// ── Survey banner ──────────────────────────────────────────────────────────────
+function showSurveyBanner() {
+  var banner = document.createElement("div");
+  banner.className = "msg assistant";
+  banner.innerHTML =
+    '<div class="msg-bubble">' +
+    '<div class="msg-info" style="margin-top:0;line-height:1.6">' +
+    '📋 ' + t("surveyInvite") +
+    '<br><br>' +
+    '<a href="survey.html" style="display:inline-block;padding:9px 20px;' +
+    'background:var(--gold);color:var(--navy);border-radius:6px;font-weight:700;' +
+    'text-decoration:none;font-size:13.5px;letter-spacing:0.2px">' +
+    t("surveyBtn") + '</a>' +
+    '</div></div>';
+  chatEl.appendChild(banner);
+  scrollBottom();
+}
 
+// ── Flow ───────────────────────────────────────────────────────────────────────
 function startFlow() {
   chatEl.innerHTML = "";
   clearActions();
@@ -575,7 +520,6 @@ function startFlow() {
   assistantSay("greeting", stepQ1);
 }
 
-// ── Q1: Personal participation? ──
 function stepQ1() {
   assistantSay("q1", function() {
     showButtons([
@@ -585,7 +529,6 @@ function stepQ1() {
   });
 }
 
-// ── Q2: NPA? ──
 function stepQ2() {
   assistantSay("q2", function() {
     showButtons([
@@ -595,7 +538,6 @@ function stepQ2() {
   });
 }
 
-// ── Q3: Court decision / action? ──
 function stepQ3() {
   assistantSay("q3", function() {
     showButtons([
@@ -605,7 +547,6 @@ function stepQ3() {
   });
 }
 
-// ── Deadline check ──
 function stepDeadline() {
   assistantSay("qDeadline", function() {
     showButtons([
@@ -620,7 +561,6 @@ function stepRedirectDeadline() {
   assistantSayRaw(html, showRestartButton);
 }
 
-// ── Q4: Self or representative? ──
 function stepQ4() {
   assistantSay("q4", function() {
     showButtons([
@@ -630,7 +570,6 @@ function stepQ4() {
   });
 }
 
-// ── Representative info ──
 function stepRepresentativeInfo() {
   var infoNote = lang === "kk"
     ? "Өтінішіңізге жоғарыда аталған құжаттарды тіркеуді ұмытпаңыз."
@@ -648,7 +587,6 @@ function stepRepresentativeInfo() {
   });
 }
 
-// ── Redirects ──
 function stepRedirectNoParticipation() {
   var html = '<div class="msg-redirect">' + t("redirectNoParticipation").replace(/\n/g, "<br>") + '</div>';
   assistantSayRaw(html, showRestartButton);
@@ -663,13 +601,13 @@ function stepRedirectUnclear() {
 }
 
 function showRestartButton() {
+  showSurveyBanner();
   showButtons([
     { label: t("restart"), action: startFlow },
     { label: t("goHome"), action: function() { window.location.href = "index.html"; }}
   ]);
 }
 
-// ── Consent ──
 function stepConsent() {
   var html = t("consentText").replace(/\n/g, "<br>");
   assistantSayRaw(html, function() {
@@ -704,10 +642,9 @@ async function sendConsent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ consent_given: true, language: lang })
     });
-  } catch(e) { /* non-blocking */ }
+  } catch(e) {}
 }
 
-// ── Describe problem ──
 function stepDescribe() {
   assistantSay("describePrompt", function() {
     clearActions();
@@ -734,7 +671,6 @@ function stepDescribe() {
   });
 }
 
-// ── Upload ──
 function stepUpload() {
   assistantSay("uploadPrompt", function() {
     clearActions();
@@ -785,7 +721,6 @@ function stepUpload() {
   });
 }
 
-// ── Generate appeal ──
 async function stepGenerate() {
   addMsg("assistant",
     '<div class="spinner-wrap"><div class="spinner"></div>' +
@@ -804,17 +739,12 @@ async function stepGenerate() {
     formData.append("is_representative", isRepresentative ? "true" : "false");
     if (userFile) formData.append("file", userFile);
 
-    var resp = await fetch(API_BASE + "/generate-appeal", {
-      method: "POST",
-      body: formData
-    });
+    var resp = await fetch(API_BASE + "/generate-appeal", { method: "POST", body: formData });
     clearTimeout(wakeTimer);
 
     if (!resp.ok) throw new Error("HTTP " + resp.status);
-
     var data = await resp.json();
 
-    // Remove spinner
     chatEl.lastElementChild.remove();
 
     if (data.within_jurisdiction === false || data.redirect) {
@@ -837,6 +767,7 @@ async function stepGenerate() {
       var resultHtml = t("resultIntro").replace(/\n/g, "<br>") +
         '<div class="result-box" id="result-text">' + escapeHtml(draft) + '</div>';
       addMsg("assistant", resultHtml);
+      showSurveyBanner();
       showButtons([
         { label: t("copy"), cls: "primary", action: copyResult },
         { label: t("restart"), action: startFlow }
@@ -862,9 +793,6 @@ function copyResult() {
   });
 }
 
-// ═══════════════════════════════════════════
-// Language switching
-// ═══════════════════════════════════════════
 document.querySelectorAll(".lang-btn").forEach(function(btn) {
   btn.addEventListener("click", function() {
     document.querySelectorAll(".lang-btn").forEach(function(b) { b.classList.remove("active"); });
@@ -879,9 +807,6 @@ document.querySelectorAll(".lang-btn").forEach(function(btn) {
   });
 });
 
-// ═══════════════════════════════════════════
-// Start
-// ═══════════════════════════════════════════
 startFlow();
 </script>
 </body>
