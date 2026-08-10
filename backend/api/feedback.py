@@ -97,4 +97,3 @@ def count_feedback() -> int:
 def count_surveys() -> int:
     """Общее количество ответов на опросник."""
     return len(_load_by_type("survey", 99999))
-мммм
