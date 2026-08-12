@@ -83,6 +83,14 @@ const API_BASE = "https://constitutional-assistant-api2.onrender.com";
 let adminCode = "";
 let charts = {};
 
+function waitForChart(callback) {
+  if (typeof Chart !== "undefined") {
+    callback();
+  } else {
+    setTimeout(() => waitForChart(callback), 100);
+  }
+}
+
 function login() {
   adminCode = document.getElementById('adminCode').value.trim();
   if (!adminCode) return;
@@ -140,6 +148,8 @@ const STEP_LABELS = {
 };
 
 function renderFunnel(funnel) {
+  if (typeof Chart === "undefined") { waitForChart(() => renderFunnel(funnel)); return; }
+
   const labels = funnel.map(f => STEP_LABELS[f.step] || f.step);
   const reached = funnel.map(f => f.reached);
   const completed = funnel.map(f => f.completed);
@@ -182,6 +192,8 @@ const JURISDICTION_LABELS = {
 };
 
 function renderJurisdiction(breakdown) {
+  if (typeof Chart === "undefined") { waitForChart(() => renderJurisdiction(breakdown)); return; }
+
   const labels = Object.keys(breakdown).map(k => JURISDICTION_LABELS[k] || k);
   const values = Object.values(breakdown);
   if (charts.jurisdiction) charts.jurisdiction.destroy();
@@ -194,6 +206,8 @@ function renderJurisdiction(breakdown) {
 }
 
 function renderLanguage(byLanguage) {
+  if (typeof Chart === "undefined") { waitForChart(() => renderLanguage(byLanguage)); return; }
+
   const labelMap = { kk: 'Казахский', ru: 'Русский', en: 'Английский' };
   const labels = Object.keys(byLanguage).map(k => labelMap[k] || k);
   const values = Object.values(byLanguage);
