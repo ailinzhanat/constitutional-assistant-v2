@@ -24,10 +24,13 @@ from groq_analyzer import analyze_complaint
 from groq_generator import generate_appeal_text
 from judicial_analyzer import generate_case_summary, search_precedents
 from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys
+from analytics import router as analytics_router
 
 load_dotenv()
 
 app = FastAPI(title="Constitutional Assistant")
+
+app.include_router(analytics_router)
 
 # --- Rate Limiter ---
 limiter = Limiter(key_func=get_remote_address)
