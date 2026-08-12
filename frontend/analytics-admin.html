@@ -115,9 +115,11 @@ async function loadDashboard(isLogin) {
     document.getElementById('dashboard').style.display = 'block';
 
     renderSummary(data);
-    renderFunnel(data.funnel);
-    renderJurisdiction(data.jurisdiction_breakdown);
-    renderLanguage(data.visitors.by_language);
+    setTimeout(() => {
+      renderFunnel(data.funnel);
+      renderJurisdiction(data.jurisdiction_breakdown);
+      renderLanguage(data.visitors.by_language);
+    }, 50);
   } catch (e) {
     document.getElementById('dashError').textContent = 'Не удалось загрузить данные: ' + e.message;
   }
