@@ -31,3 +31,8 @@
   to = "https://constitutional-assistant-api2.onrender.com/supported-formats"
   status = 200
   force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://constitutional-assistant-api2.onrender.com;"
