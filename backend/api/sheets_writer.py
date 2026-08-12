@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
 SPREADSHEET_ID = "1obSmVwWOYgO60DeAeHwoUo9kysPNOliCqCuynkrc9kU"
-SHEET_NAME = "Опросник"
+SHEET_NAME = "Survey"
 
 # Заголовки колонок (строка 1)
 HEADERS = [
