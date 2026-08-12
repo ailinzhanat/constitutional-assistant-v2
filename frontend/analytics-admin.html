@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аналитика — Constitutional Assistant</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --border:#e2e4e9; --text:#1a1d24; --muted:#6b7280; --accent:#2a5bd7; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:24px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .login-box { max-width:360px; margin:80px auto; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; }
+  .login-box input { width:100%; padding:10px; margin:10px 0; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+  .login-box button, .toolbar button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:14px; cursor:pointer; }
+  .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+  select { padding:8px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:24px; }
+  .metric { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .metric .label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .metric .value { font-size:24px; font-weight:600; }
+  .metric .value small { font-size:13px; font-weight:400; color:var(--muted); }
+  .panel { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px; }
+  .panel h2 { font-size:15px; margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font-weight:500; }
+  .error { color:#b42318; font-size:13px; }
+  .chart-wrap { position:relative; height:280px; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:700px){ .two-col{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div id="login" class="login-box">
+  <h1>Вход в аналитику</h1>
+  <p class="sub">Введите код администратора</p>
+  <input type="password" id="adminCode" placeholder="Код доступа" />
+  <button onclick="login()">Войти</button>
+  <p class="error" id="loginError"></p>
+</div>
+
+<div id="dashboard" style="display:none; max-width:960px; margin:0 auto;">
+  <h1>Аналитика Constitutional Assistant</h1>
+  <p class="sub">Данные агрегированы и обезличены. Обновляются не реже раза в сутки.</p>
+
+  <div class="toolbar">
+    <select id="periodSelect" onchange="loadDashboard()">
+      <option value="7">Последние 7 дней</option>
+      <option value="30" selected>Последние 30 дней</option>
+      <option value="90">Последние 90 дней</option>
+    </select>
+    <button onclick="exportReport('excel')">Скачать Excel</button>
+    <button onclick="exportReport('pdf')">Скачать PDF</button>
+  </div>
+
+  <div class="grid" id="summaryGrid"></div>
+
+  <div class="panel">
+    <h2>Воронка прохождения шагов 01–04</h2>
+    <div class="chart-wrap"><canvas id="funnelChart" role="img" aria-label="Столбчатая диаграмма воронки прохождения шагов">Данные воронки по шагам</canvas></div>
+    <table id="funnelTable"></table>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <h2>Причины отказа (шаг 03)</h2>
+      <div class="chart-wrap"><canvas id="jurisdictionChart" role="img" aria-label="Круговая диаграмма причин отказа по юрисдикции">Причины отказа</canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Язык интерфейса</h2>
+      <div class="chart-wrap"><canvas id="languageChart" role="img" aria-label="Круговая диаграмма распределения по языкам">Распределение по языкам</canvas></div>
+    </div>
+  </div>
+
+  <p class="error" id="dashError"></p>
+</div>
+
+<script>
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
+let adminCode = "";
+let charts = {};
+
+function login() {
+  adminCode = document.getElementById('adminCode').value.trim();
+  if (!adminCode) return;
+  loadDashboard(true);
+}
+
+async function loadDashboard(isLogin) {
+  const period = document.getElementById('periodSelect')?.value || 30;
+  document.getElementById('dashError').textContent = '';
+  try {
+    const res = await fetch(`${API_BASE}/api/analytics/dashboard?period_days=${period}`, {
+      headers: { 'X-Admin-Code': adminCode }
+    });
+    if (res.status === 403) {
+      if (isLogin) document.getElementById('loginError').textContent = 'Неверный код доступа';
+      return;
+    }
+    if (!res.ok) throw new Error('Ошибка сервера');
+    const data = await res.json();
+
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    renderSummary(data);
+    renderFunnel(data.funnel);
+    renderJurisdiction(data.jurisdiction_breakdown);
+    renderLanguage(data.visitors.by_language);
+  } catch (e) {
+    document.getElementById('dashError').textContent = 'Не удалось загрузить данные: ' + e.message;
+  }
+}
+
+function renderSummary(data) {
+  const s = data.summary;
+  const items = [
+    { label: 'Уникальные посетители', value: s.unique_visitors },
+    { label: '% успешного прохождения', value: s.overall_completion_rate_pct + '%' },
+    { label: '% вне компетенции КС РК', value: s.out_of_jurisdiction_rate_pct + '%' },
+    { label: 'Средняя удовлетворённость', value: s.avg_satisfaction ?? '—', hint: '(1–5)' },
+    { label: 'NPS', value: s.nps_score ?? '—' },
+  ];
+  document.getElementById('summaryGrid').innerHTML = items.map(i => `
+    <div class="metric">
+      <div class="label">${i.label}</div>
+      <div class="value">${i.value} ${i.hint ? `<small>${i.hint}</small>` : ''}</div>
+    </div>
+  `).join('');
+}
+
+const STEP_LABELS = {
+  '01_consent': '01 Согласие',
+  '02_description': '02 Описание',
+  '03_jurisdiction': '03 Юрисдикция',
+  '04_draft': '04 Черновик',
+};
+
+function renderFunnel(funnel) {
+  const labels = funnel.map(f => STEP_LABELS[f.step] || f.step);
+  const reached = funnel.map(f => f.reached);
+  const completed = funnel.map(f => f.completed);
+
+  if (charts.funnel) charts.funnel.destroy();
+  charts.funnel = new Chart(document.getElementById('funnelChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Дошли', data: reached, backgroundColor: '#2a5bd7' },
+        { label: 'Завершили', data: completed, backgroundColor: '#5dcaa5' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+  });
+
+  document.getElementById('funnelTable').innerHTML = `
+    <tr><th>Шаг</th><th>Дошли</th><th>Завершили</th><th>Отвал</th><th>% отвала</th></tr>
+    ${funnel.map(f => `
+      <tr>
+        <td>${STEP_LABELS[f.step] || f.step}</td>
+        <td>${f.reached}</td>
+        <td>${f.completed}</td>
+        <td>${f.drop_off}</td>
+        <td>${f.drop_off_rate_pct}%</td>
+      </tr>
+    `).join('')}
+  `;
+}
+
+const JURISDICTION_LABELS = {
+  within_jurisdiction: 'В компетенции КС РК',
+  not_participant: 'Не участник дела',
+  wrong_object: 'Оспаривается акт, не норма',
+  deadline_expired: 'Истёк срок',
+  no_valid_poa: 'Нет/неполная доверенность',
+  improper_subject: 'Ненадлежащий субъект',
+  other_out_of_jurisdiction: 'Другое (вне компетенции)',
+};
+
+function renderJurisdiction(breakdown) {
+  const labels = Object.keys(breakdown).map(k => JURISDICTION_LABELS[k] || k);
+  const values = Object.values(breakdown);
+  if (charts.jurisdiction) charts.jurisdiction.destroy();
+  if (!values.length) return;
+  charts.jurisdiction = new Chart(document.getElementById('jurisdictionChart'), {
+    type: 'pie',
+    data: { labels, datasets: [{ data: values, backgroundColor: ['#5dcaa5','#f0997b','#ed93b1','#eda100','#7f77dd','#e34948','#888780'] }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function renderLanguage(byLanguage) {
+  const labelMap = { kk: 'Казахский', ru: 'Русский', en: 'Английский' };
+  const labels = Object.keys(byLanguage).map(k => labelMap[k] || k);
+  const values = Object.values(byLanguage);
+  if (charts.language) charts.language.destroy();
+  if (!values.length) return;
+  charts.language = new Chart(document.getElementById('languageChart'), {
+    type: 'pie',
+    data: { labels, datasets: [{ data: values, backgroundColor: ['#378add','#1d9e75','#d85a30'] }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+async function exportReport(fmt) {
+  const period = document.getElementById('periodSelect').value;
+  const res = await fetch(`${API_BASE}/api/analytics/export?period_days=${period}&fmt=${fmt}`, {
+    headers: { 'X-Admin-Code': adminCode }
+  });
+  if (!res.ok) { alert('Ошибка экспорта'); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `analytics_report.${fmt === 'excel' ? 'xlsx' : 'pdf'}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
