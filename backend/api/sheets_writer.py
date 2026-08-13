@@ -1,6 +1,7 @@
 """
 Constitutional Assistant - Модуль записи в Google Sheets
-Каждый ответ опросника сразу пишется в таблицу Google Sheets.
+- Каждый ответ опросника пишется во вкладку "Survey"
+- Каждый текстовый отзыв пишется во вкладку "Feedback"
 """
 import json
 import os
@@ -9,8 +10,9 @@ from datetime import datetime, timezone
 
 SPREADSHEET_ID = "1obSmVwWOYgO60DeAeHwoUo9kysPNOliCqCuynkrc9kU"
 SHEET_NAME = "Survey"
+FEEDBACK_SHEET_NAME = "Feedback"
 
-# Заголовки колонок (строка 1)
+# Заголовки колонок опросника (строка 1, вкладка Survey)
 HEADERS = [
     "Дата", "Язык", "Роль", "Опыт обращений",
     "Ш1: Понятность шагов", "Ш2: Понятность вопросов", "Ш3: Без сторонней помощи",
@@ -23,6 +25,11 @@ HEADERS = [
     "Q14: Удовлетворённость (1-5)", "Q15: NPS (0-10)",
     "Q16: Что улучшить", "Q17: Что понравилось",
     "Consent", "Submitted at"
+]
+
+# Заголовки колонок отзывов (строка 1, вкладка Feedback)
+FEEDBACK_HEADERS = [
+    "Дата", "Язык", "Страница", "Сообщение", "Контакт", "Feedback ID"
 ]
 
 
@@ -45,8 +52,19 @@ def _get_service():
     return service
 
 
+def _ensure_sheet_exists(service, sheet_name: str) -> None:
+    """Создаёт вкладку с указанным именем, если её ещё нет в таблице."""
+    meta = service.spreadsheets().get(spreadsheetId=SPREADSHEET_ID).execute()
+    existing_titles = [s["properties"]["title"] for s in meta.get("sheets", [])]
+    if sheet_name not in existing_titles:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=SPREADSHEET_ID,
+            body={"requests": [{"addSheet": {"properties": {"title": sheet_name}}}]}
+        ).execute()
+
+
 def ensure_headers(service) -> None:
-    """Если таблица пустая — добавляет строку заголовков."""
+    """Если таблица (вкладка Survey) пустая — добавляет строку заголовков."""
     sheet = service.spreadsheets()
     result = sheet.values().get(
         spreadsheetId=SPREADSHEET_ID,
@@ -62,9 +80,27 @@ def ensure_headers(service) -> None:
         ).execute()
 
 
+def _ensure_feedback_headers(service) -> None:
+    """Если вкладка Feedback пустая — добавляет строку заголовков."""
+    _ensure_sheet_exists(service, FEEDBACK_SHEET_NAME)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"{FEEDBACK_SHEET_NAME}!A1:A1"
+    ).execute()
+    values = result.get("values", [])
+    if not values:
+        sheet.values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{FEEDBACK_SHEET_NAME}!A1",
+            valueInputOption="RAW",
+            body={"values": [FEEDBACK_HEADERS]}
+        ).execute()
+
+
 def write_survey_to_sheets(data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Записывает один ответ опросника в Google Sheets.
+    Записывает один ответ опросника в Google Sheets (вкладка Survey).
     Возвращает {"success": True} или {"success": False, "error": "..."}
     """
     try:
@@ -101,4 +137,43 @@ def write_survey_to_sheets(data: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         print(f"⚠️ Google Sheets write failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def write_feedback_to_sheets(
+    message: str,
+    language: str = "",
+    page: Optional[str] = None,
+    contact: Optional[str] = None,
+    feedback_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Записывает один текстовый отзыв в Google Sheets (отдельная вкладка Feedback).
+    Возвращает {"success": True} или {"success": False, "error": "..."}
+    """
+    try:
+        service = _get_service()
+        _ensure_feedback_headers(service)
+
+        row = [
+            datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            language or "",
+            page or "",
+            message or "",
+            contact or "",
+            feedback_id or "",
+        ]
+
+        service.spreadsheets().values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{FEEDBACK_SHEET_NAME}!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": [row]}
+        ).execute()
+
+        return {"success": True}
+
+    except Exception as e:
+        print(f"⚠️ Google Sheets feedback write failed: {e}")
         return {"success": False, "error": str(e)}
