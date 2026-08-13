@@ -11,6 +11,13 @@ from datetime import datetime, timezone
 SPREADSHEET_ID = "1obSmVwWOYgO60DeAeHwoUo9kysPNOliCqCuynkrc9kU"
 SHEET_NAME = "Survey"
 FEEDBACK_SHEET_NAME = "Feedback"
+ANALYTICS_SHEET_NAME = "Analytics"
+
+# Заголовки колонок событий аналитики (строка 1, вкладка Analytics)
+ANALYTICS_HEADERS = [
+    "Дата", "Session ID", "Шаг", "Тип события", "Язык", "Устройство",
+    "Причина отказа (шаг 03)", "Новый посетитель"
+]
 
 # Заголовки колонок опросника (строка 1, вкладка Survey)
 HEADERS = [
@@ -176,4 +183,66 @@ def write_feedback_to_sheets(
 
     except Exception as e:
         print(f"⚠️ Google Sheets feedback write failed: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def _ensure_analytics_headers(service) -> None:
+    """Если вкладка Analytics пустая — добавляет строку заголовков."""
+    _ensure_sheet_exists(service, ANALYTICS_SHEET_NAME)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(
+        spreadsheetId=SPREADSHEET_ID,
+        range=f"{ANALYTICS_SHEET_NAME}!A1:A1"
+    ).execute()
+    values = result.get("values", [])
+    if not values:
+        sheet.values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{ANALYTICS_SHEET_NAME}!A1",
+            valueInputOption="RAW",
+            body={"values": [ANALYTICS_HEADERS]}
+        ).execute()
+
+
+def write_analytics_event_to_sheets(
+    session_id: str,
+    step: str,
+    event_type: str,
+    language: str = "",
+    device: str = "",
+    jurisdiction_reason: Optional[str] = None,
+    is_new_visitor: bool = True,
+) -> Dict[str, Any]:
+    """
+    Записывает одно событие аналитики в Google Sheets (вкладка Analytics).
+    Каждый вызов /api/analytics/event пишет одну строку.
+    Возвращает {"success": True} или {"success": False, "error": "..."}
+    """
+    try:
+        service = _get_service()
+        _ensure_analytics_headers(service)
+
+        row = [
+            datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            session_id or "",
+            step or "",
+            event_type or "",
+            language or "",
+            device or "",
+            jurisdiction_reason or "",
+            "да" if is_new_visitor else "нет",
+        ]
+
+        service.spreadsheets().values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range=f"{ANALYTICS_SHEET_NAME}!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": [row]}
+        ).execute()
+
+        return {"success": True}
+
+    except Exception as e:
+        print(f"⚠️ Google Sheets analytics write failed: {e}")
         return {"success": False, "error": str(e)}
