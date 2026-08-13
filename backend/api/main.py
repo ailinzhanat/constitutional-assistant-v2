@@ -23,7 +23,7 @@ from gov_redirect import find_relevant_organs, format_redirect_message
 from groq_analyzer import analyze_complaint
 from groq_generator import generate_appeal_text
 from judicial_analyzer import generate_case_summary, search_precedents
-from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys
+from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys, init_feedback_module
 from analytics import router as analytics_router, init_analytics_router
 
 load_dotenv()
@@ -140,6 +140,7 @@ def run_query(query: str, params: dict = {}) -> List[Dict]:
         raise e
 
 init_analytics_router(run_query)
+init_feedback_module(run_query)
 
 def query_bankruptcy_context(category: str = "bankruptcy") -> List[Dict]:
     query = """
