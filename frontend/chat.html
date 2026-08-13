@@ -239,6 +239,50 @@ html, body {
 }
 
 .hidden { display: none !important; }
+
+/* ---------- FEEDBACK WIDGET ---------- */
+#fbButton{
+  position:fixed;right:20px;bottom:20px;z-index:60;
+  display:flex;align-items:center;gap:8px;
+  background:var(--gold);color:var(--navy);
+  border:none;border-radius:24px;padding:11px 16px;
+  font-family:var(--font);font-weight:600;font-size:13px;
+  cursor:pointer;box-shadow:0 10px 26px -10px rgba(0,0,0,0.6);
+  transition:background .15s, transform .1s;
+}
+#fbButton:hover{background:var(--gold-hover);}
+#fbButton:active{transform:translateY(1px);}
+
+#fbPanel{
+  position:fixed;right:20px;bottom:20px;z-index:61;
+  width:320px;max-width:calc(100vw - 40px);
+  background:var(--bg-white);color:var(--text);
+  border-radius:var(--radius);
+  box-shadow:0 24px 50px -18px rgba(0,0,0,0.5);
+  padding:20px 20px 18px;
+  display:none;
+}
+#fbPanel.open{display:block;animation:msgIn .25s ease;}
+#fbPanel h3{
+  font-family:var(--font-serif);font-weight:700;font-size:16px;
+  margin:0 0 4px;color:var(--navy);padding-right:24px;
+}
+#fbPanel .fbsub{font-size:12.5px;color:var(--text-secondary);margin:0 0 14px;}
+#fbClose{
+  position:absolute;top:14px;right:14px;
+  background:none;border:none;cursor:pointer;
+  font-size:19px;line-height:1;color:var(--text-muted);padding:0;
+}
+#fbClose:hover{color:var(--text);}
+#fbPanel textarea{min-height:88px;margin-bottom:10px;}
+#fbPanel input[type=text]{margin-bottom:12px;}
+#fbStatus{font-size:12.5px;margin-top:8px;}
+#fbStatus.ok{color:var(--green-soft);}
+#fbStatus.error{color:var(--red-soft);}
+@media (max-width:480px){
+  #fbPanel{right:10px;left:10px;width:auto;bottom:10px;}
+  #fbButton{right:10px;bottom:10px;}
+}
 </style>
 </head>
 <body>
@@ -277,6 +321,26 @@ html, body {
   <div class="footer">
     <span data-i18n="footer">Пилотная версия · Не является официальной юридической консультацией</span>
   </div>
+</div>
+
+<!-- ---------- FEEDBACK WIDGET ---------- -->
+<button id="fbButton" type="button">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M2 3.5h12v8H6.5L3.5 14v-2.5H2z" stroke="#0D1B2A" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+  <span id="fbButtonLabel">Обратная связь</span>
+</button>
+
+<div id="fbPanel" role="dialog" aria-modal="false">
+  <button id="fbClose" type="button" aria-label="Close">&times;</button>
+  <h3 id="fbTitle">Обратная связь</h3>
+  <p class="fbsub" id="fbSub">Напишите, что думаете о работе сайта.</p>
+
+  <textarea id="fbMessage" placeholder="Что понравилось, что можно улучшить…"></textarea>
+  <input type="text" id="fbContact" placeholder="Email или телефон (необязательно)">
+
+  <button class="send-btn" id="fbSend" style="width:100%;">Отправить</button>
+  <div id="fbStatus"></div>
 </div>
 
 <script>
@@ -413,7 +477,18 @@ const T = {
 
   resultIntro: { kk: "Міне сіздің өтініш жобаңыз. Юристке тексертуден кейін пайдалануға болады.", ru: "Вот черновик вашего обращения. Его можно использовать после проверки юристом.", en: "Here is your draft appeal. It can be used after review by a lawyer." },
   resultRedirect: { kk: "Талдау нәтижесі бойынша бұл мәселе Конституциялық Соттың құзыретіне жатпайды.", ru: "По результатам анализа данный вопрос не относится к компетенции Конституционного Суда.", en: "Based on the analysis, this issue does not fall within the competence of the Constitutional Court." },
-  errorGeneric: { kk: "Қате пайда болды. Кейінірек қайталап көріңіз.", ru: "Произошла ошибка. Попробуйте позже.", en: "An error occurred. Please try again later." }
+  errorGeneric: { kk: "Қате пайда болды. Кейінірек қайталап көріңіз.", ru: "Произошла ошибка. Попробуйте позже.", en: "An error occurred. Please try again later." },
+
+  fbButton: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
+  fbTitle: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
+  fbSub: { kk: "Сайттың жұмысы туралы пікіріңізді жазыңыз.", ru: "Напишите, что думаете о работе сайта.", en: "Tell us what you think about this site." },
+  fbMessagePlaceholder: { kk: "Не ұнады, не жақсартуға болады…", ru: "Что понравилось, что можно улучшить…", en: "What worked well, what could be better…" },
+  fbContactPlaceholder: { kk: "Email немесе телефон (міндетті емес)", ru: "Email или телефон (необязательно)", en: "Email or phone (optional)" },
+  fbSend: { kk: "Жіберу", ru: "Отправить", en: "Send" },
+  fbSending: { kk: "Жіберілуде…", ru: "Отправка…", en: "Sending…" },
+  fbThanks: { kk: "Рақмет! Пікіріңіз жіберілді.", ru: "Спасибо! Ваш отзыв отправлен.", en: "Thank you! Your feedback has been sent." },
+  fbEmpty: { kk: "Хабарлама мәтінін енгізіңіз.", ru: "Введите текст сообщения.", en: "Please enter a message." },
+  fbError: { kk: "Жіберу мүмкін болмады. Кейінірек қайталап көріңіз.", ru: "Не удалось отправить. Попробуйте позже.", en: "Could not send. Please try again later." }
 };
 
 const API_BASE = "https://constitutional-assistant-api2.onrender.com";
@@ -846,10 +921,85 @@ document.querySelectorAll(".lang-btn").forEach(function(btn) {
       var key = el.dataset.i18n;
       if (T[key]) el.textContent = T[key][lang];
     });
+    applyFeedbackTranslations();
     startFlow();
   });
 });
 
+/* ---------------- FEEDBACK WIDGET ---------------- */
+function applyFeedbackTranslations() {
+  document.getElementById("fbButtonLabel").textContent = t("fbButton");
+  document.getElementById("fbTitle").textContent = t("fbTitle");
+  document.getElementById("fbSub").textContent = t("fbSub");
+  document.getElementById("fbMessage").placeholder = t("fbMessagePlaceholder");
+  document.getElementById("fbContact").placeholder = t("fbContactPlaceholder");
+  document.getElementById("fbSend").textContent = t("fbSend");
+}
+
+var fbButton = document.getElementById("fbButton");
+var fbPanel  = document.getElementById("fbPanel");
+
+function openFeedback() {
+  fbPanel.classList.add("open");
+  fbButton.style.display = "none";
+  document.getElementById("fbMessage").focus();
+}
+function closeFeedback() {
+  fbPanel.classList.remove("open");
+  fbButton.style.display = "flex";
+}
+
+fbButton.addEventListener("click", openFeedback);
+document.getElementById("fbClose").addEventListener("click", closeFeedback);
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape" && fbPanel.classList.contains("open")) closeFeedback();
+});
+
+document.getElementById("fbSend").addEventListener("click", async function() {
+  var msgEl = document.getElementById("fbMessage");
+  var contactEl = document.getElementById("fbContact");
+  var statusEl = document.getElementById("fbStatus");
+  var sendBtn = document.getElementById("fbSend");
+
+  var message = msgEl.value.trim();
+  if (!message) {
+    statusEl.className = "error";
+    statusEl.textContent = t("fbEmpty");
+    return;
+  }
+
+  sendBtn.disabled = true;
+  statusEl.className = "";
+  statusEl.textContent = t("fbSending");
+
+  try {
+    var res = await fetch(API_BASE + "/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: message,
+        contact: contactEl.value.trim() || null,
+        language: lang,
+        page: "chat"
+      })
+    });
+    sendBtn.disabled = false;
+    if (!res.ok) throw new Error("send failed");
+
+    statusEl.className = "ok";
+    statusEl.textContent = t("fbThanks");
+    msgEl.value = "";
+    contactEl.value = "";
+    setTimeout(function() { closeFeedback(); statusEl.textContent = ""; }, 1800);
+  } catch (err) {
+    sendBtn.disabled = false;
+    statusEl.className = "error";
+    statusEl.textContent = t("fbError");
+  }
+});
+
+applyFeedbackTranslations();
 startFlow();
 </script>
 </body>
