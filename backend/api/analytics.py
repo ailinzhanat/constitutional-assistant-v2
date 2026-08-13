@@ -113,7 +113,8 @@ def record_event(event: AnalyticsEvent):
     """
     Публичный эндпоинт — вызывается фронтендом при каждом переходе по шагам.
     NFR-1: никаких ФИО/IP/точной геолокации не принимается и не хранится.
-    Записывается как узел :AnalyticsEvent в Neo4j.
+    1. Записывается как узел :AnalyticsEvent в Neo4j (основное хранилище)
+    2. Дополнительно пишется в Google Sheets, вкладка "Analytics" (резервная копия)
     """
     record = event.model_dump()
     record["timestamp"] = record["timestamp"] or datetime.now(timezone.utc).isoformat()
@@ -136,6 +137,25 @@ def record_event(event: AnalyticsEvent):
         """,
         record,
     )
+
+    # Резервная копия в Google Sheets — не должна ронять запрос, если
+    # основная запись в Neo4j уже прошла успешно.
+    try:
+        from sheets_writer import write_analytics_event_to_sheets
+        sheets_result = write_analytics_event_to_sheets(
+            session_id=record["session_id"],
+            step=record["step"],
+            event_type=record["event_type"],
+            language=record["language"],
+            device=record["device"],
+            jurisdiction_reason=record.get("jurisdiction_reason"),
+            is_new_visitor=record["is_new_visitor"],
+        )
+        if not sheets_result.get("success"):
+            print(f"⚠️ Sheets analytics write failed: {sheets_result.get('error')}")
+    except Exception as e:
+        print(f"⚠️ Sheets analytics import/write error: {e}")
+
     return {"status": "ok"}
 
 
