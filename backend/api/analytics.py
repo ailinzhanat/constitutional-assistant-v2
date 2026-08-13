@@ -7,61 +7,62 @@
 - категоризация и тональность отзывов (через Groq, опционально)
 - экспорт отчёта в PDF/Excel
 
-Хранение: JSONL-файлы (как feedback.jsonl) — просто, без БД, достаточно для
-масштаба пилота. Файлы НЕ должны попадать в git (добавь в .gitignore).
+Хранение: Neo4j (та же база, что уже используется в проекте для законов/статей).
+Выбрано вместо JSONL-файлов, потому что Render free-tier имеет эфемерную
+файловую систему — файлы стираются при каждом рестарте/переразвёртывании
+сервиса. Neo4j Aura (даже на бесплатном плане) данные не теряет: инстанс
+может "засыпать" при бездействии, но при пробуждении (Resume в консоли
+Neo4j Aura) все ранее записанные данные остаются на месте.
 
 Как подключить в main.py — см. комментарии внизу файла ("INTEGRATION").
 """
 
 import json
-import os
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
-# ---------------------------------------------------------------------------
-# Конфигурация и хранилище
-# ---------------------------------------------------------------------------
-
-DATA_DIR = os.path.join(os.path.dirname(__file__), "analytics_data")
-os.makedirs(DATA_DIR, exist_ok=True)
-
-EVENTS_FILE = os.path.join(DATA_DIR, "events.jsonl")
-SURVEY_FILE = os.path.join(DATA_DIR, "survey.jsonl")
+import os
 
 ADMIN_ACCESS_CODE = os.environ.get("ADMIN_ACCESS_CODE", "")  # тот же код, что и в feedback.py
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
+# Заполняется через init_analytics_router(run_query_fn) при подключении
+# роутера в main.py — так модуль переиспользует уже существующее
+# подключение к Neo4j вместо того чтобы открывать своё собственное.
+_run_query: Optional[Callable] = None
+
+
+def init_analytics_router(run_query_fn: Callable):
+    """
+    Вызывается один раз из main.py при старте приложения.
+    run_query_fn(query: str, params: dict) -> List[Dict] — та же функция
+    run_query, что уже используется в main.py для запросов к Neo4j.
+    """
+    global _run_query
+    _run_query = run_query_fn
+
+
+def _query(cypher: str, params: dict = None):
+    if _run_query is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Analytics router не инициализирован (init_analytics_router не вызван в main.py)"
+        )
+    try:
+        return _run_query(cypher, params or {})
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Ошибка подключения к Neo4j: {str(e)}")
+
 
 def _check_admin(x_admin_code: Optional[str]):
     if not ADMIN_ACCESS_CODE or x_admin_code != ADMIN_ACCESS_CODE:
         raise HTTPException(status_code=403, detail="Неверный код доступа администратора")
-
-
-def _append_jsonl(path: str, record: dict):
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-
-def _read_jsonl(path: str) -> list[dict]:
-    if not os.path.exists(path):
-        return []
-    records = []
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                records.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-    return records
 
 
 # ---------------------------------------------------------------------------
@@ -112,11 +113,29 @@ def record_event(event: AnalyticsEvent):
     """
     Публичный эндпоинт — вызывается фронтендом при каждом переходе по шагам.
     NFR-1: никаких ФИО/IP/точной геолокации не принимается и не хранится.
+    Записывается как узел :AnalyticsEvent в Neo4j.
     """
     record = event.model_dump()
     record["timestamp"] = record["timestamp"] or datetime.now(timezone.utc).isoformat()
     record["id"] = str(uuid.uuid4())
-    _append_jsonl(EVENTS_FILE, record)
+
+    _query(
+        """
+        CREATE (e:AnalyticsEvent {
+            id: $id,
+            session_id: $session_id,
+            event_type: $event_type,
+            step: $step,
+            language: $language,
+            device: $device,
+            jurisdiction_reason: $jurisdiction_reason,
+            region: $region,
+            is_new_visitor: $is_new_visitor,
+            timestamp: $timestamp
+        })
+        """,
+        record,
+    )
     return {"status": "ok"}
 
 
@@ -126,7 +145,20 @@ def record_survey(response: SurveyResponse):
     record = response.model_dump()
     record["timestamp"] = record["timestamp"] or datetime.now(timezone.utc).isoformat()
     record["id"] = str(uuid.uuid4())
-    _append_jsonl(SURVEY_FILE, record)
+
+    _query(
+        """
+        CREATE (s:AnalyticsSurvey {
+            id: $id,
+            satisfaction: $satisfaction,
+            nps: $nps,
+            completion_time_seconds: $completion_time_seconds,
+            language: $language,
+            timestamp: $timestamp
+        })
+        """,
+        record,
+    )
     return {"status": "ok"}
 
 
@@ -137,20 +169,35 @@ def record_survey(response: SurveyResponse):
 STEP_ORDER: list[StepId] = ["01_consent", "02_description", "03_jurisdiction", "04_draft"]
 
 
-def _parse_period(period_days: int) -> datetime:
-    return datetime.now(timezone.utc) - timedelta(days=period_days)
+def _since_iso(period_days: int) -> str:
+    return (datetime.now(timezone.utc) - timedelta(days=period_days)).isoformat()
 
 
-def _filter_by_period(records: list[dict], since: datetime) -> list[dict]:
-    out = []
-    for r in records:
-        try:
-            ts = datetime.fromisoformat(r["timestamp"].replace("Z", "+00:00"))
-        except (KeyError, ValueError):
-            continue
-        if ts >= since:
-            out.append(r)
-    return out
+def _fetch_events(since_iso: str) -> list[dict]:
+    rows = _query(
+        """
+        MATCH (e:AnalyticsEvent)
+        WHERE e.timestamp >= $since
+        RETURN e.id AS id, e.session_id AS session_id, e.event_type AS event_type,
+               e.step AS step, e.language AS language, e.device AS device,
+               e.jurisdiction_reason AS jurisdiction_reason, e.is_new_visitor AS is_new_visitor,
+               e.timestamp AS timestamp
+        """,
+        {"since": since_iso},
+    )
+    return rows
+
+
+def _fetch_surveys(since_iso: str) -> list[dict]:
+    rows = _query(
+        """
+        MATCH (s:AnalyticsSurvey)
+        WHERE s.timestamp >= $since
+        RETURN s.satisfaction AS satisfaction, s.nps AS nps, s.timestamp AS timestamp
+        """,
+        {"since": since_iso},
+    )
+    return rows
 
 
 @router.get("/dashboard")
@@ -162,9 +209,9 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
     """
     _check_admin(x_admin_code)
 
-    since = _parse_period(period_days)
-    events = _filter_by_period(_read_jsonl(EVENTS_FILE), since)
-    surveys = _filter_by_period(_read_jsonl(SURVEY_FILE), since)
+    since_iso = _since_iso(period_days)
+    events = _fetch_events(since_iso)
+    surveys = _fetch_surveys(since_iso)
 
     # --- FR-1/FR-2: посещаемость ---
     sessions = {e["session_id"] for e in events}
@@ -180,7 +227,6 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
     device_breakdown = Counter(e["device"] for e in events)
 
     # --- FR-5/FR-6: воронка ---
-    # Для каждого шага: сколько сессий дошли (started), сколько завершили (completed)
     sessions_per_step: dict[str, set] = defaultdict(set)
     completed_per_step: dict[str, set] = defaultdict(set)
     for e in events:
@@ -407,26 +453,36 @@ def categorize_feedback_with_groq(text: str) -> dict:
 # INTEGRATION — как подключить в main.py
 # ---------------------------------------------------------------------------
 #
-# 1. Скопировать этот файл в backend/api/analytics.py
-# 2. В main.py добавить:
+# 1. Скопировать этот файл в backend/api/analytics.py (заменить старую версию)
 #
-#      from analytics import router as analytics_router
+# 2. В main.py добавить импорт и подключение роутера — В main.py должно
+#    появиться следующее (учитывая, что там уже есть функция run_query):
+#
+#      from analytics import router as analytics_router, init_analytics_router
 #      app.include_router(analytics_router)
+#      init_analytics_router(run_query)
+#
+#    Порядок важен: init_analytics_router(run_query) можно вызвать сразу
+#    после определения функции run_query в main.py (она не обязана быть
+#    внутри startup — Python передаёт саму функцию, а не её результат).
 #
 # 3. В requirements.txt добавить (если ещё нет):
 #      openpyxl
 #      reportlab
 #
-# 4. В .gitignore добавить:
-#      backend/api/analytics_data/
+# 4. Никаких новых .gitignore записей не требуется — данные больше не
+#    пишутся в локальные файлы.
 #
-# 5. На фронтенде (appeal.html/chat.html) при переходах между шагами 01-04
-#    вызывать fetch('{API_BASE}/api/analytics/event', {{method: 'POST', ...}})
-#    с session_id, сгенерированным один раз при загрузке страницы
-#    (например: crypto.randomUUID(), хранить в sessionStorage — НЕ localStorage,
-#    чтобы не переживало закрытие вкладки и не превращалось в идентификатор).
+# 5. На фронтенде (chat.html) события отправляются как раньше — сам
+#    формат запроса /api/analytics/event не изменился.
 #
-# 6. В feedback.py при сохранении нового отзыва можно вызвать
-#    categorize_feedback_with_groq(text) и добавить результат в запись
-#    (category, sentiment) — модератор сможет поправить category вручную
-#    в feedback-admin.html.
+# 6. Рекомендуется (не обязательно) создать индексы в Neo4j для скорости:
+#      CREATE INDEX IF NOT EXISTS FOR (e:AnalyticsEvent) ON (e.timestamp)
+#      CREATE INDEX IF NOT EXISTS FOR (e:AnalyticsEvent) ON (e.session_id)
+#    Выполнить один раз через Neo4j Browser / Aura Console → Query tab.
+#
+# ВАЖНО: у бесплатного Neo4j Aura инстанс "засыпает" при долгом
+# бездействии — тогда запросы к дашборду будут падать с ошибкой
+# 503 "Ошибка подключения к Neo4j", пока кто-то вручную не нажмёт
+# "Resume" в консоли console.neo4j.io. Сами данные при этом НЕ теряются —
+# это отличие от прежней JSONL-версии, где рестарт Render стирал файлы.
