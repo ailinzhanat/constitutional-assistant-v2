@@ -1,43 +1,43 @@
 """
 Модуль общей аналитики и анализа обратной связи — Constitutional Assistant.
-
+ 
 Реализует ТЗ "Модуль общей аналитики и анализа обратной связи":
 - сбор обезличенных событий (посещаемость, воронка шагов 01-04)
 - агрегация метрик для дашборда
 - категоризация и тональность отзывов (через Groq, опционально)
 - экспорт отчёта в PDF/Excel
-
+ 
 Хранение: Neo4j (та же база, что уже используется в проекте для законов/статей).
 Выбрано вместо JSONL-файлов, потому что Render free-tier имеет эфемерную
 файловую систему — файлы стираются при каждом рестарте/переразвёртывании
 сервиса. Neo4j Aura (даже на бесплатном плане) данные не теряет: инстанс
 может "засыпать" при бездействии, но при пробуждении (Resume в консоли
 Neo4j Aura) все ранее записанные данные остаются на месте.
-
+ 
 Как подключить в main.py — см. комментарии внизу файла ("INTEGRATION").
 """
-
+ 
 import json
 import uuid
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Literal, Optional
-
+ 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
-
+ 
 import os
-
+ 
 ADMIN_ACCESS_CODE = os.environ.get("ADMIN_ACCESS_CODE", "")  # тот же код, что и в feedback.py
-
+ 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
-
+ 
 # Заполняется через init_analytics_router(run_query_fn) при подключении
 # роутера в main.py — так модуль переиспользует уже существующее
 # подключение к Neo4j вместо того чтобы открывать своё собственное.
 _run_query: Optional[Callable] = None
-
-
+ 
+ 
 def init_analytics_router(run_query_fn: Callable):
     """
     Вызывается один раз из main.py при старте приложения.
@@ -46,8 +46,8 @@ def init_analytics_router(run_query_fn: Callable):
     """
     global _run_query
     _run_query = run_query_fn
-
-
+ 
+ 
 def _query(cypher: str, params: dict = None):
     if _run_query is None:
         raise HTTPException(
@@ -58,20 +58,20 @@ def _query(cypher: str, params: dict = None):
         return _run_query(cypher, params or {})
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Ошибка подключения к Neo4j: {str(e)}")
-
-
+ 
+ 
 def _check_admin(x_admin_code: Optional[str]):
     if not ADMIN_ACCESS_CODE or x_admin_code != ADMIN_ACCESS_CODE:
         raise HTTPException(status_code=403, detail="Неверный код доступа администратора")
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # Модели
 # ---------------------------------------------------------------------------
-
+ 
 StepId = Literal["01_consent", "02_description", "03_jurisdiction", "04_draft"]
 EventType = Literal["step_started", "step_completed", "step_abandoned", "draft_downloaded"]
-
+ 
 # FR-7: причины отказа на шаге 03 (соответствуют подп.1-5 п.2 ст.47 Конституционного закона)
 JurisdictionReason = Literal[
     "within_jurisdiction",
@@ -82,8 +82,8 @@ JurisdictionReason = Literal[
     "improper_subject",           # ненадлежащий субъект (напр. юрлицо)
     "other_out_of_jurisdiction",
 ]
-
-
+ 
+ 
 class AnalyticsEvent(BaseModel):
     session_id: str = Field(..., description="Случайный анонимный ID сессии (генерируется на фронте, НЕ привязан к личности)")
     event_type: EventType
@@ -94,20 +94,20 @@ class AnalyticsEvent(BaseModel):
     region: Optional[str] = None  # агрегированный регион, если пользователь дал согласие; без точной геолокации
     is_new_visitor: bool = True
     timestamp: Optional[str] = None  # если не передано — берём серверное время
-
-
+ 
+ 
 class SurveyResponse(BaseModel):
     satisfaction: int = Field(..., ge=1, le=5)
     nps: int = Field(..., ge=0, le=10)
     completion_time_seconds: Optional[int] = None
     language: Literal["kk", "ru", "en"]
     timestamp: Optional[str] = None
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # FR-1..FR-4: события посещаемости / воронки (публичный, обезличенный)
 # ---------------------------------------------------------------------------
-
+ 
 @router.post("/event")
 def record_event(event: AnalyticsEvent):
     """
@@ -119,7 +119,7 @@ def record_event(event: AnalyticsEvent):
     record = event.model_dump()
     record["timestamp"] = record["timestamp"] or datetime.now(timezone.utc).isoformat()
     record["id"] = str(uuid.uuid4())
-
+ 
     _query(
         """
         CREATE (e:AnalyticsEvent {
@@ -137,7 +137,7 @@ def record_event(event: AnalyticsEvent):
         """,
         record,
     )
-
+ 
     # Резервная копия в Google Sheets — не должна ронять запрос, если
     # основная запись в Neo4j уже прошла успешно.
     try:
@@ -155,17 +155,17 @@ def record_event(event: AnalyticsEvent):
             print(f"⚠️ Sheets analytics write failed: {sheets_result.get('error')}")
     except Exception as e:
         print(f"⚠️ Sheets analytics import/write error: {e}")
-
+ 
     return {"status": "ok"}
-
-
+ 
+ 
 @router.post("/survey")
 def record_survey(response: SurveyResponse):
     """FR-13: приём ответов опросника (см. ТЗ «Опросник для респондентов»)."""
     record = response.model_dump()
     record["timestamp"] = record["timestamp"] or datetime.now(timezone.utc).isoformat()
     record["id"] = str(uuid.uuid4())
-
+ 
     _query(
         """
         CREATE (s:AnalyticsSurvey {
@@ -180,19 +180,19 @@ def record_survey(response: SurveyResponse):
         record,
     )
     return {"status": "ok"}
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # Агрегация для дашборда (защищено X-Admin-Code, см. NFR-3)
 # ---------------------------------------------------------------------------
-
+ 
 STEP_ORDER: list[StepId] = ["01_consent", "02_description", "03_jurisdiction", "04_draft"]
-
-
+ 
+ 
 def _since_iso(period_days: int) -> str:
     return (datetime.now(timezone.utc) - timedelta(days=period_days)).isoformat()
-
-
+ 
+ 
 def _fetch_events(since_iso: str) -> list[dict]:
     rows = _query(
         """
@@ -206,8 +206,8 @@ def _fetch_events(since_iso: str) -> list[dict]:
         {"since": since_iso},
     )
     return rows
-
-
+ 
+ 
 def _fetch_surveys(since_iso: str) -> list[dict]:
     rows = _query(
         """
@@ -218,8 +218,8 @@ def _fetch_surveys(since_iso: str) -> list[dict]:
         {"since": since_iso},
     )
     return rows
-
-
+ 
+ 
 @router.get("/dashboard")
 def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(None)):
     """
@@ -228,24 +228,24 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
     наравне с процентами.
     """
     _check_admin(x_admin_code)
-
+ 
     since_iso = _since_iso(period_days)
     events = _fetch_events(since_iso)
     surveys = _fetch_surveys(since_iso)
-
+ 
     # --- FR-1/FR-2: посещаемость ---
     sessions = {e["session_id"] for e in events}
     new_sessions = {e["session_id"] for e in events if e.get("is_new_visitor")}
     unique_visitors = len(sessions)
     new_visitors = len(new_sessions)
     returning_visitors = unique_visitors - new_visitors
-
+ 
     # --- FR-3: язык ---
     language_breakdown = Counter(e["language"] for e in events)
-
+ 
     # --- FR-4: устройство ---
     device_breakdown = Counter(e["device"] for e in events)
-
+ 
     # --- FR-5/FR-6: воронка ---
     sessions_per_step: dict[str, set] = defaultdict(set)
     completed_per_step: dict[str, set] = defaultdict(set)
@@ -254,7 +254,7 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
             sessions_per_step[e["step"]].add(e["session_id"])
         if e["event_type"] == "step_completed":
             completed_per_step[e["step"]].add(e["session_id"])
-
+ 
     funnel = []
     for step in STEP_ORDER:
         reached = len(sessions_per_step[step])
@@ -268,16 +268,16 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
             "drop_off": drop_off,
             "drop_off_rate_pct": drop_off_rate,
         })
-
+ 
     # --- FR-7: разбивка решений шага 03 ---
     jurisdiction_reasons = Counter(
         e["jurisdiction_reason"] for e in events
         if e["step"] == "03_jurisdiction" and e.get("jurisdiction_reason")
     )
-
+ 
     # --- FR-8: черновики скачаны ---
     drafts_downloaded = sum(1 for e in events if e["event_type"] == "draft_downloaded")
-
+ 
     # --- FR-13: опросник ---
     if surveys:
         avg_satisfaction = round(sum(s["satisfaction"] for s in surveys) / len(surveys), 2)
@@ -287,7 +287,7 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
     else:
         avg_satisfaction = None
         nps_score = None
-
+ 
     # --- FR-14: сводка одним взглядом ---
     step04 = next(s for s in funnel if s["step"] == "04_draft")
     step01 = next(s for s in funnel if s["step"] == "01_consent")
@@ -299,7 +299,7 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
     out_of_jurisdiction_rate = (
         round(out_of_jurisdiction / total_jurisdiction_checks * 100, 1) if total_jurisdiction_checks else 0.0
     )
-
+ 
     return {
         "period_days": period_days,
         "summary": {
@@ -325,12 +325,12 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
             "nps_score": nps_score,
         },
     }
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # FR-15: экспорт отчёта PDF/Excel
 # ---------------------------------------------------------------------------
-
+ 
 @router.get("/export")
 def export_report(
     period_days: int = 30,
@@ -343,35 +343,35 @@ def export_report(
     """
     _check_admin(x_admin_code)
     data = get_dashboard(period_days=period_days, x_admin_code=x_admin_code)
-
+ 
     if fmt == "excel":
         return _export_excel(data)
     return _export_pdf(data)
-
-
+ 
+ 
 def _export_excel(data: dict):
     from io import BytesIO
-
+ 
     from fastapi.responses import StreamingResponse
     from openpyxl import Workbook
-
+ 
     wb = Workbook()
     ws = wb.active
     ws.title = "Сводка"
     ws.append(["Метрика", "Значение"])
     for k, v in data["summary"].items():
         ws.append([k, v])
-
+ 
     ws2 = wb.create_sheet("Воронка")
     ws2.append(["Шаг", "Дошли", "Завершили", "Отвал", "% отвала"])
     for row in data["funnel"]:
         ws2.append([row["step"], row["reached"], row["completed"], row["drop_off"], row["drop_off_rate_pct"]])
-
+ 
     ws3 = wb.create_sheet("Юрисдикция")
     ws3.append(["Причина", "Количество"])
     for k, v in data["jurisdiction_breakdown"].items():
         ws3.append([k, v])
-
+ 
     buf = BytesIO()
     wb.save(buf)
     buf.seek(0)
@@ -380,29 +380,29 @@ def _export_excel(data: dict):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=analytics_report.xlsx"},
     )
-
-
+ 
+ 
 def _export_pdf(data: dict):
     from io import BytesIO
-
+ 
     from fastapi.responses import StreamingResponse
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfgen import canvas
-
+ 
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
     width, height = A4
     y = height - 50
-
+ 
     c.setFont("Helvetica-Bold", 14)
     c.drawString(50, y, "Constitutional Assistant — отчёт аналитики")
     y -= 30
-
+ 
     c.setFont("Helvetica", 11)
     for k, v in data["summary"].items():
         c.drawString(50, y, f"{k}: {v}")
         y -= 18
-
+ 
     y -= 10
     c.setFont("Helvetica-Bold", 12)
     c.drawString(50, y, "Воронка по шагам")
@@ -411,7 +411,7 @@ def _export_pdf(data: dict):
     for row in data["funnel"]:
         c.drawString(50, y, f"{row['step']}: дошли {row['reached']}, завершили {row['completed']}, отвал {row['drop_off_rate_pct']}%")
         y -= 16
-
+ 
     c.save()
     buf.seek(0)
     return StreamingResponse(
@@ -419,12 +419,12 @@ def _export_pdf(data: dict):
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=analytics_report.pdf"},
     )
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # FR-9..FR-12: обратная связь — категоризация и тональность
 # ---------------------------------------------------------------------------
-
+ 
 FEEDBACK_CATEGORIES = [
     "непонятная формулировка",
     "ошибка распознавания текста",
@@ -433,8 +433,8 @@ FEEDBACK_CATEGORIES = [
     "предложение",
     "другое",
 ]
-
-
+ 
+ 
 def categorize_feedback_with_groq(text: str) -> dict:
     """
     FR-10/FR-11: категоризация + тональность через Groq.
@@ -445,14 +445,14 @@ def categorize_feedback_with_groq(text: str) -> dict:
     try:
         from groq_analyzer import get_groq_client  # переиспользуем клиент проекта
         client = get_groq_client()
-
+ 
         prompt = f"""Проанализируй отзыв пользователя юридического сервиса.
 Категории: {", ".join(FEEDBACK_CATEGORIES)}.
 Тональность: позитив / нейтрально / негатив.
 Ответь СТРОГО в формате JSON: {{"category": "...", "sentiment": "..."}}
-
+ 
 Отзыв: {text}"""
-
+ 
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
@@ -467,8 +467,8 @@ def categorize_feedback_with_groq(text: str) -> dict:
         }
     except Exception:
         return {"category": "другое", "sentiment": "нейтрально", "auto_categorized": False}
-
-
+ 
+ 
 # ---------------------------------------------------------------------------
 # INTEGRATION — как подключить в main.py
 # ---------------------------------------------------------------------------
@@ -506,3 +506,4 @@ def categorize_feedback_with_groq(text: str) -> dict:
 # 503 "Ошибка подключения к Neo4j", пока кто-то вручную не нажмёт
 # "Resume" в консоли console.neo4j.io. Сами данные при этом НЕ теряются —
 # это отличие от прежней JSONL-версии, где рестарт Render стирал файлы.
+ 
