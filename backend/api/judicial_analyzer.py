@@ -18,7 +18,11 @@ load_dotenv()
 
 # Groq (облачный) для деплоя. Для локального режима можно вернуть Ollama.
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# ВАЖНО: llama-3.3-70b-versatile объявлена Groq устаревшей (deprecation
+# announced 17 июня 2026) и была снята с обслуживания, из-за чего запросы
+# возвращали 404. openai/gpt-oss-120b — официально рекомендованная Groq
+# замена (см. https://console.groq.com/docs/deprecations).
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 
 SPRAVKA_PROMPT_TEMPLATE = """Ты — технический помощник судьи Конституционного Суда Республики Казахстан.
