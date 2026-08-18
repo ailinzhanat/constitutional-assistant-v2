@@ -437,18 +437,27 @@ async def generate_appeal(
     # FR-6/FR-7: если найдена оспариваемая норма, проверяем — выносил ли
     # КС РК уже НП по ней, и если да — предлагаем ссылки как доп. аргумент
     # (ВСЕГДА с пометкой "требует проверки юристом", см. np_resolutions.py).
+    #
+    # Приоритет источника нормы: сначала disputed_law/disputed_article,
+    # которые Groq извлекает напрямую из текста жалобы (работает для ЛЮБОЙ
+    # статьи, даже если её нет в каталоге KNOWN_VIOLATIONS) — а governing_law/
+    # article_number из violation_data используется только как запасной
+    # вариант, если Groq не смог определить disputed_law/disputed_article
+    # сам, но нашёл известное нарушение через violation_id.
     suggested_np_citations = []
     prior_np_found = False
-    if violation_data:
-        article_law = violation_data.get("governing_law")
-        article_number = violation_data.get("article_number")
-        if article_law and article_number:
-            try:
-                prior = find_resolutions_for_article(article_law, str(article_number))
-                prior_np_found = len(prior) > 0
-                suggested_np_citations = get_suggested_citations(article_law, str(article_number))
-            except Exception as e:
-                print(f"⚠️ НП КС РК lookup failed: {e}")
+    article_law = analysis.get("disputed_law")
+    article_number = analysis.get("disputed_article")
+    if (not article_law or not article_number) and violation_data:
+        article_law = article_law or violation_data.get("governing_law")
+        article_number = article_number or violation_data.get("article_number")
+    if article_law and article_number:
+        try:
+            prior = find_resolutions_for_article(article_law, str(article_number))
+            prior_np_found = len(prior) > 0
+            suggested_np_citations = get_suggested_citations(article_law, str(article_number))
+        except Exception as e:
+            print(f"⚠️ НП КС РК lookup failed: {e}")
 
     return {
         "status": "success" if generation.get("success") else "partial",
