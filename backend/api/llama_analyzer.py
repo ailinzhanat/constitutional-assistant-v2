@@ -6,6 +6,9 @@ Constitutional Assistant - Анализ жалобы через локальну
   оснований возврата обращений по ст.47 Конституционного закона)
 - какое из известных нарушений (violation_id) соответствует жалобе
 - краткое обоснование на языке жалобы
+- оспариваемый закон и статью (disputed_law/disputed_article) — используется
+  для FR-6/FR-7 поиска релевантных НП КС РК (np_resolutions.py), НЕЗАВИСИМО
+  от того, есть ли эта норма в каталоге KNOWN_VIOLATIONS
 
 Требует запущенный Ollama на http://localhost:11434 с моделью llama3.2
 (установка: см. https://ollama.com, затем `ollama pull llama3.2`)
@@ -81,8 +84,14 @@ ANALYSIS_PROMPT_TEMPLATE = """Ты — юридический ассистент
   "return_ground": "если within_jurisdiction=false — номер подпункта п.2 ст.47, который подходит (1, 2, 3 или 5), иначе null",
   "violation_id": "один из [{violation_ids}] или null, если не подходит ни один",
   "case_type": "bankruptcy" / "employment" / "property" / "other",
+  "disputed_law": "название закона/кодекса/НПА, который гражданин оспаривает (например 'УПК', 'Трудовой кодекс', 'Конституция'), или null если не удаётся определить",
+  "disputed_article": "номер статьи, которую оспаривает гражданин (например '342', '160'), без слова 'статья', или null если не удаётся определить",
   "reasoning": "твой СОБСТВЕННЫЙ анализ в 1-2 предложениях: почему ты выбрал именно такое решение (НЕ пересказывай и не повторяй текст жалобы дословно)"
 }}
+
+Поля disputed_law и disputed_article нужны ДАЖЕ если violation_id = null — извлекай их
+всегда, когда в жалобе явно названа конкретная статья закона или НПА, независимо от
+того, относится ли жалоба к юрисдикции КС.
 
 {return_grounds_reference}
 
@@ -145,7 +154,7 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
 
     Returns:
         dict с ключами: within_jurisdiction, return_ground, violation_id, case_type,
-        reasoning, success, error
+        disputed_law, disputed_article, reasoning, success, error
     """
     prompt = _build_prompt(complaint_text, document_text)
 
@@ -172,6 +181,8 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
                 "return_ground": None,
                 "violation_id": None,
                 "case_type": None,
+                "disputed_law": None,
+                "disputed_article": None,
                 "reasoning": None,
                 "success": False,
                 "error": "Не удалось разобрать ответ Llama как JSON",
@@ -187,6 +198,8 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
             "return_ground": parsed.get("return_ground"),
             "violation_id": vid,
             "case_type": parsed.get("case_type"),
+            "disputed_law": parsed.get("disputed_law"),
+            "disputed_article": parsed.get("disputed_article"),
             "reasoning": parsed.get("reasoning"),
             "success": True,
             "error": None,
@@ -198,6 +211,8 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
             "return_ground": None,
             "violation_id": None,
             "case_type": None,
+            "disputed_law": None,
+            "disputed_article": None,
             "reasoning": None,
             "success": False,
             "error": "Не удалось подключиться к Ollama. Убедитесь, что Ollama запущена (ollama serve) и модель llama3.2 установлена.",
@@ -208,6 +223,8 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
             "return_ground": None,
             "violation_id": None,
             "case_type": None,
+            "disputed_law": None,
+            "disputed_article": None,
             "reasoning": None,
             "success": False,
             "error": f"Ошибка анализа: {str(e)}",
