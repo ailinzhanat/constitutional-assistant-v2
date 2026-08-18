@@ -25,12 +25,14 @@ from groq_generator import generate_appeal_text
 from judicial_analyzer import generate_case_summary, search_precedents
 from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys, init_feedback_module
 from analytics import router as analytics_router, init_analytics_router
+from np_resolutions import router as np_router, init_np_module, find_resolutions_for_article, get_suggested_citations
 
 load_dotenv()
 
 app = FastAPI(title="Constitutional Assistant")
 
 app.include_router(analytics_router)
+app.include_router(np_router)
 
 # --- Rate Limiter ---
 limiter = Limiter(key_func=get_remote_address)
@@ -141,6 +143,7 @@ def run_query(query: str, params: dict = {}) -> List[Dict]:
 
 init_analytics_router(run_query)
 init_feedback_module(run_query)
+init_np_module(run_query)
 
 def query_bankruptcy_context(category: str = "bankruptcy") -> List[Dict]:
     query = """
@@ -431,6 +434,22 @@ async def generate_appeal(
         is_representative=representative,
     )
 
+    # FR-6/FR-7: если найдена оспариваемая норма, проверяем — выносил ли
+    # КС РК уже НП по ней, и если да — предлагаем ссылки как доп. аргумент
+    # (ВСЕГДА с пометкой "требует проверки юристом", см. np_resolutions.py).
+    suggested_np_citations = []
+    prior_np_found = False
+    if violation_data:
+        article_law = violation_data.get("governing_law")
+        article_number = violation_data.get("article_number")
+        if article_law and article_number:
+            try:
+                prior = find_resolutions_for_article(article_law, str(article_number))
+                prior_np_found = len(prior) > 0
+                suggested_np_citations = get_suggested_citations(article_law, str(article_number))
+            except Exception as e:
+                print(f"⚠️ НП КС РК lookup failed: {e}")
+
     return {
         "status": "success" if generation.get("success") else "partial",
         "language": lang,
@@ -441,6 +460,8 @@ async def generate_appeal(
         "legal_context_found": violation_data is not None,
         "appeal_text": generation.get("appeal_text"),
         "generation_error": generation.get("error"),
+        "prior_np_found": prior_np_found,
+        "suggested_np_citations": suggested_np_citations,
     }
 
 # ============================================================================
