@@ -1,23 +1,20 @@
 """
-Constitutional Assistant - Анализ жалобы через Groq API (облачная Llama 70B)
-
+Constitutional Assistant - Анализ жалобы через Groq API (облачная модель)
 Замена локального llama_analyzer.py для облачного деплоя.
 Использует тот же промпт и известные нарушения, но через Groq вместо Ollama.
 """
-
 import os
 import requests
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
-
 from llama_analyzer import _extract_json, KNOWN_VIOLATIONS, ANALYSIS_PROMPT_TEMPLATE, _build_prompt
-
 load_dotenv()
-
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
-
-
+# ВАЖНО: llama-3.3-70b-versatile объявлена Groq устаревшей (deprecation
+# announced 17 июня 2026) и была снята с обслуживания, из-за чего запросы
+# возвращали 404. openai/gpt-oss-120b — официально рекомендованная Groq
+# замена (см. https://console.groq.com/docs/deprecations).
+GROQ_MODEL = "openai/gpt-oss-120b"
 def analyze_complaint(
     complaint_text: str,
     document_text: Optional[str] = None,
@@ -27,7 +24,6 @@ def analyze_complaint(
     """
     Анализирует жалобу через Groq.
     Интерфейс идентичен llama_analyzer.analyze_complaint.
-
     Returns:
         dict: within_jurisdiction, violation_id, case_type, reasoning, success, error
     """
@@ -35,9 +31,7 @@ def analyze_complaint(
     if not key:
         return {"within_jurisdiction": None, "violation_id": None, "case_type": None,
                 "reasoning": None, "success": False, "error": "GROQ_API_KEY не найден в .env"}
-
     prompt = _build_prompt(complaint_text, document_text)
-
     try:
         response = requests.post(
             GROQ_API_URL,
@@ -53,7 +47,6 @@ def analyze_complaint(
             },
             timeout=timeout,
         )
-
         if response.status_code == 401:
             return {"within_jurisdiction": None, "violation_id": None, "case_type": None,
                     "reasoning": None, "success": False, "error": "Groq: неверный API-ключ (401)"}
@@ -61,21 +54,17 @@ def analyze_complaint(
             return {"within_jurisdiction": None, "violation_id": None, "case_type": None,
                     "reasoning": None, "success": False,
                     "error": "Groq: превышена квота (429). Попробуйте позже."}
-
         response.raise_for_status()
         data = response.json()
         raw_output = data["choices"][0]["message"]["content"]
-
         parsed = _extract_json(raw_output)
         if parsed is None:
             return {"within_jurisdiction": None, "violation_id": None, "case_type": None,
                     "reasoning": None, "success": False,
                     "error": "Не удалось разобрать ответ Groq как JSON", "raw_response": raw_output}
-
         vid = parsed.get("violation_id")
         if vid not in KNOWN_VIOLATIONS:
             vid = None
-
         return {
             "within_jurisdiction": parsed.get("within_jurisdiction"),
             "violation_id": vid,
@@ -84,7 +73,6 @@ def analyze_complaint(
             "success": True,
             "error": None,
         }
-
     except requests.exceptions.ConnectionError:
         return {"within_jurisdiction": None, "violation_id": None, "case_type": None,
                 "reasoning": None, "success": False,
