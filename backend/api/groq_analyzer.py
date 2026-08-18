@@ -69,6 +69,8 @@ def analyze_complaint(
             "within_jurisdiction": parsed.get("within_jurisdiction"),
             "violation_id": vid,
             "case_type": parsed.get("case_type"),
+            "disputed_law": parsed.get("disputed_law"),
+            "disputed_article": parsed.get("disputed_article"),
             "reasoning": parsed.get("reasoning"),
             "success": True,
             "error": None,
