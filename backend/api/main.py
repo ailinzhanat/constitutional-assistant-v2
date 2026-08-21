@@ -412,7 +412,19 @@ async def generate_appeal(
         try:
             prior = find_resolutions_for_article(article_law, str(article_number))
             prior_np_found = len(prior) > 0
-            suggested_np_citations = get_suggested_citations(article_law, str(article_number))
+            # FR-3: карточка цитаты возвращается на языке диалога (lang) — с
+            # fallback на русский внутри get_suggested_citations, если для
+            # конкретного НП перевод ещё не загружен.
+            np_lang = (lang or "ru").lower()
+            if np_lang not in ("ru", "kk", "en"):
+                np_lang = "ru"
+            # FR-4: complaint_text передаётся как fallback для полнотекстового
+            # (fuzzy) поиска — используется ТОЛЬКО если точное совпадение по
+            # (article_law, article_number) ничего не нашло в Neo4j.
+            suggested_np_citations = get_suggested_citations(
+                article_law, str(article_number), language=np_lang,
+                complaint_text=body.problem_description,
+            )
         except Exception as e:
             print(f"⚠️ НП КС РК lookup failed: {e}")
     return {
