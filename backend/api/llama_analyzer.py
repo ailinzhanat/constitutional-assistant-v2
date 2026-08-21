@@ -1,6 +1,5 @@
 """
 Constitutional Assistant - Анализ жалобы через локальную Llama (Ollama)
-
 Определяет:
 - относится ли жалоба к юрисдикции Конституционного суда (на основе РЕАЛЬНЫХ
   оснований возврата обращений по ст.47 Конституционного закона)
@@ -9,19 +8,15 @@ Constitutional Assistant - Анализ жалобы через локальну
 - оспариваемый закон и статью (disputed_law/disputed_article) — используется
   для FR-6/FR-7 поиска релевантных НП КС РК (np_resolutions.py), НЕЗАВИСИМО
   от того, есть ли эта норма в каталоге KNOWN_VIOLATIONS
-
 Требует запущенный Ollama на http://localhost:11434 с моделью llama3.2
 (установка: см. https://ollama.com, затем `ollama pull llama3.2`)
 """
-
 import json
 import re
 import requests
 from typing import Optional, Dict, Any
-
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "llama3.2"
-
 # Известные нарушения из базы знаний Neo4j (расширяется по мере роста graph)
 KNOWN_VIOLATIONS = {
     "viol_lack_transparency": "Отсутствие прозрачности от управляющего (банкротство)",
@@ -29,13 +24,11 @@ KNOWN_VIOLATIONS = {
     "viol_no_public_hearing": "Отсутствие открытого судебного заседания",
     "viol_dismissal_health_grounds": "Неопределённость нормы об учёте состояния здоровья при увольнении сотрудника правоохранительной службы (п.3 ст.80 Закона РК «О правоохранительной службе»)",
 }
-
 # Реальные основания ВОЗВРАТА обращений по п.2 ст.47 Конституционного закона
 # «О Конституционном Суде Республики Казахстан» — составлено на основе
 # фактических ответов Аппарата КС РК (обезличенная выборка, июль 2026)
 RETURN_GROUNDS_REFERENCE = """
 ОСНОВАНИЯ ДЛЯ ВОЗВРАТА ОБРАЩЕНИЯ (п.2 ст.47 Конституционного закона) — проверяй жалобу на КАЖДОЕ из них:
-
 Подпункт 1) — вопрос НЕ относится к компетенции КС (ст.73 Конституции). Обращение
 НЕ ПРИНИМАЕТСЯ, если гражданин по сути просит:
   - пересмотреть судебный акт по существу дела (это апелляция/кассация, не КС)
@@ -47,19 +40,16 @@ RETURN_GROUNDS_REFERENCE = """
     рассмотрении конкретных дел — это тоже не вопрос конституционности нормы
   - применить закон об амнистии к конкретному случаю (не вопрос конституционности)
   - защитить права человека в общем смысле — это вопрос Уполномоченного по правам человека
-
 Подпункт 2) — обращение подано представителем БЕЗ надлежащего оформления:
   - нет доверенности от самого гражданина на подачу обращения представителем
   - представитель не является законным представителем, адвокатом, либо юридическим
     консультантом — членом палаты юридических консультантов (п.4 ст.44)
-
 Подпункт 3) — обращение не соответствует иным требованиям закона:
   - НЕНАДЛЕЖАЩИЙ СУБЪЕКТ обращения — например, юридическое лицо (ТОО, компания) обращается
     от СВОЕГО имени; по ст.73 Конституции субъектами обращения являются граждане, а не
     юридические лица напрямую
   - повторное обращение с тем же неустранённым недостатком (уже возвращали по этой же
     причине, а её не исправили)
-
 Подпункт 5) — обращение НЕ соответствует условиям допустимости по ст.45:
   - оспариваемый акт НЕ был применён судом именно в деле САМОГО заявителя
     (например, акт применён в отношении ИНОГО лица, а не самого обратившегося)
@@ -68,17 +58,13 @@ RETURN_GROUNDS_REFERENCE = """
     ВАЖНО: срок отсчитывается от даты ВЫНЕСЕНИЯ (ОГЛАШЕНИЯ) акта, а не от даты его
     технического подписания/оформления — если гражданин путает эти две даты и полагает,
     что более поздняя дата подписания "продлевает" срок, это ошибка
-
 Обращение ДОПУСТИМО (within_jurisdiction = true), только если гражданин чётко просит
 проверить конкретную норму закона/НПА на соответствие Конституции, эта норма была
 применена судом именно в его деле, судебный акт вступил в силу не более года назад,
 и представительство (если есть) оформлено надлежащим образом.
 """
-
 ANALYSIS_PROMPT_TEMPLATE = """Ты — юридический ассистент, который анализирует обращения граждан Казахстана в Конституционный Суд.
-
 Твоя задача — проанализировать текст жалобы и вернуть ТОЛЬКО JSON (без markdown, без пояснений) со следующими полями:
-
 {{
   "within_jurisdiction": true/false,
   "return_ground": "если within_jurisdiction=false — номер подпункта п.2 ст.47, который подходит (1, 2, 3 или 5), иначе null",
@@ -88,76 +74,83 @@ ANALYSIS_PROMPT_TEMPLATE = """Ты — юридический ассистент
   "disputed_article": "номер статьи, которую оспаривает гражданин (например '342', '160'), без слова 'статья', или null если не удаётся определить",
   "reasoning": "твой СОБСТВЕННЫЙ анализ в 1-2 предложениях: почему ты выбрал именно такое решение (НЕ пересказывай и не повторяй текст жалобы дословно)"
 }}
-
 Поля disputed_law и disputed_article нужны ДАЖЕ если violation_id = null — извлекай их
 всегда, когда в жалобе явно названа конкретная статья закона или НПА, независимо от
 того, относится ли жалоба к юрисдикции КС.
-
 {return_grounds_reference}
-
+{confirmed_facts_section}
 Известные нарушения (используй для поля violation_id, только если явно совпадает по смыслу):
 {violations_list}
-
 Текст жалобы гражданина:
 \"\"\"
 {complaint_text}
 \"\"\"
-
 {document_section}
-
 Верни только JSON, ничего больше."""
-
-
-def _build_prompt(complaint_text: str, document_text: Optional[str] = None) -> str:
+def _build_prompt(complaint_text: str, document_text: Optional[str] = None, confirmed_facts: Optional[dict] = None) -> str:
     violations_list = "\n".join(f"- {vid}: {desc}" for vid, desc in KNOWN_VIOLATIONS.items())
     violation_ids = ", ".join(KNOWN_VIOLATIONS.keys())
-
     document_section = ""
     if document_text:
         snippet = document_text[:3000]
         document_section = f'Текст приложенного судебного акта:\n"""\n{snippet}\n"""'
 
+    confirmed_facts_section = ""
+    if confirmed_facts:
+        lines = []
+        if confirmed_facts.get("is_case_participant"):
+            lines.append("- заявитель является участником дела, и оспариваемая норма применена судом именно в его деле (условие ст.45 выполнено)")
+        if confirmed_facts.get("act_is_npa"):
+            lines.append("- оспариваемый акт является законом/НПА в смысле ст.7 Закона «О правовых актах» (не факты дела и не действия должностных лиц)")
+        if confirmed_facts.get("within_one_year"):
+            lines.append("- с момента вступления судебного акта в законную силу прошло НЕ более одного года (условие пп.2 п.2 ст.45 выполнено)")
+        if confirmed_facts.get("is_representative"):
+            lines.append("- обращение подаётся через представителя, оформление которого пользователю уже разъяснено отдельно")
+        if lines:
+            confirmed_facts_section = (
+                "\nВАЖНО: следующие процессуальные условия УЖЕ ПРОВЕРЕНЫ И ПОДТВЕРЖДЕНЫ пользователем "
+                "через отдельную анкету на платформе ДО того, как ты получил этот текст. НЕ проверяй их "
+                "повторно и НЕ указывай их как основание для within_jurisdiction=false — считай их выполненными:\n"
+                + "\n".join(lines) +
+                "\n\nТвоя задача — проверить ТОЛЬКО вопрос по существу (подпункт 1) п.2 ст.47): "
+                "действительно ли гражданин просит проверить норму закона/НПА на соответствие Конституции, "
+                "а не пересмотреть дело по существу, не разъяснить обычную норму, не оценить действия "
+                "должностных лиц/факты дела и т.п.\n"
+            )
+
     return ANALYSIS_PROMPT_TEMPLATE.format(
         violation_ids=violation_ids,
         violations_list=violations_list,
         return_grounds_reference=RETURN_GROUNDS_REFERENCE,
+        confirmed_facts_section=confirmed_facts_section,
         complaint_text=complaint_text,
         document_section=document_section,
     )
-
-
 def _extract_json(raw_text: str) -> Optional[dict]:
     """
     Llama иногда оборачивает JSON в ```json ... ``` или добавляет текст вокруг.
     Эта функция вытаскивает первый валидный JSON-объект из ответа.
     """
     cleaned = re.sub(r"```(?:json)?", "", raw_text).strip()
-
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
-
     match = re.search(r"\{.*\}", cleaned, re.DOTALL)
     if match:
         try:
             return json.loads(match.group(0))
         except json.JSONDecodeError:
             return None
-
     return None
-
-
-def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, timeout: int = 60) -> Dict[str, Any]:
+def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, timeout: int = 60, confirmed_facts: Optional[dict] = None) -> Dict[str, Any]:
     """
     Анализирует жалобу через локальную Llama.
-
     Returns:
         dict с ключами: within_jurisdiction, return_ground, violation_id, case_type,
         disputed_law, disputed_article, reasoning, success, error
     """
-    prompt = _build_prompt(complaint_text, document_text)
-
+    prompt = _build_prompt(complaint_text, document_text, confirmed_facts)
     try:
         response = requests.post(
             OLLAMA_URL,
@@ -172,9 +165,7 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
         response.raise_for_status()
         result = response.json()
         raw_output = result.get("response", "")
-
         parsed = _extract_json(raw_output)
-
         if parsed is None:
             return {
                 "within_jurisdiction": None,
@@ -188,11 +179,9 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
                 "error": "Не удалось разобрать ответ Llama как JSON",
                 "raw_response": raw_output,
             }
-
         vid = parsed.get("violation_id")
         if vid not in KNOWN_VIOLATIONS:
             vid = None
-
         return {
             "within_jurisdiction": parsed.get("within_jurisdiction"),
             "return_ground": parsed.get("return_ground"),
@@ -204,7 +193,6 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
             "success": True,
             "error": None,
         }
-
     except requests.exceptions.ConnectionError:
         return {
             "within_jurisdiction": None,
@@ -229,8 +217,6 @@ def analyze_complaint(complaint_text: str, document_text: Optional[str] = None, 
             "success": False,
             "error": f"Ошибка анализа: {str(e)}",
         }
-
-
 def is_ollama_available() -> bool:
     """Проверяет, доступна ли Ollama по адресу localhost:11434."""
     try:
