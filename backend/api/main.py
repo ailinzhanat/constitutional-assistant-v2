@@ -2,20 +2,16 @@
 Constitutional Assistant - Unified FastAPI Server
 С поддержкой загрузки файлов (PDF, Word, сканы, фото) и 3 языков (KZ/RU/EN)
 """
-
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import os
 from dotenv import load_dotenv
-
 from fastapi.responses import PlainTextResponse
-
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-
 from parser import parse_file, get_supported_formats, clean_text, truncate_text
 from i18n import detect_language, normalize_language, t, SUPPORTED_LANGUAGES
 from consent import get_consent_text, record_consent, get_consent_record, generate_consent_document
@@ -26,25 +22,19 @@ from judicial_analyzer import generate_case_summary, search_precedents
 from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys, init_feedback_module
 from analytics import router as analytics_router, init_analytics_router
 from np_resolutions import router as np_router, init_np_module, find_resolutions_for_article, get_suggested_citations
-
 load_dotenv()
-
 app = FastAPI(title="Constitutional Assistant")
-
 app.include_router(analytics_router)
 app.include_router(np_router)
-
 # --- Rate Limiter ---
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
 # --- CORS ---
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
     "https://constitutional-assistantkz.netlify.app"
 ).split(",")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -52,24 +42,19 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
-
 NEO4J_URI = os.getenv("NEO4J_URI", "neo4j+s://8b6c1184.databases.neo4j.io")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
-
 JUDICIAL_ACCESS_CODE = os.getenv("JUDICIAL_ACCESS_CODE")
 ADMIN_ACCESS_CODE = os.getenv("ADMIN_ACCESS_CODE")
-
 def check_admin_access(x_admin_code: Optional[str] = Header(None)):
     if not ADMIN_ACCESS_CODE or x_admin_code != ADMIN_ACCESS_CODE:
         raise HTTPException(status_code=401, detail="Неверный код доступа администратора")
     return True
-
 def check_judicial_access(x_judicial_code: Optional[str] = Header(None)):
     if not JUDICIAL_ACCESS_CODE or x_judicial_code != JUDICIAL_ACCESS_CODE:
         raise HTTPException(status_code=401, detail="Неверный код доступа для внутреннего инструмента судьи")
     return True
-
 def get_driver():
     from neo4j import GraphDatabase
     uris_to_try = [
@@ -87,42 +72,31 @@ def get_driver():
             print(f"⚠️ Failed with {uri}: {str(e)[:100]}")
             continue
     return None
-
 driver = None
-
 # ============================================================================
 # DATA MODELS
 # ============================================================================
-
 class ProblemRequest(BaseModel):
     problem_description: str
     language: Optional[str] = None
-
 class BankruptcyContextRequest(BaseModel):
     category: str = "bankruptcy"
-
 class ViolationSearchRequest(BaseModel):
     violation_id: str
-
 class TemplateStructureRequest(BaseModel):
     template_id: str = "tpl_cassation_bankruptcy"
-
 class ConsentRequest(BaseModel):
     full_name: Optional[str] = None
     language: str = "RU"
-
 class JudicialSummaryRequest(BaseModel):
     case_text: str
     language: str = "RU"
-
 class JudicialPrecedentSearchRequest(BaseModel):
     keyword: str
     case_type: Optional[str] = None
-
 # ============================================================================
 # NEO4J QUERY FUNCTIONS
 # ============================================================================
-
 def run_query(query: str, params: dict = {}) -> List[Dict]:
     global driver
     if driver is None:
@@ -140,11 +114,9 @@ def run_query(query: str, params: dict = {}) -> List[Dict]:
                 results = session.run(query, params)
                 return [dict(record) for record in results]
         raise e
-
 init_analytics_router(run_query)
 init_feedback_module(run_query)
 init_np_module(run_query)
-
 def query_bankruptcy_context(category: str = "bankruptcy") -> List[Dict]:
     query = """
     MATCH (law:Law {category: $category})-[:HAS_ARTICLE]->(articles:Article)
@@ -153,7 +125,7 @@ def query_bankruptcy_context(category: str = "bankruptcy") -> List[Dict]:
     OPTIONAL MATCH (violations:Violation)-[:VIOLATES]->(articles)
     OPTIONAL MATCH (violations)-[:REMEDIED_BY]->(remedy_procedures:Procedure)
     OPTIONAL MATCH (decisions:Decision)-[:CITES]->(articles)
-    RETURN 
+    RETURN
       law.name as law_name,
       articles.number as article_number,
       articles.title as article_title,
@@ -164,14 +136,13 @@ def query_bankruptcy_context(category: str = "bankruptcy") -> List[Dict]:
       collect(DISTINCT decisions.summary) as precedents
     """
     return run_query(query, {"category": category})
-
 def query_violation_search(violation_id: str) -> Optional[Dict]:
     query = """
     MATCH (viol:Violation {id: $violation_id})-[:VIOLATES]->(articles:Article)
     OPTIONAL MATCH (viol)-[:REMEDIED_BY]->(procedures:Procedure)
     OPTIONAL MATCH (articles)<-[:HAS_ARTICLE]-(law:Law)
     OPTIONAL MATCH (decisions:Decision)-[:CITES]->(articles)
-    RETURN 
+    RETURN
       viol.name as violation_name,
       viol.type as violation_type,
       viol.impact as impact,
@@ -185,12 +156,11 @@ def query_violation_search(violation_id: str) -> Optional[Dict]:
     """
     records = run_query(query, {"violation_id": violation_id})
     return records[0] if records else None
-
 def query_template_structure(template_id: str) -> Optional[Dict]:
     query = """
     MATCH (template:Template {id: $template_id})
     MATCH (template)-[:SUPPORTS]->(procedures:Procedure)
-    RETURN 
+    RETURN
       template.name as template_name,
       template.required_sections as sections,
       template.estimated_length_pages as estimated_pages,
@@ -204,33 +174,27 @@ def query_template_structure(template_id: str) -> Optional[Dict]:
     """
     records = run_query(query, {"template_id": template_id})
     return records[0] if records else None
-
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
-
 @app.get("/health")
 async def health_check():
     global driver
     neo4j_status = "connected" if driver else "disconnected"
     return {"status": "ok", "service": "Constitutional Assistant", "neo4j": neo4j_status}
-
 @app.get("/languages")
 async def languages():
     return {"languages": SUPPORTED_LANGUAGES}
-
 @app.get("/supported-formats")
 async def supported_formats():
     return {
         "formats": get_supported_formats(),
         "description": "PDF, Word (.docx/.doc), изображения (OCR), TXT, ODT"
     }
-
 @app.get("/api/consent-text")
 async def consent_text(language: str = "RU"):
     lang = normalize_language(language)
     return {"language": lang, "text": get_consent_text(lang)}
-
 @app.post("/api/consent")
 @limiter.limit("10/minute")
 async def give_consent(request: Request, body: ConsentRequest):
@@ -242,7 +206,6 @@ async def give_consent(request: Request, body: ConsentRequest):
         "consent_id": record["consent_id"],
         "consented_at": record["consented_at"]
     }
-
 @app.get("/api/consent/{consent_id}/download")
 async def download_consent(consent_id: str):
     document = generate_consent_document(consent_id)
@@ -252,7 +215,6 @@ async def download_consent(consent_id: str):
         content=document,
         headers={"Content-Disposition": f"attachment; filename=consent_{consent_id}.txt"}
     )
-
 @app.post("/api/judicial/summary")
 @limiter.limit("20/minute")
 async def judicial_summary(request: Request, body: JudicialSummaryRequest, _auth: bool = Depends(check_judicial_access)):
@@ -260,7 +222,6 @@ async def judicial_summary(request: Request, body: JudicialSummaryRequest, _auth
     if not result.get("success"):
         raise HTTPException(status_code=502, detail=result.get("error", "Не удалось составить справку"))
     return result
-
 @app.post("/api/judicial/search-precedents")
 @limiter.limit("30/minute")
 async def judicial_search_precedents(request: Request, body: JudicialPrecedentSearchRequest, _auth: bool = Depends(check_judicial_access)):
@@ -274,7 +235,6 @@ async def judicial_search_precedents(request: Request, body: JudicialPrecedentSe
         return {"results": results, "count": len(results)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка поиска прецедентов: {str(e)}")
-
 @app.post("/api/feedback")
 @limiter.limit("5/minute")
 async def submit_feedback(request: Request, body: dict):
@@ -298,18 +258,15 @@ async def submit_feedback(request: Request, body: dict):
         if not result.get("success"):
             raise HTTPException(status_code=400, detail=result.get("error"))
         return {"status": "success", "feedback_id": result["feedback_id"]}
-
 @app.get("/api/feedback")
 async def get_feedback(_auth: bool = Depends(check_admin_access)):
     items = list_feedback()
     return {"count": count_feedback(), "items": items}
-
 @app.get("/api/surveys")
 async def get_surveys(_auth: bool = Depends(check_admin_access)):
     """Возвращает все ответы на опросник (type=survey) для панели администратора."""
     items = list_surveys()
     return {"count": count_surveys(), "items": items}
-
 @app.post("/api/upload-document")
 @limiter.limit("10/minute")
 async def upload_document(request: Request, file: UploadFile = File(...)):
@@ -328,7 +285,6 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
         "detected_language": detected_lang,
         "success": True
     }
-
 @app.post("/api/bankruptcy-context")
 async def get_bankruptcy_context(request: BankruptcyContextRequest):
     try:
@@ -338,7 +294,6 @@ async def get_bankruptcy_context(request: BankruptcyContextRequest):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Neo4j query error: {str(e)}")
-
 @app.post("/api/violation-search")
 async def search_violation(request: ViolationSearchRequest):
     try:
@@ -348,7 +303,6 @@ async def search_violation(request: ViolationSearchRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Neo4j query error: {str(e)}")
-
 @app.post("/api/template-structure")
 async def get_template_structure(request: TemplateStructureRequest):
     try:
@@ -358,11 +312,9 @@ async def get_template_structure(request: TemplateStructureRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Neo4j query error: {str(e)}")
-
 # ============================================================================
 # ГЛАВНЫЙ ЭНДПОИНТ — ГЕНЕРАЦИЯ ОБРАЩЕНИЯ
 # ============================================================================
-
 @app.post("/generate-appeal")
 @limiter.limit("5/minute")
 async def generate_appeal(
@@ -371,16 +323,27 @@ async def generate_appeal(
     problem_description: Optional[str] = Form(None),
     language: Optional[str] = Form(None),
     is_representative: Optional[str] = Form(None),
+    is_case_participant: Optional[str] = Form(None),
+    act_is_npa: Optional[str] = Form(None),
+    within_one_year: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
 ):
     problem_text = text or problem_description or ""
     representative = (is_representative or "").lower() == "true"
     body = ProblemRequest(problem_description=problem_text, language=language)
-
     lang = normalize_language(body.language) if body.language else detect_language(body.problem_description)
-
-    analysis = analyze_complaint(body.problem_description)
-
+    # Процессуальные факты, которые пользователь уже подтвердил через анкету
+    # на фронтенде (chat.html) ДО генерации черновика — участие в деле, вид
+    # оспариваемого акта, срок давности. Передаём их в анализ, чтобы Groq не
+    # пересматривал заново то, что уже было проверено интерфейсом, и не
+    # выносил противоречащее решение о допустимости обращения.
+    confirmed_facts = {
+        "is_case_participant": (is_case_participant or "").lower() == "true",
+        "act_is_npa": (act_is_npa or "").lower() == "true",
+        "within_one_year": (within_one_year or "").lower() == "true",
+        "is_representative": representative,
+    }
+    analysis = analyze_complaint(body.problem_description, confirmed_facts=confirmed_facts)
     if not analysis.get("success"):
         return {
             "status": "partial",
@@ -389,12 +352,10 @@ async def generate_appeal(
             "message": "Не удалось проанализировать жалобу.",
             "appeal_text": None,
         }
-
     violation_id = analysis.get("violation_id")
     case_type = analysis.get("case_type")
     reasoning = analysis.get("reasoning")
     within_jurisdiction = analysis.get("within_jurisdiction")
-
     if within_jurisdiction is False and not violation_id:
         redirect_info = find_relevant_organs(body.problem_description, driver)
         redirect_msg = format_redirect_message(redirect_info, lang=lang)
@@ -410,10 +371,8 @@ async def generate_appeal(
             "suggested_organs": redirect_info.get("organs", []),
             "appeal_text": None,
         }
-
     violation_data = None
     template_data = None
-
     if violation_id:
         try:
             violation_data = query_violation_search(violation_id)
@@ -423,7 +382,6 @@ async def generate_appeal(
             template_data = query_template_structure("tpl_cassation_bankruptcy")
         except Exception as e:
             print(f"⚠️ Neo4j template lookup failed: {e}")
-
     generation = generate_appeal_text(
         complaint_text=body.problem_description,
         language=lang,
@@ -433,7 +391,6 @@ async def generate_appeal(
         template_data=template_data,
         is_representative=representative,
     )
-
     # FR-6/FR-7: если найдена оспариваемая норма, проверяем — выносил ли
     # КС РК уже НП по ней, и если да — предлагаем ссылки как доп. аргумент
     # (ВСЕГДА с пометкой "требует проверки юристом", см. np_resolutions.py).
@@ -458,7 +415,6 @@ async def generate_appeal(
             suggested_np_citations = get_suggested_citations(article_law, str(article_number))
         except Exception as e:
             print(f"⚠️ НП КС РК lookup failed: {e}")
-
     return {
         "status": "success" if generation.get("success") else "partial",
         "language": lang,
@@ -472,11 +428,9 @@ async def generate_appeal(
         "prior_np_found": prior_np_found,
         "suggested_np_citations": suggested_np_citations,
     }
-
 # ============================================================================
 # STARTUP/SHUTDOWN
 # ============================================================================
-
 @app.on_event("startup")
 async def startup():
     global driver
@@ -488,14 +442,12 @@ async def startup():
     else:
         print("❌ Neo4j connection failed - will retry on first request")
     print("📚 API documentation: http://127.0.0.1:8000/docs")
-
 @app.on_event("shutdown")
 async def shutdown():
     global driver
     if driver:
         driver.close()
     print("Neo4j connection closed")
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
