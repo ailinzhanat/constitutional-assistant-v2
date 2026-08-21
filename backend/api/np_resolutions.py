@@ -31,6 +31,29 @@ def init_np_module(run_query_fn: Callable):
     """Вызывается один раз из main.py при старте приложения."""
     global _run_query
     _run_query = run_query_fn
+    _ensure_fulltext_index()
+def _ensure_fulltext_index():
+    """
+    FR-4: полнотекстовый (Lucene, встроен в Neo4j) индекс по title/summary/
+    full_text — используется как fallback-семантический поиск, когда точное
+    совпадение по (закон, статья) ничего не находит (см. find_resolutions_fuzzy
+    ниже). Это НЕ векторные embeddings — честно: полноценный семантический
+    поиск на embeddings потребовал бы внешнего embeddings-API (OpenAI/Cohere/
+    Voyage и т.п.), которого сейчас нет в стеке проекта, и это отдельное
+    решение (выбор провайдера, стоимость), которое должен принять владелец
+    проекта. Полнотекстовый индекс — честный практичный шаг в сторону FR-4
+    без добавления нового внешнего платного сервиса.
+    IF NOT EXISTS — безопасно вызывать при каждом старте приложения.
+    """
+    try:
+        _query(
+            """
+            CREATE FULLTEXT INDEX np_fulltext IF NOT EXISTS
+            FOR (r:NormativeResolution) ON EACH [r.title, r.summary, r.full_text]
+            """
+        )
+    except Exception as e:
+        print(f"⚠️ Не удалось создать полнотекстовый индекс np_fulltext: {e}")
 def _query(cypher: str, params: dict = None):
     if _run_query is None:
         raise HTTPException(status_code=503, detail="НП-модуль не инициализирован (init_np_module не вызван в main.py)")
@@ -76,17 +99,25 @@ class ArticleRef(BaseModel):
     number: str = Field(..., description="Номер статьи, например '43' или '160'")
     part: Optional[str] = Field(None, description="Часть/пункт статьи, например 'п.1', 'ч.5'")
 class NormativeResolutionIn(BaseModel):
-    """FR-1/FR-2: данные для загрузки одного постановления в корпус."""
+    """FR-1/FR-2/FR-3: данные для загрузки одного постановления в корпус."""
     number: str = Field(..., description="Номер постановления, например '89-НП'")
     date: str = Field(..., description="Дата принятия, формат ДД.ММ.ГГГГ (согласовано с текущей загрузкой корпуса)")
-    title: str = Field(..., description="Заголовок постановления")
+    title: str = Field(..., description="Заголовок постановления (на языке из поля language, обычно ru)")
     full_text: str = Field(..., description="Полный текст постановления")
     summary: Optional[str] = Field(None, description="Краткое резюме сути (1-2 предложения)")
     status: ResolutionStatus = "active"
     source_url: Optional[str] = Field(None, description="Ссылка на первоисточник (sud.gov.kz/gov.kz)")
     articles: List[ArticleRef] = Field(default_factory=list, description="Нормы, которые толкует/проверяет это НП")
     cites: List[str] = Field(default_factory=list, description="Номера других НП, которые цитирует это постановление")
-    language: Literal["ru", "kk"] = "ru"
+    language: Literal["ru", "kk", "en"] = "ru"
+    # FR-3: переводы заголовка/резюме на казахский и английский — необязательные,
+    # заполняются отдельным проходом поверх уже загруженной записи (title/summary
+    # остаются "исходным" русским текстом независимо от этих полей). Если для
+    # конкретного языка перевод не передан — при выдаче используется fallback на ru.
+    title_kk: Optional[str] = Field(None, description="Заголовок на казахском (FR-3)")
+    summary_kk: Optional[str] = Field(None, description="Резюме на казахском (FR-3)")
+    title_en: Optional[str] = Field(None, description="Заголовок на английском (FR-3)")
+    summary_en: Optional[str] = Field(None, description="Резюме на английском (FR-3)")
 class RelevanceCheckRequest(BaseModel):
     """FR-6: проверка — выносил ли КС РК уже НП по указанной норме."""
     law: str
@@ -105,6 +136,12 @@ def ingest_resolution(resolution: NormativeResolutionIn, x_admin_code: Optional[
     _check_admin(x_admin_code)
     now = datetime.now(timezone.utc).isoformat()
     # FR-4: базовый узел постановления с метаданными
+    # FR-3: title_kk/summary_kk/title_en/summary_en используют COALESCE — если
+    # в этом конкретном запросе перевод не передан (None), уже сохранённый
+    # перевод из предыдущей загрузки НЕ затирается пустой строкой. Это позволяет
+    # сначала загрузить запись на русском, а переводы добавить отдельным
+    # проходом (повторным POST того же number с заполненными title_kk и т.д.),
+    # не потеряв уже существующие переводы, если они уже были загружены.
     _query(
         """
         MERGE (r:NormativeResolution {number: $number})
@@ -115,7 +152,11 @@ def ingest_resolution(resolution: NormativeResolutionIn, x_admin_code: Optional[
             r.status = $status,
             r.source_url = $source_url,
             r.language = $language,
-            r.loaded_at = $loaded_at
+            r.loaded_at = $loaded_at,
+            r.title_kk = COALESCE($title_kk, r.title_kk),
+            r.summary_kk = COALESCE($summary_kk, r.summary_kk),
+            r.title_en = COALESCE($title_en, r.title_en),
+            r.summary_en = COALESCE($summary_en, r.summary_en)
         """,
         {
             "number": resolution.number,
@@ -127,6 +168,10 @@ def ingest_resolution(resolution: NormativeResolutionIn, x_admin_code: Optional[
             "source_url": resolution.source_url or "",
             "language": resolution.language,
             "loaded_at": now,
+            "title_kk": resolution.title_kk,
+            "summary_kk": resolution.summary_kk,
+            "title_en": resolution.title_en,
+            "summary_en": resolution.summary_en,
         },
     )
     # FR-2: связи с нормами, которые это НП толкует/проверяет
@@ -277,12 +322,47 @@ def find_resolutions_for_article(law: str, article_number: str) -> List[Dict[str
         MATCH (r:NormativeResolution)-[:REVIEWS]->(a:Article {{law: $law, number: $article_number}})
         WITH r, {_DATE_SORT_KEY_CYPHER} AS date_sort
         RETURN r.number AS number, r.date AS date, r.title AS title,
-               r.summary AS summary, r.status AS status, r.source_url AS source_url
+               r.summary AS summary, r.status AS status, r.source_url AS source_url,
+               r.title_kk AS title_kk, r.summary_kk AS summary_kk,
+               r.title_en AS title_en, r.summary_en AS summary_en
         ORDER BY date_sort DESC
         """,
         {"law": law, "article_number": article_number},
     )
     return rows
+def find_resolutions_fuzzy(query_text: str, max_results: int = 3) -> List[Dict[str, Any]]:
+    """
+    FR-4 (частично, см. _ensure_fulltext_index): семантический fallback —
+    когда точное совпадение (закон, статья) в find_resolutions_for_article
+    ничего не находит (например, норма извлечена Groq неточно, или НП
+    касается вопроса без чёткой привязки к одной статье), ищем по смыслу
+    описания жалобы через полнотекстовый Lucene-индекс по title/summary/
+    full_text. Результаты этого поиска ВСЕГДА помечаются как "возможно
+    релевантно" (risk из ТЗ раздела 7: "риск ложных совпадений") — это
+    менее надёжно, чем точное совпадение по статье, и никогда не должно
+    подаваться как эквивалент точного результата.
+    """
+    if not query_text or not query_text.strip():
+        return []
+    try:
+        rows = _query(
+            """
+            CALL db.index.fulltext.queryNodes('np_fulltext', $query_text)
+            YIELD node AS r, score
+            WHERE r.status = 'active'
+            RETURN r.number AS number, r.date AS date, r.title AS title,
+                   r.summary AS summary, r.status AS status, r.source_url AS source_url,
+                   r.title_kk AS title_kk, r.summary_kk AS summary_kk,
+                   r.title_en AS title_en, r.summary_en AS summary_en, score
+            ORDER BY score DESC
+            LIMIT $max_results
+            """,
+            {"query_text": query_text[:1000], "max_results": max_results},
+        )
+        return rows
+    except Exception as e:
+        print(f"⚠️ Полнотекстовый поиск np_fulltext не удался: {e}")
+        return []
 @router.post("/check-relevance")
 def check_relevance(request: RelevanceCheckRequest, x_admin_code: Optional[str] = Header(None)):
     """
@@ -295,46 +375,146 @@ def check_relevance(request: RelevanceCheckRequest, x_admin_code: Optional[str] 
 # ---------------------------------------------------------------------------
 # FR-7: релевантные ссылки для черновика обращения (используется в generate_appeal)
 # ---------------------------------------------------------------------------
-def get_suggested_citations(law: str, article_number: str, max_results: int = 3) -> List[Dict[str, Any]]:
+def _localized_title_summary(r: Dict[str, Any], language: str) -> Dict[str, Any]:
+    """
+    FR-3: выбирает title/summary на запрошенном языке (kk/en), с откатом
+    на русский (title/summary всегда заполнены — это исходные поля), если
+    перевод для этого конкретного НП ещё не загружен. Так интерфейс никогда
+    не показывает пустую карточку из-за отсутствующего перевода.
+    """
+    if language == "kk":
+        return {
+            "title": r.get("title_kk") or r["title"],
+            "summary": r.get("summary_kk") or r.get("summary"),
+        }
+    if language == "en":
+        return {
+            "title": r.get("title_en") or r["title"],
+            "summary": r.get("summary_en") or r.get("summary"),
+        }
+    return {"title": r["title"], "summary": r.get("summary")}
+_NOTE_BY_LANGUAGE = {
+    "ru": "Это автоматическая подсказка на основе базы практики КС РК. Требует проверки юристом перед использованием.",
+    "kk": "Бұл — КС РК тәжірибесі базасы негізіндегі автоматты ұсыныс. Пайдаланар алдында заңгердің тексеруін қажет етеді.",
+    "en": "This is an automated suggestion based on the Constitutional Court's case-law database. It requires review by a lawyer before use.",
+}
+_SUPERSEDED_NOTE_BY_LANGUAGE = {
+    "ru": "Утратило силу / изменено (статус: {status}) — не использовать как действующую позицию суда.",
+    "kk": "Күшін жойған / өзгертілген (мәртебесі: {status}) — соттың қолданыстағы позициясы ретінде пайдаланбау керек.",
+    "en": "No longer in force / amended (status: {status}) — do not use as the Court's current position.",
+}
+_FUZZY_NOTE_BY_LANGUAGE = {
+    "ru": "Возможно релевантно (найдено по смыслу описания, а не по точному совпадению нормы) — требует особо внимательной проверки юристом.",
+    "kk": "Мүмкін өзекті (норманың дәл сәйкестігі бойынша емес, сипаттаманың мағынасы бойынша табылған) — заңгердің аса мұқият тексеруін қажет етеді.",
+    "en": "Possibly relevant (found by meaning of the description, not an exact match on the provision) — requires especially careful review by a lawyer.",
+}
+def get_suggested_citations(
+    law: str,
+    article_number: str,
+    max_results: int = 3,
+    language: str = "ru",
+    complaint_text: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """
     Вызывается из pipeline генерации черновика (groq_generator.py / main.py).
     Возвращает НП, которые можно предложить как дополнительный аргумент —
     ВСЕГДА с explicit пометкой (см. formatted_note), что это подсказка,
     а не готовый вывод (риск из ТЗ раздела 7: "риск ложных совпадений").
+    FR-3: language ("ru"/"kk"/"en") выбирает язык title/summary/note в ответе.
+    FR-4: если точное совпадение по (law, article_number) ничего не находит
+    и передан complaint_text — пробуем полнотекстовый (fuzzy) поиск как
+    fallback, результаты помечаются "possibly_relevant" и отдельной пометкой
+    с более низкой уверенностью (см. _FUZZY_NOTE_BY_LANGUAGE).
     """
+    if language not in ("ru", "kk", "en"):
+        language = "ru"
     results = find_resolutions_for_article(law, article_number)
     active_only = [r for r in results if r.get("status") == "active"]
     suggestions = []
     for r in active_only[:max_results]:
+        loc = _localized_title_summary(r, language)
         suggestions.append({
             "number": r["number"],
             "date": r["date"],
-            "title": r["title"],
-            "summary": r.get("summary"),
+            "title": loc["title"],
+            "summary": loc["summary"],
             "source_url": r.get("source_url"),
             # FR-7: обязательная пометка при использовании в черновике
-            "note": "Это автоматическая подсказка на основе базы практики КС РК. "
-                    "Требует проверки юристом перед использованием.",
+            "note": _NOTE_BY_LANGUAGE[language],
         })
     # FR-8: утратившие силу тоже возвращаем, но с явной меткой,
     # чтобы вызывающий код мог решить не использовать их как позицию суда
     superseded = [r for r in results if r.get("status") != "active"]
     for r in superseded[:max_results]:
+        loc = _localized_title_summary(r, language)
         suggestions.append({
             "number": r["number"],
             "date": r["date"],
-            "title": r["title"],
-            "summary": r.get("summary"),
+            "title": loc["title"],
+            "summary": loc["summary"],
             "source_url": r.get("source_url"),
-            "note": f"⚠️ Утратило силу / изменено (статус: {r.get('status')}) — "
-                    f"не использовать как действующую позицию суда.",
+            "note": "⚠️ " + _SUPERSEDED_NOTE_BY_LANGUAGE[language].format(status=r.get("status")),
             "superseded": True,
         })
+    # FR-4: точное совпадение по статье ничего не дало — пробуем fuzzy fallback
+    if not suggestions and complaint_text:
+        fuzzy = find_resolutions_fuzzy(complaint_text, max_results)
+        for r in fuzzy:
+            loc = _localized_title_summary(r, language)
+            suggestions.append({
+                "number": r["number"],
+                "date": r["date"],
+                "title": loc["title"],
+                "summary": loc["summary"],
+                "source_url": r.get("source_url"),
+                "note": _FUZZY_NOTE_BY_LANGUAGE[language],
+                "possibly_relevant": True,
+            })
     return suggestions
 @router.get("/suggested-citations")
-def suggested_citations_endpoint(law: str, article_number: str, max_results: int = 3):
+def suggested_citations_endpoint(
+    law: str,
+    article_number: str,
+    max_results: int = 3,
+    language: str = "ru",
+    complaint_text: Optional[str] = None,
+):
     """Публичный (не защищённый кодом) эндпоинт — вызывается фронтендом при формировании черновика."""
-    return {"suggestions": get_suggested_citations(law, article_number, max_results)}
+    return {"suggestions": get_suggested_citations(law, article_number, max_results, language, complaint_text)}
+@router.get("/last-updated")
+def last_updated():
+    """
+    NFR-3: публичный (без кода администратора) эндпоинт с датой актуальности
+    базы НП КС РК — вызывается фронтендом (chat.html) для отображения
+    "База практики КС РК актуальна на: ...". В отличие от /corpus-status
+    (админский, отдаёт больше деталей) этот эндпоинт отдаёт только то,
+    что безопасно показывать публично.
+    """
+    rows = _query(
+        f"""
+        MATCH (r:NormativeResolution)
+        WITH r, {_DATE_SORT_KEY_CYPHER} AS date_sort
+        RETURN count(r) AS total,
+               max(r.loaded_at) AS last_loaded_at,
+               max(date_sort) AS latest_sort
+        """
+    )
+    row = rows[0] if rows else {}
+    last_loaded_at = row.get("last_loaded_at")
+    # Отдаём только дату (без времени) в формате ДД.ММ.ГГГГ — этого достаточно
+    # для NFR-3 ("дата актуальности базы") и не раскрывает лишних деталей.
+    updated_display = None
+    if last_loaded_at:
+        try:
+            dt = datetime.fromisoformat(last_loaded_at)
+            updated_display = dt.strftime("%d.%m.%Y")
+        except Exception:
+            updated_display = None
+    return {
+        "total_resolutions": row.get("total", 0),
+        "updated_at": updated_display,
+        "latest_resolution_date": _sort_key_to_display_date(row.get("latest_sort")),
+    }
 # ---------------------------------------------------------------------------
 # Просмотр корпуса (для админки — будущий интерфейс НП-каталога)
 # ---------------------------------------------------------------------------
