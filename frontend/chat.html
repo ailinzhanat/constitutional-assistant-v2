@@ -146,6 +146,7 @@ html, body {
 .np-citation-number { font-weight: 700; color: var(--gold-hover); }
 .np-citation-summary { margin-top: 4px; line-height: 1.5; }
 .np-citation-superseded { color: var(--red-soft); font-weight: 600; font-size: 12px; }
+.np-citation-possible { color: var(--gold-hover); font-weight: 600; font-size: 12px; }
 .np-citation-link { font-size: 12px; margin-top: 4px; display: inline-block; }
 .np-citations-note {
   font-size: 11.5px; color: var(--text-muted); margin-top: 8px; font-style: italic;
@@ -316,6 +317,7 @@ html, body {
   <div id="action-zone"></div>
   <div class="footer">
     <span data-i18n="footer">Пилотная версия · Не является официальной юридической консультацией</span>
+    <span id="npDbActuality" class="hidden"></span>
   </div>
 </div>
 <!-- ---------- FEEDBACK WIDGET ---------- -->
@@ -450,8 +452,11 @@ const T = {
   waking: { kk: "Сервер жүктеліп жатыр (тегін хостинг), күте тұрыңыз...", ru: "Сервер просыпается (бесплатный хостинг), подождите...", en: "Server is waking up (free hosting), please wait..." },
   resultIntro: { kk: "Міне сіздің өтініш жобаңыз. Юристке тексертуден кейін пайдалануға болады.", ru: "Вот черновик вашего обращения. Его можно использовать после проверки юристом.", en: "Here is your draft appeal. It can be used after review by a lawyer." },
   npFoundTitle: { kk: "КС РК бұл нормаға қатысты бұрын шешім қабылдаған", ru: "КС РК уже рассматривал эту норму", en: "The Constitutional Court has already reviewed this provision" },
+  npFoundTitleFuzzy: { kk: "Мүмкін өзекті тәжірибе (мазмұны бойынша табылған)", ru: "Возможно релевантная практика (найдено по смыслу)", en: "Possibly relevant case law (found by meaning)" },
+  npPossibleTag: { kk: "мүмкін өзекті", ru: "возможно релевантно", en: "possibly relevant" },
   npNote: { kk: "Бұл — тексерілуі тиіс автоматты ұсыныс.", ru: "Это автоматическая подсказка, требует проверки юристом.", en: "This is an automated suggestion and requires review by a lawyer." },
   npSupersededTag: { kk: "күшін жойған", ru: "утратило силу", en: "no longer in force" },
+  npDbActuality: { kk: "КС РК тәжірибесінің базасы мынаған дейін өзекті:", ru: "База практики КС РК актуальна на:", en: "Constitutional Court case-law database is current as of:" },
   resultRedirect: { kk: "Талдау нәтижесі бойынша бұл мәселе Конституциялық Соттың құзыретіне жатпайды.", ru: "По результатам анализа данный вопрос не относится к компетенции Конституционного Суда.", en: "Based on the analysis, this issue does not fall within the competence of the Constitutional Court." },
   errorGeneric: { kk: "Қате пайда болды. Кейінірек қайталап көріңіз.", ru: "Произошла ошибка. Попробуйте позже.", en: "An error occurred. Please try again later." },
   fbButton: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
@@ -842,9 +847,16 @@ async function stepGenerate() {
 }
 function renderNpCitations(citations) {
   if (!citations || !citations.length) return "";
+  // FR-4: если ВСЕ карточки — только fuzzy-совпадения (нет ни одного точного
+  // совпадения по статье), заголовок секции честно отражает более низкую
+  // уверенность вместо формулировки "уже рассматривал эту норму".
+  var allFuzzy = citations.every(function(c) { return c.possibly_relevant; });
   var cards = citations.map(function(c) {
     var superseded = c.superseded
       ? '<div class="np-citation-superseded">⚠️ ' + t("npSupersededTag") + '</div>'
+      : "";
+    var possible = c.possibly_relevant
+      ? '<div class="np-citation-possible">🔍 ' + t("npPossibleTag") + '</div>'
       : "";
     var link = c.source_url
       ? '<a class="np-citation-link" href="' + escapeHtml(c.source_url) + '" target="_blank" rel="noopener">' + escapeHtml(c.source_url) + '</a>'
@@ -854,6 +866,7 @@ function renderNpCitations(citations) {
         '<span class="np-citation-number">№' + escapeHtml(c.number || "") + '</span>' +
         (c.date ? ' · ' + escapeHtml(c.date) : '') +
         superseded +
+        possible +
         (c.summary ? '<div class="np-citation-summary">' + escapeHtml(c.summary) + '</div>' : '') +
         link +
       '</div>'
@@ -861,7 +874,7 @@ function renderNpCitations(citations) {
   }).join("");
   return (
     '<div class="np-citations">' +
-      '<div class="np-citations-title">📚 ' + t("npFoundTitle") + '</div>' +
+      '<div class="np-citations-title">📚 ' + (allFuzzy ? t("npFoundTitleFuzzy") : t("npFoundTitle")) + '</div>' +
       cards +
       '<div class="np-citations-note">' + t("npNote") + '</div>' +
     '</div>'
@@ -890,6 +903,7 @@ document.querySelectorAll(".lang-btn").forEach(function(btn) {
       if (T[key]) el.textContent = T[key][lang];
     });
     applyFeedbackTranslations();
+    renderNpDbActuality();
     startFlow();
   });
 });
@@ -956,7 +970,27 @@ document.getElementById("fbSend").addEventListener("click", async function() {
     statusEl.textContent = t("fbError");
   }
 });
+/* ---------------- NFR-3: дата актуальности базы НП КС РК ---------------- */
+var npDbUpdatedAt = null;
+function renderNpDbActuality() {
+  var el = document.getElementById("npDbActuality");
+  if (!el || !npDbUpdatedAt) return;
+  el.textContent = " · " + t("npDbActuality") + " " + npDbUpdatedAt;
+  el.classList.remove("hidden");
+}
+function fetchNpDbActuality() {
+  fetch(API_BASE + "/api/np/last-updated")
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.updated_at) {
+        npDbUpdatedAt = data.updated_at;
+        renderNpDbActuality();
+      }
+    })
+    .catch(function() {});
+}
 applyFeedbackTranslations();
+fetchNpDbActuality();
 startFlow();
 </script>
 </body>
