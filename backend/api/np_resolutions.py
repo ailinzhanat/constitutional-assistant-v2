@@ -53,9 +53,13 @@ def _check_admin(x_admin_code: Optional[str]):
 # символ '3' > '0'). Этот фрагмент строит временный сортируемый ключ
 # "ГГГГММДД" прямо в запросе, не меняя сами данные в базе.
 _DATE_SORT_KEY_CYPHER = """
-    CASE WHEN r.date =~ '\\\\d{2}\\\\.\\\\d{2}\\\\.\\\\d{4}'
-         THEN substring(r.date, 6, 4) + substring(r.date, 3, 2) + substring(r.date, 0, 2)
-         ELSE r.date END
+    CASE
+        WHEN r.date =~ '\\\\d{2}\\\\.\\\\d{2}\\\\.\\\\d{4}'
+            THEN substring(r.date, 6, 4) + substring(r.date, 3, 2) + substring(r.date, 0, 2)
+        WHEN r.date =~ '\\\\d{4}-\\\\d{2}-\\\\d{2}'
+            THEN substring(r.date, 0, 4) + substring(r.date, 5, 2) + substring(r.date, 8, 2)
+        ELSE r.date
+    END
 """
 def _sort_key_to_display_date(sort_key: Optional[str]) -> Optional[str]:
     """Обратное преобразование "ГГГГММДД" -> "ДД.ММ.ГГГГ" для ответа API."""
