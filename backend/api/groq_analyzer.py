@@ -20,10 +20,17 @@ def analyze_complaint(
     document_text: Optional[str] = None,
     api_key: Optional[str] = None,
     timeout: int = 45,
+    confirmed_facts: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Анализирует жалобу через Groq.
     Интерфейс идентичен llama_analyzer.analyze_complaint.
+
+    confirmed_facts: словарь с процессуальными фактами, которые пользователь
+    уже подтвердил через анкету на фронтенде (участие в деле, вид акта,
+    срок давности, наличие представителя) — передаётся в промпт, чтобы
+    Groq не пересматривал заново то, что уже было проверено интерфейсом.
+
     Returns:
         dict: within_jurisdiction, violation_id, case_type, reasoning, success, error
     """
@@ -31,7 +38,7 @@ def analyze_complaint(
     if not key:
         return {"within_jurisdiction": None, "violation_id": None, "case_type": None,
                 "reasoning": None, "success": False, "error": "GROQ_API_KEY не найден в .env"}
-    prompt = _build_prompt(complaint_text, document_text)
+    prompt = _build_prompt(complaint_text, document_text, confirmed_facts)
     try:
         response = requests.post(
             GROQ_API_URL,
