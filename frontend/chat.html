@@ -276,6 +276,8 @@ html, body {
 #fbClose:hover{color:var(--text);}
 #fbPanel textarea{min-height:88px;margin-bottom:10px;}
 #fbPanel input[type=text]{margin-bottom:12px;}
+#fbPanel select{width:100%;margin-bottom:12px;padding:9px 10px;font-family:var(--font);font-size:13.5px;
+  border:2px solid var(--border);border-radius:var(--radius-sm);color:var(--text);background:var(--bg-white);}
 #fbStatus{font-size:12.5px;margin-top:8px;}
 #fbStatus.ok{color:var(--green-soft);}
 #fbStatus.error{color:var(--red-soft);}
@@ -332,6 +334,11 @@ html, body {
   <h3 id="fbTitle">Обратная связь</h3>
   <p class="fbsub" id="fbSub">Напишите, что думаете о работе сайта.</p>
   <textarea id="fbMessage" placeholder="Что понравилось, что можно улучшить…"></textarea>
+  <select id="fbRole">
+    <option value="" id="fbRoleOptEmpty">Кто вы? (необязательно)</option>
+    <option value="citizen" id="fbRoleOptCitizen">Гражданин</option>
+    <option value="lawyer" id="fbRoleOptLawyer">Юрист</option>
+  </select>
   <input type="text" id="fbContact" placeholder="Email или телефон (необязательно)">
   <button class="send-btn" id="fbSend" style="width:100%;">Отправить</button>
   <div id="fbStatus"></div>
@@ -461,6 +468,9 @@ const T = {
   errorGeneric: { kk: "Қате пайда болды. Кейінірек қайталап көріңіз.", ru: "Произошла ошибка. Попробуйте позже.", en: "An error occurred. Please try again later." },
   fbButton: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
   fbTitle: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
+  fbRoleEmpty: { kk: "Сіз кімсіз? (міндетті емес)", ru: "Кто вы? (необязательно)", en: "Who are you? (optional)" },
+  fbRoleCitizen: { kk: "Азамат", ru: "Гражданин", en: "Citizen" },
+  fbRoleLawyer: { kk: "Заңгер", ru: "Юрист", en: "Lawyer" },
   fbSub: { kk: "Сайттың жұмысы туралы пікіріңізді жазыңыз.", ru: "Напишите, что думаете о работе сайта.", en: "Tell us what you think about this site." },
   fbMessagePlaceholder: { kk: "Не ұнады, не жақсартуға болады…", ru: "Что понравилось, что можно улучшить…", en: "What worked well, what could be better…" },
   fbContactPlaceholder: { kk: "Email немесе телефон (міндетті емес)", ru: "Email или телефон (необязательно)", en: "Email or phone (optional)" },
@@ -489,7 +499,9 @@ sessionStorage.setItem("ca_visited_before", "1");
 function getDeviceType() {
   return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "desktop";
 }
+var CURRENT_STEP = "01_consent"; // FR-9: используется виджетом обратной связи, чтобы знать к какому шагу относится отзыв
 function trackEvent(step, eventType, extra) {
+  CURRENT_STEP = step;
   try {
     fetch(API_BASE + "/api/analytics/event", {
       method: "POST",
@@ -915,6 +927,9 @@ function applyFeedbackTranslations() {
   document.getElementById("fbMessage").placeholder = t("fbMessagePlaceholder");
   document.getElementById("fbContact").placeholder = t("fbContactPlaceholder");
   document.getElementById("fbSend").textContent = t("fbSend");
+  document.getElementById("fbRoleOptEmpty").textContent = t("fbRoleEmpty");
+  document.getElementById("fbRoleOptCitizen").textContent = t("fbRoleCitizen");
+  document.getElementById("fbRoleOptLawyer").textContent = t("fbRoleLawyer");
 }
 var fbButton = document.getElementById("fbButton");
 var fbPanel  = document.getElementById("fbPanel");
@@ -954,7 +969,9 @@ document.getElementById("fbSend").addEventListener("click", async function() {
         message: message,
         contact: contactEl.value.trim() || null,
         language: lang,
-        page: "chat"
+        page: "chat",
+        step: CURRENT_STEP,
+        role: document.getElementById("fbRole").value || null
       })
     });
     sendBtn.disabled = false;
