@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Модерация форума — Constitutional Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12203A; --panel:#1B2C4F; --paper:#ECEAE3;
+    --seal:#B8934A; --seal-bright:#D4AC63; --patina:#3F7D73;
+    --text:#E8E6DF; --dim:#9AA6BE; --slate:#4A5164; --slate-dim:#82889A;
+    --red:#C77B6E;
+    --sans:"IBM Plex Sans",sans-serif; --cond:"IBM Plex Sans Condensed",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);min-height:100vh;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 70px;}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    border-bottom:1px solid rgba(232,230,223,0.14);padding-bottom:18px;margin-bottom:20px;}
+  h1{font-family:var(--cond);font-weight:700;font-size:21px;margin:0;}
+  .count{font-family:var(--mono);font-size:12px;color:var(--dim);}
+
+  #gate{max-width:380px;margin:70px auto;text-align:center;}
+  .card{background:var(--paper);color:var(--slate);border-radius:2px;padding:28px 26px;}
+  .card h2{font-family:var(--cond);font-size:18px;margin:0 0 6px;color:#1A2333;}
+  .card p{font-size:13px;color:var(--slate-dim);margin:0 0 18px;}
+  input[type=text],input[type=password]{width:100%;font-family:var(--mono);font-size:14px;
+    background:#fff;border:1px solid rgba(0,0,0,0.15);color:#1A2333;
+    padding:11px 13px;border-radius:2px;margin-bottom:12px;text-align:center;}
+  input[type=text]:focus,input[type=password]:focus{outline:2px solid var(--seal);outline-offset:1px;}
+  .btn{font-family:var(--sans);font-weight:600;font-size:14px;padding:11px 20px;
+    border:none;border-radius:2px;background:var(--seal);color:#1A1204;cursor:pointer;}
+  .btn:hover{background:var(--seal-bright);}
+  .btn:disabled{background:#6b6248;cursor:not-allowed;}
+  .btn.small{padding:7px 13px;font-size:12.5px;}
+  .btn.danger{background:var(--red);color:#2A0E0A;}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(232,230,223,0.25);}
+  .err{color:#C77B6E;font-size:13px;margin-top:8px;}
+  .ok{color:var(--patina);font-size:13px;margin-top:8px;}
+
+  #panel{display:none;}
+  #panel.visible{display:block;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+  .tabs button{font-family:var(--sans);font-size:13px;padding:9px 16px;border-radius:2px;
+    border:1px solid rgba(232,230,223,0.18);background:var(--panel);color:var(--dim);cursor:pointer;}
+  .tabs button.active{background:var(--seal);color:#1A1204;border-color:var(--seal);font-weight:600;}
+  .tabs button .badge{background:rgba(0,0,0,0.2);padding:1px 6px;border-radius:8px;margin-left:6px;font-family:var(--mono);font-size:11px;}
+  .tabs button.active .badge{background:rgba(0,0,0,0.25);}
+
+  .item{background:var(--panel);border-radius:2px;padding:18px 20px;margin-bottom:12px;}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--dim);
+    display:flex;gap:10px;flex-wrap:wrap;margin-bottom:9px;align-items:center;}
+  .sla-chip{padding:1px 7px;border-radius:9px;background:rgba(199,123,110,0.22);color:var(--red);}
+  .body-text{font-size:14px;line-height:1.6;white-space:pre-wrap;margin:0 0 12px;color:var(--text);}
+  .title-text{font-family:var(--cond);font-weight:700;font-size:17px;margin:0 0 8px;color:var(--text);}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .empty{color:var(--dim);text-align:center;padding:40px 0;font-size:14px;}
+  .field-label{display:block;font-size:11px;color:var(--dim);font-family:var(--mono);margin-bottom:4px;}
+  select, textarea{font-family:var(--sans);font-size:13px;padding:8px 10px;
+    border:1px solid rgba(232,230,223,0.2);border-radius:2px;background:var(--ink);color:var(--text);width:100%;margin-bottom:8px;}
+  textarea{min-height:60px;resize:vertical;}
+  .status-form{background:rgba(0,0,0,0.15);border-radius:2px;padding:12px 14px;margin-top:10px;}
+  .note{font-size:12px;color:var(--slate-dim);margin:0 0 10px;line-height:1.5;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .filters select{width:auto;min-width:160px;margin-bottom:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="gate">
+    <div class="card">
+      <h2>Модерация форума</h2>
+      <p>Введите код администратора — тот же, что и в остальных админ-панелях проекта. У модерации форума нет отдельного режима «только просмотр»: код администратора даёт полный доступ к этому разделу.</p>
+      <input type="text" id="code" placeholder="Код администратора" autocomplete="off">
+      <button class="btn" id="btnEnter" style="width:100%;">Открыть</button>
+      <div class="err" id="gateErr"></div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <header>
+      <h1>Модерация форума</h1>
+      <span class="count" id="clock"></span>
+    </header>
+
+    <div class="tabs">
+      <button id="tabLawyers" class="active">Заявки юристов <span class="badge" id="badgeLawyers">0</span></button>
+      <button id="tabReports">Жалобы <span class="badge" id="badgeReports">0</span></button>
+      <button id="tabThreads">Темы и статусы</button>
+    </div>
+
+    <div id="content"></div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
+let adminCode = "";
+let categories = [];
+
+const ALLOWED_STATUSES = ["на рассмотрении", "принято в разработку", "внедрено", "отклонено"];
+const STEP_OPTIONS = [
+  ["", "Не привязано"],
+  ["01_consent", "01 Согласие"],
+  ["02_description", "02 Описание проблемы"],
+  ["03_jurisdiction", "03 Проверка юрисдикции"],
+  ["04_draft", "04 Черновик обращения"],
+];
+
+function esc(s){ const d=document.createElement("div"); d.textContent = s==null ? "" : String(s); return d.innerHTML; }
+function fmtDate(iso){
+  if(!iso) return "";
+  try{ return new Date(iso).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
+  catch(e){ return iso; }
+}
+
+document.getElementById("btnEnter").addEventListener("click", enter);
+document.getElementById("code").addEventListener("keydown", e => { if(e.key==="Enter") enter(); });
+document.getElementById("tabLawyers").addEventListener("click", () => switchTab("lawyers"));
+document.getElementById("tabReports").addEventListener("click", () => switchTab("reports"));
+document.getElementById("tabThreads").addEventListener("click", () => switchTab("threads"));
+
+async function fapi(path, opts={}){
+  const headers = Object.assign({ "Content-Type": "application/json", "X-Admin-Code": adminCode }, opts.headers||{});
+  const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+  let data = null;
+  try{ data = await res.json(); }catch(e){}
+  if(!res.ok){
+    const err = new Error((data && (data.detail?.message || data.detail)) || "Ошибка запроса");
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+async function enter(){
+  const errEl = document.getElementById("gateErr");
+  errEl.textContent = "";
+  const code = document.getElementById("code").value.trim();
+  if(!code){ errEl.textContent = "Введите код"; return; }
+  adminCode = code;
+  try{
+    // Проверяем код и заодно проверяем, что это именно полный доступ (модератор), а не код "только просмотр" из аналитики.
+    await fapi("/api/forum/moderation/pending-lawyers");
+  }catch(e){
+    if(e.status === 401 || e.status === 403){ errEl.textContent = "Неверный код или код не даёт прав модератора"; return; }
+    errEl.textContent = "Ошибка запроса: " + e.message; return;
+  }
+  try{ categories = (await fapi("/api/forum/categories")).categories; }catch(e){ categories = []; }
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("panel").classList.add("visible");
+  refreshBadges();
+  switchTab("lawyers");
+}
+
+async function refreshBadges(){
+  try{
+    const lw = await fapi("/api/forum/moderation/pending-lawyers");
+    document.getElementById("badgeLawyers").textContent = lw.count;
+  }catch(e){}
+  try{
+    const rp = await fapi("/api/forum/moderation/reports");
+    document.getElementById("badgeReports").textContent = rp.count;
+  }catch(e){}
+}
+
+function switchTab(tab){
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add("active");
+  if(tab === "lawyers") renderLawyers();
+  else if(tab === "reports") renderReports();
+  else renderThreads();
+}
+
+// ---------------- Заявки юристов (FR-5, NFR-6) ----------------
+async function renderLawyers(){
+  const c = document.getElementById("content");
+  c.innerHTML = `<div class="empty">Загрузка…</div>`;
+  try{
+    const data = await fapi("/api/forum/moderation/pending-lawyers");
+    if(!data.items.length){ c.innerHTML = `<div class="empty">Заявок на верификацию сейчас нет.</div>`; return; }
+    c.innerHTML = data.items.map(u => `
+      <div class="item">
+        <div class="meta">
+          <span>${fmtDate(u.created_at)}</span>
+          <span>${u.days_pending != null ? u.days_pending + " дн. в очереди" : ""}</span>
+          ${u.sla_overdue ? `<span class="sla-chip">просрочено (более 3 дней)</span>` : ""}
+        </div>
+        <div class="title-text">${esc(u.display_name)}</div>
+        <div class="body-text" style="font-size:13px;color:var(--dim);">${esc(u.email)}${u.organization ? " · " + esc(u.organization) : ""}</div>
+        <div class="row-actions">
+          ${u.verification_doc_id ? `<button class="btn small ghost" onclick="downloadDoc('${u.verification_doc_id}', this)">Скачать документ</button>` : `<span style="font-size:12px;color:var(--dim);">Документ не загружен</span>`}
+          <button class="btn small" onclick="reviewLawyer('${u.user_id}', true, this)">Одобрить</button>
+          <button class="btn small danger" onclick="reviewLawyer('${u.user_id}', false, this)">Отклонить</button>
+        </div>
+        <div id="msg-${u.user_id}"></div>
+      </div>
+    `).join("");
+  }catch(e){ c.innerHTML = `<div class="err">Не удалось загрузить: ${esc(e.message)}</div>`; }
+}
+
+async function downloadDoc(docId, btn){
+  const orig = btn.textContent;
+  btn.textContent = "Загрузка…"; btn.disabled = true;
+  try{
+    const res = await fetch(`${API_BASE}/api/forum/moderation/verification-document/${docId}`, { headers: { "X-Admin-Code": adminCode } });
+    if(!res.ok) throw new Error("Ошибка загрузки документа");
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : "document";
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }catch(e){ alert("Не удалось скачать документ: " + e.message); }
+  finally{ btn.textContent = orig; btn.disabled = false; }
+}
+
+async function reviewLawyer(userId, approve, btn){
+  const msg = document.getElementById(`msg-${userId}`);
+  let note = null;
+  if(!approve){ note = prompt("Причина отклонения (увидит только модератор, в записи пользователя):") || null; }
+  btn.disabled = true;
+  try{
+    await fapi(`/api/forum/moderation/lawyers/${userId}/review`, { method:"POST", body: JSON.stringify({ approve, note }) });
+    msg.innerHTML = `<div class="ok">${approve ? "Юрист одобрен." : "Заявка отклонена."}</div>`;
+    refreshBadges();
+    setTimeout(renderLawyers, 900);
+  }catch(e){ msg.innerHTML = `<div class="err">${esc(e.message)}</div>`; btn.disabled = false; }
+}
+
+// ---------------- Жалобы (FR-10) ----------------
+async function renderReports(){
+  const c = document.getElementById("content");
+  c.innerHTML = `<div class="empty">Загрузка…</div>`;
+  try{
+    const data = await fapi("/api/forum/moderation/reports");
+    if(!data.items.length){ c.innerHTML = `<div class="empty">Нерассмотренных жалоб нет.</div>`; return; }
+    c.innerHTML = data.items.map(r => `
+      <div class="item">
+        <div class="meta">
+          <span>${fmtDate(r.created_at)}</span>
+          <span>${r.target_type === "thread" ? "тема" : "ответ"}</span>
+        </div>
+        <div class="title-text" style="font-size:15px;">${esc((r.content && (r.content.title || r.content.body)) || "(материал не найден — возможно, уже удалён)")}</div>
+        <div class="body-text" style="font-size:13px;"><b>Причина жалобы:</b> ${esc(r.reason)}</div>
+        <p class="note">Материал уже скрыт с форума до вашего решения (FR-10). «Оставить скрытым» — жалоба закрывается, материал остаётся скрытым. «Вернуть» — материал снова становится виден всем.</p>
+        <div class="row-actions">
+          <button class="btn small" onclick="resolveReport('${r.report_id}', 'hide', this)">Оставить скрытым</button>
+          <button class="btn small ghost" onclick="resolveReport('${r.report_id}', 'restore', this)">Вернуть на форум</button>
+        </div>
+        <div id="rmsg-${r.report_id}"></div>
+      </div>
+    `).join("");
+  }catch(e){ c.innerHTML = `<div class="err">Не удалось загрузить: ${esc(e.message)}</div>`; }
+}
+
+async function resolveReport(reportId, action, btn){
+  const msg = document.getElementById(`rmsg-${reportId}`);
+  btn.disabled = true;
+  try{
+    await fapi(`/api/forum/moderation/reports/${reportId}/resolve`, { method:"POST", body: JSON.stringify({ action }) });
+    msg.innerHTML = `<div class="ok">Готово.</div>`;
+    refreshBadges();
+    setTimeout(renderReports, 900);
+  }catch(e){ msg.innerHTML = `<div class="err">${esc(e.message)}</div>`; btn.disabled = false; }
+}
+
+// ---------------- Темы: статусы, закрепление, закрытие (FR-5/FR-6) ----------------
+let threadStatusFilter = "";
+async function renderThreads(){
+  const c = document.getElementById("content");
+  c.innerHTML = `
+    <div class="filters">
+      <select id="thStatusFilter">
+        <option value="">Все статусы</option>
+        ${ALLOWED_STATUSES.map(s => `<option value="${esc(s)}" ${s===threadStatusFilter?"selected":""}>${esc(s)}</option>`).join("")}
+      </select>
+    </div>
+    <div id="threadsListAdmin" class="empty">Загрузка…</div>
+  `;
+  document.getElementById("thStatusFilter").onchange = (e) => { threadStatusFilter = e.target.value; renderThreads(); };
+  try{
+    const qs = threadStatusFilter ? `?status=${encodeURIComponent(threadStatusFilter)}` : "";
+    const data = await fapi(`/api/forum/threads${qs}`);
+    const list = document.getElementById("threadsListAdmin");
+    if(!data.items.length){ list.innerHTML = `<div class="empty">Тем не найдено.</div>`; return; }
+    list.innerHTML = data.items.map(threadAdminHtml).join("");
+    data.items.forEach(t => wireThreadForm(t));
+  }catch(e){ document.getElementById("threadsListAdmin").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+function threadAdminHtml(t){
+  const catTitle = (categories.find(c => c.key === t.category) || {}).title || t.category;
+  return `
+    <div class="item">
+      <div class="meta">
+        <span>${esc(catTitle)}</span>
+        <span>${esc(t.status)}</span>
+        <span>${esc(t.author_display_name)}</span>
+        <span>${fmtDate(t.created_at)}</span>
+        <span>💬 ${t.reply_count}</span>
+        ${t.pinned ? `<span>📌 закреплена</span>` : ""}
+        ${t.closed ? `<span>🔒 закрыта</span>` : ""}
+      </div>
+      <div class="title-text" style="font-size:15px;">${esc(t.title)}</div>
+      <div class="row-actions">
+        <button class="btn small ghost" onclick="togglePin('${t.thread_id}', ${!t.pinned}, this)">${t.pinned ? "Открепить" : "Закрепить"}</button>
+        <button class="btn small ghost" onclick="toggleClose('${t.thread_id}', ${!t.closed}, this)">${t.closed ? "Открыть для ответов" : "Закрыть тему"}</button>
+      </div>
+      <div class="status-form">
+        <label class="field-label">Изменить статус (при «внедрено» обязательны версия и раздел — FR-6)</label>
+        <select id="stStatus-${t.thread_id}">
+          ${ALLOWED_STATUSES.map(s => `<option value="${esc(s)}" ${s===t.status?"selected":""}>${esc(s)}</option>`).join("")}
+        </select>
+        <input type="text" id="stVersion-${t.thread_id}" placeholder="Версия / релиз (обязательно для «внедрено»), напр. v1.4" value="${esc(t.implemented_version||'')}">
+        <select id="stStep-${t.thread_id}">
+          ${STEP_OPTIONS.map(([v,l]) => `<option value="${v}" ${((t.linked_step||"")===v)?"selected":""}>${esc(l)}</option>`).join("")}
+        </select>
+        <textarea id="stNote-${t.thread_id}" placeholder="Комментарий для авторов темы (увидят все подписчики)"></textarea>
+        <button class="btn small" id="stSubmit-${t.thread_id}">Сохранить статус</button>
+        <div id="stMsg-${t.thread_id}"></div>
+      </div>
+    </div>
+  `;
+}
+
+function wireThreadForm(t){
+  document.getElementById(`stSubmit-${t.thread_id}`).onclick = async () => {
+    const msg = document.getElementById(`stMsg-${t.thread_id}`);
+    msg.innerHTML = "";
+    const status = document.getElementById(`stStatus-${t.thread_id}`).value;
+    const implemented_version = document.getElementById(`stVersion-${t.thread_id}`).value.trim() || null;
+    const linked_step = document.getElementById(`stStep-${t.thread_id}`).value || null;
+    const note = document.getElementById(`stNote-${t.thread_id}`).value.trim() || null;
+    try{
+      await fapi(`/api/forum/threads/${t.thread_id}/status`, {
+        method: "POST",
+        body: JSON.stringify({ status, note, implemented_version, linked_step }),
+      });
+      msg.innerHTML = `<div class="ok">Статус обновлён, подписчики уведомлены.</div>`;
+      refreshBadges();
+    }catch(e){ msg.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  };
+}
+
+async function togglePin(threadId, pinned, btn){
+  btn.disabled = true;
+  try{
+    await fapi(`/api/forum/threads/${threadId}/pin?pinned=${pinned}`, { method: "POST" });
+    renderThreads();
+  }catch(e){ alert("Ошибка: " + e.message); btn.disabled = false; }
+}
+async function toggleClose(threadId, closed, btn){
+  btn.disabled = true;
+  try{
+    await fapi(`/api/forum/threads/${threadId}/close?closed=${closed}`, { method: "POST" });
+    renderThreads();
+  }catch(e){ alert("Ошибка: " + e.message); btn.disabled = false; }
+}
+
+function tickClock(){
+  document.getElementById("clock").textContent = new Date().toLocaleString("ru-RU", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+}
+tickClock();
+setInterval(tickClock, 30000);
+</script>
+</body>
+</html>
