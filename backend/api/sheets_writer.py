@@ -16,7 +16,7 @@ ANALYTICS_SHEET_NAME = "Analytics"
 # Заголовки колонок событий аналитики (строка 1, вкладка Analytics)
 ANALYTICS_HEADERS = [
     "Дата", "Session ID", "Шаг", "Тип события", "Язык", "Устройство",
-    "Причина отказа (шаг 03)", "Новый посетитель"
+    "Причина отказа (шаг 03)", "Новый посетитель", "Регион"
 ]
 
 # Заголовки колонок опросника (строка 1, вкладка Survey)
@@ -36,7 +36,8 @@ HEADERS = [
 
 # Заголовки колонок отзывов (строка 1, вкладка Feedback)
 FEEDBACK_HEADERS = [
-    "Дата", "Язык", "Страница", "Сообщение", "Контакт", "Feedback ID"
+    "Дата", "Язык", "Страница", "Шаг интерфейса", "Роль автора",
+    "Сообщение", "Категория", "Тональность", "Контакт", "Feedback ID"
 ]
 
 
@@ -153,9 +154,15 @@ def write_feedback_to_sheets(
     page: Optional[str] = None,
     contact: Optional[str] = None,
     feedback_id: Optional[str] = None,
+    step: Optional[str] = None,
+    role: Optional[str] = None,
+    category: Optional[str] = None,
+    sentiment: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Записывает один текстовый отзыв в Google Sheets (отдельная вкладка Feedback).
+    FR-9/FR-10/FR-11: шаг, роль автора, автокатегория и тональность
+    записываются вместе с отзывом, если известны.
     Возвращает {"success": True} или {"success": False, "error": "..."}
     """
     try:
@@ -166,7 +173,11 @@ def write_feedback_to_sheets(
             datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
             language or "",
             page or "",
+            step or "",
+            role or "",
             message or "",
+            category or "",
+            sentiment or "",
             contact or "",
             feedback_id or "",
         ]
@@ -212,10 +223,12 @@ def write_analytics_event_to_sheets(
     device: str = "",
     jurisdiction_reason: Optional[str] = None,
     is_new_visitor: bool = True,
+    region: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Записывает одно событие аналитики в Google Sheets (вкладка Analytics).
     Каждый вызов /api/analytics/event пишет одну строку.
+    FR-4: регион пишется только если пользователь дал согласие (обычно пусто).
     Возвращает {"success": True} или {"success": False, "error": "..."}
     """
     try:
@@ -231,6 +244,7 @@ def write_analytics_event_to_sheets(
             device or "",
             jurisdiction_reason or "",
             "да" if is_new_visitor else "нет",
+            region or "",
         ]
 
         service.spreadsheets().values().append(
