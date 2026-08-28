@@ -3,298 +3,1015 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Отзывы пользователей</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@700&display=swap" rel="stylesheet">
+<title>Constitutional Assistant — Конституциялық көмекші</title>
 <style>
-  :root{
-    --ink:#12203A; --panel:#1B2C4F; --paper:#ECEAE3;
-    --seal:#B8934A; --seal-bright:#D4AC63; --patina:#3F7D73;
-    --text:#E8E6DF; --dim:#9AA6BE; --slate:#4A5164; --slate-dim:#82889A;
-    --sans:"IBM Plex Sans",sans-serif; --cond:"IBM Plex Sans Condensed",sans-serif; --mono:"IBM Plex Mono",monospace;
-  }
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);min-height:100vh;}
-  .wrap{max-width:900px;margin:0 auto;padding:32px 24px 70px;}
- 
-  header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
-    border-bottom:1px solid rgba(232,230,223,0.14);padding-bottom:18px;margin-bottom:20px;}
-  h1{font-family:var(--cond);font-weight:700;font-size:21px;margin:0;}
-  .count{font-family:var(--mono);font-size:12px;color:var(--dim);}
-  .access-badge{font-family:var(--mono);font-size:11px;color:var(--seal-bright);
-    background:rgba(184,147,74,0.14);padding:3px 9px;border-radius:10px;}
- 
-  #gate{max-width:380px;margin:70px auto;text-align:center;}
-  .card{background:var(--paper);color:var(--slate);border-radius:2px;padding:28px 26px;}
-  .card h2{font-family:var(--cond);font-size:18px;margin:0 0 6px;color:#1A2333;}
-  .card p{font-size:13px;color:var(--slate-dim);margin:0 0 18px;}
-  input[type=text]{width:100%;font-family:var(--mono);font-size:14px;
-    background:#fff;border:1px solid rgba(0,0,0,0.15);color:#1A2333;
-    padding:11px 13px;border-radius:2px;margin-bottom:12px;text-align:center;}
-  input[type=text]:focus{outline:2px solid var(--seal);outline-offset:1px;}
-  .btn{font-family:var(--sans);font-weight:600;font-size:14px;padding:11px 20px;
-    border:none;border-radius:2px;background:var(--seal);color:#1A1204;cursor:pointer;}
-  .btn:hover{background:var(--seal-bright);}
-  .btn:disabled{background:#6b6248;cursor:not-allowed;}
-  .err{color:#A6493D;font-size:13px;margin-top:8px;}
- 
-  #list{display:none;}
-  #list.visible{display:block;}
- 
-  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;background:var(--panel);
-    padding:14px;border-radius:2px;}
-  .filters label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim);
-    font-family:var(--mono);}
-  .filters input, .filters select{font-family:var(--sans);font-size:13px;padding:7px 9px;
-    border:1px solid rgba(232,230,223,0.2);border-radius:2px;background:var(--ink);color:var(--text);}
-  .filters .btn{align-self:flex-end;padding:8px 16px;font-size:13px;}
-  .filters .clear{align-self:flex-end;background:transparent;color:var(--dim);border:1px solid rgba(232,230,223,0.2);
-    padding:8px 14px;font-size:13px;border-radius:2px;cursor:pointer;}
- 
-  .item{background:var(--panel);border-radius:2px;padding:18px 20px;margin-bottom:12px;}
-  .meta{font-family:var(--mono);font-size:11px;color:var(--dim);
-    display:flex;gap:10px;flex-wrap:wrap;margin-bottom:9px;align-items:center;}
-  .lang-chip{padding:1px 7px;border-radius:9px;background:rgba(184,147,74,0.18);color:var(--seal-bright);}
-  .role-chip{padding:1px 7px;border-radius:9px;background:rgba(63,125,115,0.22);color:#7FD1C1;}
-  .step-chip{padding:1px 7px;border-radius:9px;background:rgba(255,255,255,0.08);color:var(--dim);}
-  .msg{font-size:14.5px;line-height:1.6;white-space:pre-wrap;margin:0 0 10px;}
-  .contact{margin-top:10px;font-size:12.5px;color:var(--seal-bright);font-family:var(--mono);}
-  .empty{color:var(--dim);font-size:14px;text-align:center;padding:50px 0;}
- 
-  .tags{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  .sentiment{font-size:11px;padding:2px 8px;border-radius:9px;font-family:var(--mono);}
-  .sentiment.positive{background:rgba(63,125,115,0.25);color:#7FD1C1;}
-  .sentiment.neutral{background:rgba(255,255,255,0.08);color:var(--dim);}
-  .sentiment.negative{background:rgba(166,73,61,0.22);color:#E39A90;}
-  .category-select{font-family:var(--sans);font-size:12px;padding:3px 6px;border-radius:9px;
-    background:rgba(184,147,74,0.14);color:var(--seal-bright);border:1px solid rgba(184,147,74,0.3);}
-  .category-select:disabled{opacity:0.6;cursor:not-allowed;}
-  .auto-note{font-size:10.5px;color:var(--dim);font-style:italic;}
-  .save-status{font-size:11px;margin-left:4px;}
-  .save-status.ok{color:#7FD1C1;}
-  .save-status.error{color:#E39A90;}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #0D1B2A;
+  --navy-light: #152238;
+  --blue: #0A7B83;
+  --gold: #C8A23C;
+  --gold-hover: #DBBA5A;
+  --bg: #F5F3EF;
+  --bg-white: #FFFFFF;
+  --text: #1A1A1A;
+  --text-light: #F0EDE8;
+  --text-secondary: #6B6355;
+  --text-muted: #9A9084;
+  --border: #DDD8D0;
+  --red-soft: #C44B4B;
+  --green-soft: #3DA66E;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+}
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px; line-height: 1.55;
+}
+.app {
+  display: flex; flex-direction: column;
+  height: 100%; max-width: 720px;
+  margin: 0 auto;
+  background: var(--bg);
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--navy);
+  border-bottom: none;
+  flex-shrink: 0;
+}
+.header-left {
+  display: flex; align-items: center; gap: 12px;
+}
+.header-logo { width: 36px; height: 36px; flex-shrink: 0; }
+.header-text { display: flex; flex-direction: column; }
+.header-title {
+  font-family: var(--font-serif);
+  font-size: 16px; font-weight: 700;
+  color: var(--bg-white);
+  letter-spacing: 0.2px;
+}
+.header-sub {
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  letter-spacing: 0.5px;
+}
+.lang-select {
+  display: flex; gap: 0;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px; overflow: hidden;
+}
+.lang-btn {
+  border: none; background: transparent;
+  padding: 6px 12px; font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.4); cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  font-family: var(--font);
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+.lang-btn:last-child { border-right: none; }
+.lang-btn.active { background: var(--gold); color: var(--navy); }
+.lang-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); }
+.chat {
+  flex: 1; overflow-y: auto;
+  padding: 20px 20px 12px;
+  scroll-behavior: smooth;
+  background: var(--bg);
+}
+.msg { max-width: 88%; margin-bottom: 12px; animation: msgIn 0.3s ease-out; }
+@keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { .msg { animation:none; } }
+.msg.assistant { align-self: flex-start; }
+.msg.user { margin-left: auto; }
+.msg-bubble {
+  padding: 13px 16px;
+  border-radius: var(--radius);
+  font-size: 14.5px; line-height: 1.6;
+}
+.msg.assistant .msg-bubble {
+  background: var(--navy);
+  color: var(--text-light);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow);
+}
+.msg.user .msg-bubble {
+  background: var(--bg-white);
+  color: var(--navy);
+  border-bottom-right-radius: 4px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.msg-bubble p { margin-bottom: 10px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble strong { font-weight: 600; color: var(--gold); }
+.msg-info {
+  background: rgba(10,123,131,0.15); border-left: 3px solid var(--blue);
+  padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-top: 10px; font-size: 13.5px; color: var(--text-light);
+}
+.msg-warning {
+  background: rgba(200,162,60,0.12); border-left: 3px solid var(--gold);
+  padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-top: 10px; font-size: 13.5px; color: var(--gold-hover);
+}
+.msg-redirect {
+  background: rgba(196,75,75,0.12); border-left: 3px solid var(--red-soft);
+  padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-top: 10px; font-size: 13.5px; color: #F0A0A0;
+}
+.msg-redirect a, .msg-warning a, .msg-info a {
+  color: var(--gold-hover); text-decoration: underline; word-break: break-word;
+}
+.msg-redirect a:hover, .msg-warning a:hover, .msg-info a:hover { color: var(--bg-white); }
+.np-citations {
+  margin-top: 12px; background: rgba(200,162,60,0.08);
+  border: 1px solid rgba(200,162,60,0.25); border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.np-citations-title {
+  font-size: 13px; font-weight: 700; color: var(--gold-hover); margin-bottom: 8px;
+}
+.np-citation-card {
+  background: rgba(255,255,255,0.04); border-radius: var(--radius-sm);
+  padding: 8px 10px; margin-bottom: 8px; font-size: 13px; color: var(--text-light);
+}
+.np-citation-card:last-child { margin-bottom: 0; }
+.np-citation-number { font-weight: 700; color: var(--gold-hover); }
+.np-citation-summary { margin-top: 4px; line-height: 1.5; }
+.np-citation-superseded { color: var(--red-soft); font-weight: 600; font-size: 12px; }
+.np-citation-possible { color: var(--gold-hover); font-weight: 600; font-size: 12px; }
+.np-citation-link { font-size: 12px; margin-top: 4px; display: inline-block; }
+.np-citations-note {
+  font-size: 11.5px; color: var(--text-muted); margin-top: 8px; font-style: italic;
+}
+.typing {
+  display: flex; gap: 5px; padding: 14px 18px;
+  margin-bottom: 10px;
+  background: var(--navy);
+  border-radius: var(--radius); border-bottom-left-radius: 4px;
+  width: fit-content; box-shadow: var(--shadow);
+}
+.typing span { width:7px; height:7px; background:var(--gold); border-radius:50%; animation:typingDot 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay:0.2s; }
+.typing span:nth-child(3) { animation-delay:0.4s; }
+@keyframes typingDot { 0%,60%,100%{opacity:.3;transform:scale(.85)} 30%{opacity:1;transform:scale(1)} }
+.actions { padding: 4px 20px 16px; flex-shrink: 0; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.action-btn {
+  flex: 1; min-width: 120px;
+  border: 2px solid var(--navy);
+  background: var(--bg-white);
+  color: var(--navy);
+  padding: 12px 18px; border-radius: var(--radius-sm);
+  font-size: 14.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; font-family: var(--font);
+}
+.action-btn:hover, .action-btn:focus-visible { background: var(--navy); color: var(--bg-white); outline: none; }
+.action-btn.primary { background: var(--navy); color: var(--bg-white); border-color: var(--navy); }
+.action-btn.primary:hover { background: var(--navy-light); }
+.action-btn.gold { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+.action-btn.gold:hover { background: var(--gold-hover); border-color: var(--gold-hover); }
+.input-area { padding: 4px 20px 16px; flex-shrink: 0; }
+.text-input {
+  width: 100%; border: 2px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 14.5px; line-height: 1.5;
+  font-family: var(--font); resize: vertical; min-height: 100px; max-height: 240px;
+  color: var(--text); background: var(--bg-white); transition: border-color 0.15s;
+}
+.text-input:focus { outline: none; border-color: var(--navy); }
+.text-input::placeholder { color: var(--text-muted); }
+.input-row { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
+.send-btn {
+  background: var(--navy); color: var(--bg-white);
+  border: none; border-radius: var(--radius-sm);
+  padding: 11px 22px; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); white-space: nowrap; transition: background 0.15s;
+}
+.send-btn:hover { background: var(--navy-light); }
+.send-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius-sm);
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.15s;
+  margin-top: 10px; background: var(--bg-white);
+}
+.upload-zone:hover { border-color: var(--navy); background: #F0EDE8; }
+.upload-zone.has-file { border-color: var(--green-soft); border-style: solid; background: #F0FDF4; }
+.upload-icon { font-size: 28px; margin-bottom: 6px; }
+.upload-label { font-size: 13.5px; color: var(--text-secondary); }
+.upload-filename { font-size: 13.5px; color: var(--green-soft); font-weight: 600; margin-top: 4px; }
+.file-input { display: none; }
+.consent-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; }
+.consent-row input[type="checkbox"] { margin-top:3px; width:18px; height:18px; accent-color:var(--navy); cursor:pointer; flex-shrink:0; }
+.consent-label { font-size:13.5px; color:var(--text); cursor:pointer; user-select:none; }
+.spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; padding:30px 0; }
+.spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,0.15); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.spinner-text { font-size:13.5px; color:var(--text-light); opacity:0.7; }
+.result-box {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-sm); padding: 16px; margin-top: 12px;
+  font-size: 14px; line-height: 1.65; white-space: pre-wrap;
+  max-height: 400px; overflow-y: auto; color: var(--text-light);
+}
+.footer {
+  padding: 10px 20px; text-align: center;
+  font-size: 11.5px; color: var(--text-muted);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+  background: var(--bg-white);
+}
+.chat::-webkit-scrollbar { width:6px; }
+.chat::-webkit-scrollbar-track { background:transparent; }
+.chat::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1); border-radius:3px; }
+.chat::-webkit-scrollbar-thumb:hover { background:rgba(0,0,0,0.2); }
+@media (max-width: 600px) {
+  .app { max-width:100%; }
+  .chat { padding:14px 14px 10px; }
+  .actions, .input-area { padding-left:14px; padding-right:14px; }
+  .msg { max-width:94%; }
+  .msg-bubble { font-size:14px; padding:10px 14px; }
+  .header { padding:12px 14px; }
+  .header-title { font-size:14px; }
+  .footer { padding:8px 14px; }
+}
+.hidden { display: none !important; }
+/* ---------- FEEDBACK WIDGET ---------- */
+#fbButton{
+  position:fixed;right:20px;bottom:20px;z-index:60;
+  display:flex;align-items:center;gap:8px;
+  background:var(--gold);color:var(--navy);
+  border:none;border-radius:24px;padding:11px 16px;
+  font-family:var(--font);font-weight:600;font-size:13px;
+  cursor:pointer;box-shadow:0 10px 26px -10px rgba(0,0,0,0.6);
+  transition:background .15s, transform .1s;
+}
+#fbButton:hover{background:var(--gold-hover);}
+#fbButton:active{transform:translateY(1px);}
+#fbPanel{
+  position:fixed;right:20px;bottom:20px;z-index:61;
+  width:320px;max-width:calc(100vw - 40px);
+  background:var(--bg-white);color:var(--text);
+  border-radius:var(--radius);
+  box-shadow:0 24px 50px -18px rgba(0,0,0,0.5);
+  padding:20px 20px 18px;
+  display:none;
+}
+#fbPanel.open{display:block;animation:msgIn .25s ease;}
+#fbPanel h3{
+  font-family:var(--font-serif);font-weight:700;font-size:16px;
+  margin:0 0 4px;color:var(--navy);padding-right:24px;
+}
+#fbPanel .fbsub{font-size:12.5px;color:var(--text-secondary);margin:0 0 14px;}
+#fbClose{
+  position:absolute;top:14px;right:14px;
+  background:none;border:none;cursor:pointer;
+  font-size:19px;line-height:1;color:var(--text-muted);padding:0;
+}
+#fbClose:hover{color:var(--text);}
+#fbPanel textarea{min-height:88px;margin-bottom:10px;}
+#fbPanel input[type=text]{margin-bottom:12px;}
+#fbPanel select{width:100%;margin-bottom:12px;padding:9px 10px;font-family:var(--font);font-size:13.5px;
+  border:2px solid var(--border);border-radius:var(--radius-sm);color:var(--text);background:var(--bg-white);}
+#fbStatus{font-size:12.5px;margin-top:8px;}
+#fbStatus.ok{color:var(--green-soft);}
+#fbStatus.error{color:var(--red-soft);}
+@media (max-width:480px){
+  #fbPanel{right:10px;left:10px;width:auto;bottom:10px;}
+  #fbButton{right:10px;bottom:10px;}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
- 
-  <div id="gate">
-    <div class="card">
-      <h2>Отзывы пользователей</h2>
-      <p>Введите код администратора (полный доступ или только просмотр).</p>
-      <input type="text" id="code" placeholder="Код администратора" autocomplete="off">
-      <button class="btn" id="btnEnter" style="width:100%;">Открыть</button>
-      <div class="err" id="gateErr"></div>
-    </div>
-  </div>
- 
-  <div id="list">
-    <header>
-      <h1>Отзывы пользователей</h1>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span class="access-badge" id="accessBadge"></span>
-        <span class="count" id="count"></span>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <svg class="header-logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="16.5" fill="none" stroke="#C8A23C" stroke-width="1"/>
+        <circle cx="18" cy="18" r="12.5" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.4"/>
+        <line x1="18" y1="7" x2="18" y2="27" stroke="#C8A23C" stroke-width="1" opacity="0.6"/>
+        <line x1="11" y1="13" x2="25" y2="13" stroke="#C8A23C" stroke-width="1"/>
+        <path d="M11 13 L9 19 Q11 21 13 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
+        <path d="M25 13 L23 19 Q25 21 27 19 Z" fill="none" stroke="#C8A23C" stroke-width="0.8"/>
+        <path d="M14 27 L22 27" stroke="#C8A23C" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M6 18 Q10 10, 18 7" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+        <path d="M30 18 Q26 10, 18 7" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+        <path d="M6 18 Q10 26, 18 29" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+        <path d="M30 18 Q26 26, 18 29" fill="none" stroke="#C8A23C" stroke-width="0.5" opacity="0.3"/>
+      </svg>
+      <div class="header-text">
+        <span class="header-title" data-i18n="header">Конституционный ассистент</span>
+        <span class="header-sub" data-i18n="headerSub">Пилотный проект</span>
       </div>
-    </header>
- 
-    <div class="filters">
-      <label>Дата с
-        <input type="date" id="fDateFrom">
-      </label>
-      <label>Дата по
-        <input type="date" id="fDateTo">
-      </label>
-      <label>Шаг интерфейса
-        <select id="fStep">
-          <option value="">Все шаги</option>
-          <option value="01_consent">01 Согласие</option>
-          <option value="02_description">02 Описание проблемы</option>
-          <option value="03_jurisdiction">03 Проверка юрисдикции</option>
-          <option value="04_draft">04 Черновик обращения</option>
-        </select>
-      </label>
-      <label>Роль автора
-        <select id="fRole">
-          <option value="">Любая</option>
-          <option value="citizen">Гражданин</option>
-          <option value="lawyer">Юрист</option>
-        </select>
-      </label>
-      <button class="btn" id="btnFilter">Применить</button>
-      <button class="clear" id="btnClearFilter" type="button">Сбросить</button>
     </div>
- 
-    <div id="items"></div>
+    <div class="lang-select">
+      <button class="lang-btn" data-lang="kk">ҚАЗ</button>
+      <button class="lang-btn active" data-lang="ru">РУС</button>
+      <button class="lang-btn" data-lang="en">ENG</button>
+    </div>
   </div>
- 
+  <div class="chat" id="chat"></div>
+  <div id="action-zone"></div>
+  <div class="footer">
+    <span data-i18n="footer">Пилотная версия · Не является официальной юридической консультацией</span>
+    <span id="npDbActuality" class="hidden"></span>
+  </div>
 </div>
- 
+<!-- ---------- FEEDBACK WIDGET ---------- -->
+<button id="fbButton" type="button">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M2 3.5h12v8H6.5L3.5 14v-2.5H2z" stroke="#0D1B2A" stroke-width="1.6" stroke-linejoin="round"/>
+  </svg>
+  <span id="fbButtonLabel">Обратная связь</span>
+</button>
+<div id="fbPanel" role="dialog" aria-modal="false">
+  <button id="fbClose" type="button" aria-label="Close">&times;</button>
+  <h3 id="fbTitle">Обратная связь</h3>
+  <p class="fbsub" id="fbSub">Напишите, что думаете о работе сайта.</p>
+  <textarea id="fbMessage" placeholder="Что понравилось, что можно улучшить…"></textarea>
+  <select id="fbRole">
+    <option value="" id="fbRoleOptEmpty">Кто вы? (необязательно)</option>
+    <option value="citizen" id="fbRoleOptCitizen">Гражданин</option>
+    <option value="lawyer" id="fbRoleOptLawyer">Юрист</option>
+  </select>
+  <input type="text" id="fbContact" placeholder="Email или телефон (необязательно)">
+  <button class="send-btn" id="fbSend" style="width:100%;">Отправить</button>
+  <div id="fbStatus"></div>
+</div>
 <script>
-// Backend задеплоен на Render.
-const API_BASE = "";
-let adminCode = "";
-let accessLevel = "view"; // "full" | "view" — определяется по первому успешному запросу
- 
-const STEP_LABELS = {
-  "01_consent": "01 Согласие",
-  "02_description": "02 Описание",
-  "03_jurisdiction": "03 Юрисдикция",
-  "04_draft": "04 Черновик",
+const T = {
+  header: { kk: "Конституциялық көмекші", ru: "Конституционный ассистент", en: "Constitutional Assistant" },
+  headerSub: { kk: "Пилоттық жоба", ru: "Пилотный проект", en: "Pilot project" },
+  footer: { kk: "Пилоттық нұсқа · Ресми заң кеңесі емес", ru: "Пилотная версия · Не является официальной юридической консультацией", en: "Pilot version · Not official legal advice" },
+  yes: { kk: "Иә", ru: "Да", en: "Yes" },
+  no: { kk: "Жоқ", ru: "Нет", en: "No" },
+  self: { kk: "Өз бетімше", ru: "Самостоятельно", en: "On my own" },
+  representative: { kk: "Өкіл арқылы", ru: "Через представителя", en: "Through a representative" },
+  understood: { kk: "Түсінікті, жалғастыру", ru: "Понятно, продолжить", en: "Understood, continue" },
+  agree: { kk: "Келісемін", ru: "Согласен(-на)", en: "I agree" },
+  next: { kk: "Жалғастыру", ru: "Продолжить", en: "Continue" },
+  generate: { kk: "Жобаны жасау", ru: "Сформировать черновик", en: "Generate draft" },
+  restart: { kk: "Басынан бастау", ru: "Начать сначала", en: "Start over" },
+  copy: { kk: "Көшіру", ru: "Скопировать", en: "Copy" },
+  copied: { kk: "Көшірілді", ru: "Скопировано", en: "Copied" },
+  goHome: { kk: "Басты бетке", ru: "На главную", en: "Home" },
+  surveyInvite: {
+    kk: "Сіздің пікіріңіз маңызды. Сервисті жақсарту үшін қысқа сауалнамадан өтуіңізді сұраймыз — бұл 3–5 минут алады.",
+    ru: "Ваше мнение важно для нас. Пройдите короткий опросник, чтобы помочь улучшить сервис — это займёт 3–5 минут.",
+    en: "Your feedback matters. Please take a short survey to help us improve — it takes 3–5 minutes."
+  },
+  surveyBtn: {
+    kk: "Сауалнамаға өту →",
+    ru: "Пройти опросник →",
+    en: "Take the survey →"
+  },
+  greeting: {
+    kk: "Сәлеметсіз бе! Мен — Конституциялық көмекші, Қазақстан Республикасының Конституциялық Сотына өтініш дайындауға көмектесетін пилоттық сервис.\n\nӨтініш «Қазақстан Республикасының Конституциялық Соты туралы» Конституциялық заңның 44 және 45-баптарының талаптарына сай болуы үшін бірнеше маңызды сұраққа жауап беріңіз.",
+    ru: "Здравствуйте! Я — Конституционный ассистент, пилотный сервис, который помогает шаг за шагом подготовить обращение в Конституционный Суд Республики Казахстан.\n\nЧтобы обращение соответствовало статьям 44 и 45 Конституционного закона «О Конституционном Суде Республики Казахстан», ответьте, пожалуйста, на несколько важных вопросов.",
+    en: "Hello! I am the Constitutional Assistant, a pilot service that helps you prepare an appeal to the Constitutional Court of the Republic of Kazakhstan step by step.\n\nTo ensure your appeal meets Articles 44 and 45 of the Constitutional Law \"On the Constitutional Court\", please answer a few important questions."
+  },
+  q1: {
+    kk: "Сот актісі сіз жеке қатысқан іс бойынша шығарылды ма, және сот қолданған заң нормасы дәл сіздің құқықтарыңыз бен бостандықтарыңызды қозғайды ма?\n\nБұл маңызды, себебі Конституциялық заңның 45-бабы өтініш берушінің сот актісі шығарылған нақты іске қатысушы болуын талап етеді.",
+    ru: "Судебный акт, о котором идёт речь, вынесен по делу, в котором участвовали лично вы, и норма закона, применённая судом, затрагивает именно ваши права и свободы?\n\nЭто важно, потому что статья 45 Конституционного закона требует, чтобы заявитель сам был участником конкретного дела, по которому вынесен судебный акт.",
+    en: "Was the judicial act in question issued in a case in which you personally participated, and does the legal provision applied by the court affect your rights and freedoms?\n\nThis matters because Article 45 of the Constitutional Law requires that the applicant be a participant in the specific case."
+  },
+  q2: {
+    kk: "Сіз шағымданғыңыз келетін акт — бұл сіздің ойыңызша Конституцияға қайшы келетін заң немесе «Құқықтық актілер туралы» ҚР Заңының 7-бабы мағынасындағы өзге нормативтік құқықтық акт (НҚА) ме?\n\n<strong>Анықтама — НҚА-ның негізгі түрлері (7-бап):</strong>\n• Конституция, конституциялық заңдар, кодекстер, заңдар;\n• Президенттің нормативтік құқықтық жарлықтары;\n• Парламент пен оның палаталарының нормативтік қаулылары;\n• Үкіметтің нормативтік қаулылары;\n• КС пен Жоғарғы Соттың нормативтік қаулылары;\n• министрлер мен орталық мемлекеттік органдар басшыларының нормативтік бұйрықтары;\n• мәслихаттардың шешімдері, әкімдердің шешімдері.\n\n<a href='https://adilet.zan.kz/rus/docs/Z1600000480' target='_blank' rel='noopener'>ҚР «Құқықтық актілер туралы» Заңы, 7-бап (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=37312788' target='_blank' rel='noopener'>Параграф</a>",
+    ru: "Оспариваемый акт — это закон или иной нормативный правовой акт (НПА) в значении статьи 7 Закона РК «О правовых актах», который, по вашему мнению, противоречит Конституции?\n\n<strong>Справка — основные виды НПА (ст. 7):</strong>\n• Конституция, конституционные законы, кодексы, законы;\n• нормативные правовые указы Президента;\n• нормативные постановления Парламента и его Палат;\n• нормативные постановления Правительства;\n• нормативные постановления КС и Верховного Суда;\n• нормативные приказы министров и руководителей центральных госорганов;\n• решения маслихатов, решения акимов.\n\n<a href='https://adilet.zan.kz/rus/docs/Z1600000480' target='_blank' rel='noopener'>Закон РК «О правовых актах», ст. 7 (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=37312788' target='_blank' rel='noopener'>Параграф</a>",
+    en: "Is the contested act a law or other normative legal act (as defined by Article 7 of the Law \"On Legal Acts\") that, in your opinion, contradicts the Constitution?\n\n<strong>Reference — main types of NLAs (Art. 7):</strong>\n• Constitution, constitutional laws, codes, laws;\n• normative legal decrees of the President;\n• normative resolutions of Parliament and its Chambers;\n• normative resolutions of the Government;\n• normative resolutions of the CC and Supreme Court;\n• normative orders of ministers and heads of central state bodies;\n• decisions of maslikhats, decisions of akims.\n\n<a href='https://adilet.zan.kz/rus/docs/Z1600000480' target='_blank' rel='noopener'>Law \"On Legal Acts\", Art. 7 (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=37312788' target='_blank' rel='noopener'>Paragraph</a>"
+  },
+  q3: {
+    kk: "Немесе сіз нақты сот шешіміне, не құқық қорғау органы қызметкерінің, судьяның немесе прокурордың іс-әрекетіне (әрекетсіздігіне) шағымданғыңыз келе ме?",
+    ru: "Или вы хотите обжаловать конкретное решение суда, либо действие (бездействие) сотрудника правоохранительного органа, судьи или прокурора по вашему делу?",
+    en: "Or do you want to challenge a specific court decision, or an action (inaction) of a law enforcement officer, judge, or prosecutor?"
+  },
+  q4: {
+    kk: "Сіз өтінішті өз бетіңізше бересіз бе, әлде өкіл (адвокат, заң кеңесші немесе басқа уәкілетті тұлға) арқылы ма?",
+    ru: "Вы подаёте обращение самостоятельно или через представителя (адвоката, юридического консультанта или иное уполномоченное лицо)?",
+    en: "Are you filing on your own or through a representative (lawyer, legal consultant, or other authorized person)?"
+  },
+  qDeadline: {
+    kk: "Сот актісі заңды күшіне енген күннен бастап бір жылдан астам уақыт өтті ме?\n\nКонституциялық заңның 45-бабының 2-тармағының 2) тармақшасы бойынша өтініш сот актісі қабылданған күннен бастап бір жыл ішінде берілуі тиіс.",
+    ru: "Прошло ли более одного года со дня вступления судебного акта в законную силу?\n\nСогласно подпункту 2) пункта 2 статьи 45 Конституционного закона, обращение должно быть подано не позднее одного года со дня принятия судебного акта.",
+    en: "Has more than one year passed since the judicial act entered into legal force?\n\nAccording to Subparagraph 2) of Paragraph 2, Article 45 of the Constitutional Law, the appeal must be filed no later than one year from the date of the judicial act."
+  },
+  redirectDeadline: {
+    kk: "Конституциялық заңның 45-бабының 2-тармағының 2) тармақшасына сәйкес, өтініш сот актісі қабылданған күннен бастап бір жыл ішінде берілуі тиіс. Бір жылдан астам уақыт өттігіне байланысты өтініш қабылдану шарттарына сәйкес келмеуі мүмкін.\n\n<strong>Нормативтік негіздеме:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>«ҚР Конституциялық Соты туралы» Конституциялық заңның 45-бабы, 2-т. 2) тш. (Әділет)</a>\n\nДегенмен, мерзімді қалпына келтіру мүмкін болуы мүмкін — заңгерге кеңес алуыңызды ұсынамыз.",
+    ru: "Согласно подпункту 2) пункта 2 статьи 45 Конституционного закона, обращение должно быть подано не позднее одного года со дня принятия судебного акта. Поскольку год прошёл, обращение может не соответствовать условиям допустимости.\n\n<strong>Нормативное основание:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Ст. 45 п. 2 пп. 2) Конституционного закона «О КС РК» (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Параграф</a>\n\nТем не менее, восстановление срока может быть возможно — рекомендуем проконсультироваться с юристом.",
+    en: "According to Subparagraph 2) of Paragraph 2 of Article 45 of the Constitutional Law, the appeal must be filed within one year of the judicial act. Since more than a year has passed, the appeal may not meet admissibility requirements.\n\n<strong>Legal basis:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Art. 45(2)(2) of the Constitutional Law (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Paragraph</a>\n\nHowever, restoration of the deadline may be possible — we recommend consulting a lawyer."
+  },
+  withinDeadline: { kk: "Жоқ, бір жыл өтпеді", ru: "Нет, год ещё не прошёл", en: "No, less than a year" },
+  pastDeadline: { kk: "Иә, бір жылдан астам өтті", ru: "Да, прошло больше года", en: "Yes, more than a year" },
+  representativeInfo: {
+    kk: "Конституциялық заңның 41-бабының 4-тармағына (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>ІПС Әділет</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Параграф</a>) және ҚР Конституциялық Сотының Регламентінің (2023 жылғы 5 қаңтардағы №1 нормативтік қаулы) 2-тарауының 15-тармағына сәйкес:\n\nАзаматтардың өтініштерін қарау кезінде өкілдер тек заңды өкілдер, адвокаттар, заң кеңесшілер палатасының мүшелері болып табылатын заң кеңесшілер, сондай-ақ заңмен, жарғымен немесе ережемен осы ұйымдар мүшелерінің құқықтары мен мүдделерін, басқа тұлғалардың құқықтары мен мүдделерін қорғау құқығы берілген ұйымдардың уәкілетті тұлғалары бола алады.\n\nӨтінішке қоса тіркеу керек:\n\n<strong>Адвокат болса:</strong>\n• адвокат куәлігі;\n• қорғау (өкілдік) туралы жазбаша хабарлама;\n• нотариалды куәландырылған сенімхат.\n\n<strong>Заң кеңесші болса:</strong>\n• заң кеңесшілер палатасының мүшелігін растайтын құжат;\n• нотариалды куәландырылған сенімхат.\n\nСенімхатта өкілдің құқықтары нақты көрсетілуі тиіс: КС-ке өтініш беру, өкіл болу және отырыстарға қатысу, материалдармен танысу, өтінішхат беру, өтінішті негіздеу, барлық сатыларда істі жүргізу, өтінішке қол қою және КС-ке жіберу.",
+    ru: "Согласно пункту 4 статьи 41 Конституционного закона (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>ИПС Әділет</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Параграф</a>) и пункту 15 главы 2 Регламента Конституционного Суда РК (нормативное постановление от 5 января 2023 года № 1):\n\nПредставителями при рассмотрении обращений граждан могут быть только законные представители, адвокаты, юридические консультанты, являющиеся членами палаты юридических консультантов, а также уполномоченные лица организаций, которым законом, уставом или положением предоставлено право защищать права и интересы членов этих организаций, права и интересы других лиц.\n\nК обращению нужно приложить:\n\n<strong>Если представитель — адвокат:</strong>\n• удостоверение адвоката;\n• письменное уведомление о защите (представительстве);\n• нотариально удостоверенная доверенность.\n\n<strong>Если представитель — юридический консультант:</strong>\n• документ, подтверждающий членство в палате юридических консультантов;\n• нотариально удостоверенная доверенность.\n\nВ доверенности должно быть прямо указано право представителя: подавать обращение в КС РК, быть представителем и участвовать в заседаниях, знакомиться с материалами конституционного производства, подавать ходатайства, обосновывать обращение, вести дело на всех стадиях, подписывать и направлять обращение.",
+    en: "According to Paragraph 4 of Article 41 of the Constitutional Law (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Әділет</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Paragraph</a>) and Paragraph 15, Chapter 2 of the Rules of the Constitutional Court (Normative Resolution No. 1 of January 5, 2023):\n\nRepresentatives in the consideration of citizens' appeals may only be legal representatives, lawyers, legal consultants who are members of the chamber of legal consultants, as well as authorized persons of organizations that are granted by law, charter, or regulation the right to protect the rights and interests of their members and other persons.\n\nThe appeal must include:\n\n<strong>If the representative is a lawyer:</strong>\n• lawyer's certificate;\n• written notice of defense (representation);\n• notarized power of attorney.\n\n<strong>If the representative is a legal consultant:</strong>\n• document confirming chamber membership;\n• notarized power of attorney.\n\nThe power of attorney must explicitly state the right to: file an appeal to the CC, participate in hearings, review materials, file motions, substantiate the appeal, conduct the case at all stages, sign and send the appeal."
+  },
+  redirectNoParticipation: {
+    kk: "Конституциялық заңның 45-бабы бойынша өтініш беру үшін сот актісі шығарылған іске жеке қатысу міндетті шарт.\n\nЕгер сіз басқа адамның құқықтарын қорғағыңыз келсе — заңды өкіл ретінде сенімхат арқылы іс-әрекет жасауға болады. Бұл жағдайда өтініш берушінің өзі — іске қатысушы — қол қоюы керек.\n\n<strong>Нормативтік негіздеме:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>«ҚР Конституциялық Соты туралы» Конституциялық заңның 45-бабы (ІПС Әділет)</a>\n• <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>45-бап — Параграф</a>",
+    ru: "Статья 45 Конституционного закона требует, чтобы заявитель лично был участником дела, по которому вынесен судебный акт.\n\nЕсли вы хотите защитить права другого лица — это возможно в качестве законного представителя (адвоката, юридического консультанта) по доверенности. В таком случае автором обращения является сам участник дела.\n\n<strong>Нормативное основание:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Ст. 45 Конституционного закона «О Конституционном Суде РК» (ИПС Әділет)</a>\n• <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Ст. 45 — Параграф</a>",
+    en: "Article 45 of the Constitutional Law requires the applicant to personally be a participant in the case.\n\nIf you want to protect another person's rights, this is possible as a legal representative with a power of attorney. In that case, the appeal's author is the case participant themselves.\n\n<strong>Legal basis:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Art. 45 of the Constitutional Law (Әділет)</a>\n• <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Art. 45 — Paragraph</a>"
+  },
+  redirectNotKS: {
+    kk: "Конституциялық Сот нақты сот шешімдерін қайта қарамайды және лауазымды тұлғалардың іс-әрекетін бағаламайды. КС тек заңдар мен НҚА-ның конституциялылығын тексереді.\n\n<strong>Сот шешіміне шағымдану үшін:</strong>\n• Азаматтық іс бойынша — апелляциялық тәртіп: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ҚР АПК-нің 401–403-баптары (ІПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Параграф</a>\n• Қылмыстық іс бойынша — апелляциялық тәртіп: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>ҚР ҚІЖК-нің 414-бабы (ІПС Әділет)</a>\n\n<strong>Лауазымды тұлғалардың іс-әрекетіне шағымдану үшін:</strong>\n• Әкімшілік талап арыз: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>ҚР ӘІПК-нің 3, 12-тараулары (ІПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Параграф</a>\n• Прокуратураға шағым: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>«Прокуратура туралы» Конституциялық заңның 29-бабы (ІПС Әділет)</a>",
+    ru: "Конституционный Суд не пересматривает конкретные решения судов и не оценивает действия (бездействие) должностных лиц. КС проверяет только конституционность законов и иных НПА.\n\n<strong>Для обжалования судебного решения:</strong>\n• По гражданскому делу — апелляция: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ст. 401–403 ГПК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Параграф</a>\n• По уголовному делу — апелляция: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>ст. 414 УПК РК (ИПС Әділет)</a>\n\n<strong>Для жалобы на действия должностных лиц:</strong>\n• Административный иск: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>главы 3, 12 АППК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Параграф</a>\n• Жалоба в прокуратуру: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>ст. 29 Конституционного закона «О прокуратуре» (ИПС Әділет)</a>",
+    en: "The Constitutional Court does not review specific court decisions or evaluate actions of officials. The CC only reviews the constitutionality of laws and normative legal acts.\n\n<strong>To challenge a court decision:</strong>\n• Civil case — appeal: <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>Art. 401–403, Civil Procedure Code (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Paragraph</a>\n• Criminal case — appeal: <a href='https://adilet.zan.kz/rus/docs/K1400000231' target='_blank' rel='noopener'>Art. 414, Criminal Procedure Code (Әділет)</a>\n\n<strong>To complain about officials' actions:</strong>\n• Administrative claim: <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>Chapters 3, 12 of APPK (Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Paragraph</a>\n• Complaint to the prosecutor: <a href='https://adilet.zan.kz/rus/docs/Z2200000155' target='_blank' rel='noopener'>Art. 29 of the Constitutional Law «On the Prosecutor's Office» (Әділet)</a>"
+  },
+  redirectUnclear: {
+    kk: "Сіздің сипаттауыңыз бойынша обращение объектісін анықтау қиын. Конституциялық Сот тек заңдар мен НҚА-ның Конституцияға сәйкестігін тексереді (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Конституциялық заңның 23-бабы, Әділет</a>).\n\nЗаңгерге кеңес алуыңызды ұсынамыз — ол сіздің жағдайыңызға тиімді қорғау жолын анықтауға көмектеседі.\n\nСондай-ақ құқықтарыңызды қорғау тәртібін мына актілерден білуге болады:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ҚР Азаматтық процестік кодексі (Әділет)</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>ҚР ӘІПК (Әділет)</a>",
+    ru: "По вашему описанию сложно определить предмет обращения. Конституционный Суд проверяет только конституционность законов и иных НПА (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>ст. 23 Конституционного закона, ИПС Әділет</a>).\n\nРекомендуем проконсультироваться с юристом — он поможет определить наиболее эффективный способ защиты ваших прав.\n\nОзнакомиться с порядком защиты прав можно в следующих актах:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>ГПК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=34329053' target='_blank' rel='noopener'>Параграф</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>АППК РК (ИПС Әділет)</a> | <a href='https://online.zakon.kz/Document/?doc_id=35132264' target='_blank' rel='noopener'>Параграф</a>",
+    en: "Based on your description, it is difficult to determine the subject of the appeal. The Constitutional Court only reviews the constitutionality of laws and normative legal acts (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Art. 23 of the Constitutional Law, Әділет</a>).\n\nWe recommend consulting a lawyer to determine the best way to protect your rights.\n\nYou can learn about rights protection procedures in:\n• <a href='https://adilet.zan.kz/rus/docs/K1500000377' target='_blank' rel='noopener'>Civil Procedure Code (Әділет)</a>\n• <a href='https://adilet.zan.kz/rus/docs/K2000000350' target='_blank' rel='noopener'>APPK (Әділet)</a>"
+  },
+  consentText: {
+    kk: "Жүйе сіздің деректеріңізді ҚР-ның 2013 жылғы 21 мамырдағы № 94-V «Дербес деректер және оларды қорғау туралы» Заңына сәйкес өңдейді. Деректер тек өтінішті дайындау үшін қолданылады және үшінші тараптарға берілмейді.",
+    ru: "Система обрабатывает ваши данные в соответствии с Законом РК от 21 мая 2013 года № 94-V «О персональных данных и их защите». Данные используются исключительно для подготовки обращения и не передаются третьим лицам.",
+    en: "The system processes your data under the Law of the Republic of Kazakhstan No. 94-V \"On Personal Data and Their Protection\". Data is used solely for preparing the appeal and is not shared with third parties."
+  },
+  consentCheckbox: {
+    kk: "Дербес деректерді өңдеуге келісемін",
+    ru: "Даю согласие на обработку персональных данных",
+    en: "I consent to the processing of personal data"
+  },
+  describePrompt: {
+    kk: "Проблеманы өз сөзіңізбен сипаттаңыз — қандай заң немесе НҚА Конституцияға қайшы деп санайсыз және неліктен.\n\nМүмкіндігінше нақты бап пен тармақ нөмірін көрсетіңіз.",
+    ru: "Опишите проблему своими словами — какой закон или НПА, по вашему мнению, противоречит Конституции, и почему.\n\nПо возможности укажите конкретную статью и пункт.",
+    en: "Describe the problem in your own words — which law or normative act you believe contradicts the Constitution, and why.\n\nIf possible, specify the exact article and paragraph."
+  },
+  describePlaceholder: {
+    kk: "Мысалы: Қылмыстық кодекстің 68-бабының 5-бөлігі Конституцияның 13-бабына қайшы келеді, себебі...",
+    ru: "Например: Часть 5 статьи 68 Уголовного кодекса противоречит статье 13 Конституции, потому что...",
+    en: "E.g.: Part 5 of Article 68 of the Criminal Code contradicts Article 13 of the Constitution, because..."
+  },
+  uploadPrompt: {
+    kk: "Егер қолыңызда сот актілері болса — тіркеңіз (бірінші инстанция шешімі және бар болса апелляциялық шешім). Егер әзірге жоқ болса — файлсыз жалғастыруға болады.\n\nФорматтар: PDF, Word, сурет (JPG/PNG) немесе мәтіндік файл.",
+    ru: "Если у вас есть судебные акты — приложите их (решение суда первой инстанции и, при наличии, апелляционной). Если пока нет на руках — можно продолжить без файла.\n\nФорматы: PDF, Word, изображение (JPG/PNG) или текстовый файл.",
+    en: "If you have the judicial acts, please attach them (first instance decision and, if available, the appellate decision). If you don't have them yet, you can continue without a file.\n\nFormats: PDF, Word, image (JPG/PNG), or text file."
+  },
+  uploadDrop: { kk: "Файлды таңдау үшін басыңыз", ru: "Нажмите, чтобы выбрать файл", en: "Click to select a file" },
+  uploadFormats: { kk: "PDF, DOCX, JPG, PNG, TXT, ODT", ru: "PDF, DOCX, JPG, PNG, TXT, ODT", en: "PDF, DOCX, JPG, PNG, TXT, ODT" },
+  skipUpload: { kk: "Файлсыз жалғастыру", ru: "Продолжить без файла", en: "Continue without file" },
+  processing: { kk: "Өтінішіңіз талданып жатыр... Бір минутқа дейін созылуы мүмкін.", ru: "Анализирую обращение... Это может занять до минуты.", en: "Analyzing your appeal... This may take up to a minute." },
+  waking: { kk: "Сервер жүктеліп жатыр (тегін хостинг), күте тұрыңыз...", ru: "Сервер просыпается (бесплатный хостинг), подождите...", en: "Server is waking up (free hosting), please wait..." },
+  resultIntro: { kk: "Міне сіздің өтініш жобаңыз. Юристке тексертуден кейін пайдалануға болады.", ru: "Вот черновик вашего обращения. Его можно использовать после проверки юристом.", en: "Here is your draft appeal. It can be used after review by a lawyer." },
+  npFoundTitle: { kk: "КС РК бұл нормаға қатысты бұрын шешім қабылдаған", ru: "КС РК уже рассматривал эту норму", en: "The Constitutional Court has already reviewed this provision" },
+  npFoundTitleFuzzy: { kk: "Мүмкін өзекті тәжірибе (мазмұны бойынша табылған)", ru: "Возможно релевантная практика (найдено по смыслу)", en: "Possibly relevant case law (found by meaning)" },
+  npPossibleTag: { kk: "мүмкін өзекті", ru: "возможно релевантно", en: "possibly relevant" },
+  npNote: { kk: "Бұл — тексерілуі тиіс автоматты ұсыныс.", ru: "Это автоматическая подсказка, требует проверки юристом.", en: "This is an automated suggestion and requires review by a lawyer." },
+  npSupersededTag: { kk: "күшін жойған", ru: "утратило силу", en: "no longer in force" },
+  npDbActuality: { kk: "КС РК тәжірибесінің базасы мынаған дейін өзекті:", ru: "База практики КС РК актуальна на:", en: "Constitutional Court case-law database is current as of:" },
+  resultRedirect: { kk: "Талдау нәтижесі бойынша бұл мәселе Конституциялық Соттың құзыретіне жатпайды.", ru: "По результатам анализа данный вопрос не относится к компетенции Конституционного Суда.", en: "Based on the analysis, this issue does not fall within the competence of the Constitutional Court." },
+  errorGeneric: { kk: "Қате пайда болды. Кейінірек қайталап көріңіз.", ru: "Произошла ошибка. Попробуйте позже.", en: "An error occurred. Please try again later." },
+  fbButton: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
+  fbTitle: { kk: "Кері байланыс", ru: "Обратная связь", en: "Feedback" },
+  fbRoleEmpty: { kk: "Сіз кімсіз? (міндетті емес)", ru: "Кто вы? (необязательно)", en: "Who are you? (optional)" },
+  fbRoleCitizen: { kk: "Азамат", ru: "Гражданин", en: "Citizen" },
+  fbRoleLawyer: { kk: "Заңгер", ru: "Юрист", en: "Lawyer" },
+  fbSub: { kk: "Сайттың жұмысы туралы пікіріңізді жазыңыз.", ru: "Напишите, что думаете о работе сайта.", en: "Tell us what you think about this site." },
+  fbMessagePlaceholder: { kk: "Не ұнады, не жақсартуға болады…", ru: "Что понравилось, что можно улучшить…", en: "What worked well, what could be better…" },
+  fbContactPlaceholder: { kk: "Email немесе телефон (міндетті емес)", ru: "Email или телефон (необязательно)", en: "Email or phone (optional)" },
+  fbSend: { kk: "Жіберу", ru: "Отправить", en: "Send" },
+  fbSending: { kk: "Жіберілуде…", ru: "Отправка…", en: "Sending…" },
+  fbThanks: { kk: "Рақмет! Пікіріңіз жіберілді.", ru: "Спасибо! Ваш отзыв отправлен.", en: "Thank you! Your feedback has been sent." },
+  fbEmpty: { kk: "Хабарлама мәтінін енгізіңіз.", ru: "Введите текст сообщения.", en: "Please enter a message." },
+  fbError: { kk: "Жіберу мүмкін болмады. Кейінірек қайталап көріңіз.", ru: "Не удалось отправить. Попробуйте позже.", en: "Could not send. Please try again later." }
 };
-const ROLE_LABELS = { citizen: "Гражданин", lawyer: "Юрист" };
-const SENTIMENT_LABELS = { "позитив": "позитив", "нейтрально": "нейтрально", "негатив": "негатив" };
-const SENTIMENT_CLASS = { "позитив": "positive", "нейтрально": "neutral", "негатив": "negative" };
-const FEEDBACK_CATEGORIES = [
-  "непонятная формулировка",
-  "ошибка распознавания текста",
-  "неверное определение юрисдикции",
-  "техническая ошибка",
-  "предложение",
-  "другое",
-];
- 
-document.getElementById("btnEnter").addEventListener("click", () => load(true));
-document.getElementById("code").addEventListener("keydown", e => { if(e.key==="Enter") load(true); });
-document.getElementById("btnFilter").addEventListener("click", () => load(false));
-document.getElementById("btnClearFilter").addEventListener("click", () => {
-  document.getElementById("fDateFrom").value = "";
-  document.getElementById("fDateTo").value = "";
-  document.getElementById("fStep").value = "";
-  document.getElementById("fRole").value = "";
-  load(false);
-});
- 
-function buildQuery(){
-  const params = new URLSearchParams();
-  const dFrom = document.getElementById("fDateFrom").value;
-  const dTo = document.getElementById("fDateTo").value;
-  const step = document.getElementById("fStep").value;
-  const role = document.getElementById("fRole").value;
-  // Дата хранится как ISO timestamp — берём начало/конец суток
-  if (dFrom) params.set("date_from", dFrom + "T00:00:00");
-  if (dTo) params.set("date_to", dTo + "T23:59:59");
-  if (step) params.set("step", step);
-  if (role) params.set("role", role);
-  return params.toString();
-}
- 
-async function load(isLogin){
-  const errEl = document.getElementById("gateErr");
-  errEl.textContent = "";
- 
-  if (isLogin) {
-    const code = document.getElementById("code").value.trim();
-    if(!code){ errEl.textContent = "Введите код"; return; }
-    adminCode = code;
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
+let lang = "ru";
+let isRepresentative = false;
+let userDescription = "";
+let userFile = null;
+// ── Analytics ──────────────────────────────────────────────────────────────────
+const ANALYTICS_SESSION_ID = (function() {
+  var id = sessionStorage.getItem("ca_session_id");
+  if (!id) {
+    id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+    sessionStorage.setItem("ca_session_id", id);
   }
- 
-  try{
-    const qs = buildQuery();
-    const res = await fetch(`${API_BASE}/api/feedback${qs ? "?" + qs : ""}`, { headers:{ "X-Admin-Code": adminCode } });
-    if(res.status === 401){ errEl.textContent = "Неверный код"; return; }
-    if(!res.ok){ errEl.textContent = "Ошибка запроса"; return; }
- 
-    const data = await res.json();
-    document.getElementById("gate").style.display = "none";
-    document.getElementById("list").classList.add("visible");
-    document.getElementById("count").textContent = `показано: ${data.filtered_count ?? data.items.length} · всего: ${data.count}`;
- 
-    // Пробуем определить уровень доступа: пробуем PATCH-подобный запрос не делаем,
-    // просто пытаемся дёрнуть дашборд аналитики (там access_level возвращается явно).
-    detectAccessLevel();
- 
-    renderItems(data.items || []);
-  }catch(err){
-    errEl.textContent = "Не удалось подключиться к серверу. Проверьте, что backend запущен.";
-  }
+  return id;
+})();
+const ANALYTICS_IS_NEW = !sessionStorage.getItem("ca_visited_before");
+sessionStorage.setItem("ca_visited_before", "1");
+function getDeviceType() {
+  return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "desktop";
 }
- 
-async function detectAccessLevel(){
-  try{
-    const res = await fetch(`${API_BASE}/api/analytics/dashboard?period_days=1`, { headers:{ "X-Admin-Code": adminCode } });
-    if (res.ok) {
-      const d = await res.json();
-      accessLevel = d.access_level || "view";
-    }
-  }catch(e){ /* не критично — по умолчанию считаем "view" и просто не даём редактировать */ }
-  document.getElementById("accessBadge").textContent = accessLevel === "full" ? "полный доступ" : "только просмотр";
-  document.querySelectorAll(".category-select").forEach(sel => { sel.disabled = accessLevel !== "full"; });
+var CURRENT_STEP = "01_consent"; // FR-9: используется виджетом обратной связи, чтобы знать к какому шагу относится отзыв
+function trackEvent(step, eventType, extra) {
+  CURRENT_STEP = step;
+  try {
+    fetch(API_BASE + "/api/analytics/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({
+        session_id: ANALYTICS_SESSION_ID,
+        event_type: eventType,
+        step: step,
+        language: lang === "kk" ? "kk" : lang === "en" ? "en" : "ru",
+        device: getDeviceType(),
+        is_new_visitor: ANALYTICS_IS_NEW
+      }, extra || {}))
+    }).catch(function() {});
+  } catch (e) {}
 }
- 
-function renderItems(items){
-  const box = document.getElementById("items");
-  if(!items.length){
-    box.innerHTML = `<p class="empty">Отзывов не найдено по заданным фильтрам.</p>`;
-    return;
-  }
-  box.innerHTML = items.map(it => {
-    const sentiment = it.sentiment || "нейтрально";
-    const sentClass = SENTIMENT_CLASS[sentiment] || "neutral";
-    const categoryOptions = FEEDBACK_CATEGORIES.map(c =>
-      `<option value="${esc(c)}" ${c === it.category ? "selected" : ""}>${esc(c)}</option>`
-    ).join("");
-    return `
-      <div class="item" data-id="${esc(it.feedback_id)}">
-        <div class="meta">
-          <span>${fmtDate(it.created_at)}</span>
-          <span class="lang-chip">${esc(it.language || "")}</span>
-          ${it.step ? `<span class="step-chip">${esc(STEP_LABELS[it.step] || it.step)}</span>` : ""}
-          ${it.role ? `<span class="role-chip">${esc(ROLE_LABELS[it.role] || it.role)}</span>` : ""}
-          ${it.page ? `<span>${esc(it.page)}</span>` : ""}
-        </div>
-        <p class="msg">${esc(it.message || "")}</p>
-        <div class="tags">
-          <select class="category-select" ${accessLevel !== "full" ? "disabled" : ""}>${categoryOptions}</select>
-          <span class="sentiment ${sentClass}">${esc(SENTIMENT_LABELS[sentiment] || sentiment)}</span>
-          ${it.auto_categorized && !it.category_edited_by_moderator ? '<span class="auto-note">автокатегория ИИ — подсказка, требует проверки</span>' : ""}
-          ${it.category_edited_by_moderator ? '<span class="auto-note">категория проверена модератором</span>' : ""}
-          <span class="save-status" data-role="save-status"></span>
-        </div>
-        ${it.contact ? `<div class="contact">${esc(it.contact)}</div>` : ""}
-      </div>
-    `;
-  }).join("");
- 
-  box.querySelectorAll(".item").forEach(el => {
-    const select = el.querySelector(".category-select");
-    select.addEventListener("change", () => saveCategory(el.dataset.id, select.value, el));
+const chatEl = document.getElementById("chat");
+const actionZone = document.getElementById("action-zone");
+function t(key) { return (T[key] && T[key][lang]) || key; }
+function scrollBottom() { requestAnimationFrame(function() { chatEl.scrollTop = chatEl.scrollHeight; }); }
+function addMsg(role, html) {
+  var div = document.createElement("div");
+  div.className = "msg " + role;
+  div.innerHTML = '<div class="msg-bubble">' + html + '</div>';
+  chatEl.appendChild(div);
+  scrollBottom();
+}
+function showTyping() {
+  var div = document.createElement("div");
+  div.className = "typing"; div.id = "typing-indicator";
+  div.innerHTML = "<span></span><span></span><span></span>";
+  chatEl.appendChild(div);
+  scrollBottom();
+}
+function hideTyping() { var el = document.getElementById("typing-indicator"); if (el) el.remove(); }
+function clearActions() { actionZone.innerHTML = ""; }
+function showButtons(buttons) {
+  clearActions();
+  var wrap = document.createElement("div");
+  wrap.className = "actions";
+  var row = document.createElement("div");
+  row.className = "action-buttons";
+  buttons.forEach(function(b) {
+    var btn = document.createElement("button");
+    btn.className = "action-btn" + (b.cls ? " " + b.cls : "");
+    btn.textContent = b.label;
+    btn.onclick = function() { btn.blur(); b.action(); };
+    row.appendChild(btn);
   });
+  wrap.appendChild(row);
+  actionZone.appendChild(wrap);
 }
- 
-async function saveCategory(feedbackId, category, itemEl){
-  const statusEl = itemEl.querySelector('[data-role="save-status"]');
-  statusEl.textContent = "сохраняю…";
-  statusEl.className = "save-status";
-  try{
-    const res = await fetch(`${API_BASE}/api/feedback/${encodeURIComponent(feedbackId)}/category`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "X-Admin-Code": adminCode },
-      body: JSON.stringify({ category })
-    });
-    if(!res.ok){ throw new Error(); }
-    statusEl.textContent = "сохранено";
-    statusEl.className = "save-status ok";
-    setTimeout(() => { statusEl.textContent = ""; }, 2000);
-  }catch(e){
-    statusEl.textContent = "ошибка сохранения (нужен полный код доступа)";
-    statusEl.className = "save-status error";
-  }
+function assistantSay(textKey, thenFn, extraHtml) {
+  showTyping();
+  var text = t(textKey);
+  var delay = Math.min(400 + text.length * 3, 1200);
+  setTimeout(function() {
+    hideTyping();
+    var html = text.replace(/\n/g, "<br>") + (extraHtml || "");
+    addMsg("assistant", html);
+    if (thenFn) thenFn();
+  }, delay);
 }
- 
-function fmtDate(iso){
-  if(!iso) return "—";
-  try{
-    const d = new Date(iso);
-    return d.toLocaleString("ru-RU", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
-  }catch(e){ return iso; }
+function assistantSayRaw(html, thenFn) {
+  showTyping();
+  setTimeout(function() {
+    hideTyping();
+    addMsg("assistant", html);
+    if (thenFn) thenFn();
+  }, 700);
 }
- 
-function esc(s){
-  const d = document.createElement("div");
-  d.textContent = s;
+function escapeHtml(str) {
+  var d = document.createElement("div");
+  d.textContent = str;
   return d.innerHTML;
 }
+// ── Survey banner ──────────────────────────────────────────────────────────────
+function showSurveyBanner() {
+  var banner = document.createElement("div");
+  banner.className = "msg assistant";
+  banner.innerHTML =
+    '<div class="msg-bubble">' +
+    '<div class="msg-info" style="margin-top:0;line-height:1.6">' +
+    '📋 ' + t("surveyInvite") +
+    '<br><br>' +
+    '<a href="survey.html" style="display:inline-block;padding:9px 20px;' +
+    'background:var(--gold);color:var(--navy);border-radius:6px;font-weight:700;' +
+    'text-decoration:none;font-size:13.5px;letter-spacing:0.2px">' +
+    t("surveyBtn") + '</a>' +
+    '</div></div>';
+  chatEl.appendChild(banner);
+  scrollBottom();
+}
+// ── Flow ───────────────────────────────────────────────────────────────────────
+function startFlow() {
+  chatEl.innerHTML = "";
+  clearActions();
+  isRepresentative = false;
+  userDescription = "";
+  userFile = null;
+  trackEvent("01_consent", "step_started");
+  assistantSay("greeting", stepQ1);
+}
+function stepQ1() {
+  assistantSay("q1", function() {
+    showButtons([
+      { label: t("yes"), cls: "primary", action: function() { addMsg("user", t("yes")); clearActions(); stepQ2(); }},
+      { label: t("no"), action: function() { addMsg("user", t("no")); clearActions(); stepRedirectNoParticipation(); }}
+    ]);
+  });
+}
+function stepQ2() {
+  assistantSay("q2", function() {
+    showButtons([
+      { label: t("yes"), cls: "primary", action: function() { addMsg("user", t("yes")); clearActions(); stepDeadline(); }},
+      { label: t("no"), action: function() { addMsg("user", t("no")); clearActions(); stepQ3(); }}
+    ]);
+  });
+}
+function stepQ3() {
+  assistantSay("q3", function() {
+    showButtons([
+      { label: t("yes"), action: function() { addMsg("user", t("yes")); clearActions(); stepRedirectNotKS(); }},
+      { label: t("no"), action: function() { addMsg("user", t("no")); clearActions(); stepRedirectUnclear(); }}
+    ]);
+  });
+}
+function stepDeadline() {
+  assistantSay("qDeadline", function() {
+    showButtons([
+      { label: t("withinDeadline"), cls: "primary", action: function() { addMsg("user", t("withinDeadline")); clearActions(); stepQ4(); }},
+      { label: t("pastDeadline"), action: function() { addMsg("user", t("pastDeadline")); clearActions(); stepRedirectDeadline(); }}
+    ]);
+  });
+}
+function stepRedirectDeadline() {
+  var html = '<div class="msg-warning">' + t("redirectDeadline").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
+}
+function stepQ4() {
+  assistantSay("q4", function() {
+    showButtons([
+      { label: t("self"), cls: "primary", action: function() { addMsg("user", t("self")); clearActions(); isRepresentative = false; stepConsent(); }},
+      { label: t("representative"), action: function() { addMsg("user", t("representative")); clearActions(); isRepresentative = true; stepRepresentativeInfo(); }}
+    ]);
+  });
+}
+function stepRepresentativeInfo() {
+  var infoNote = lang === "kk"
+    ? "Өтінішіңізге жоғарыда аталған құжаттарды тіркеуді ұмытпаңыз."
+    : lang === "en"
+    ? "Remember to attach the documents listed above to your appeal."
+    : "Не забудьте приложить указанные документы к обращению.";
+  var html = t("representativeInfo").replace(/\n/g, "<br>") +
+    '<div class="msg-info" style="margin-top:14px">' + infoNote + '</div>';
+  assistantSayRaw(html, function() {
+    showButtons([
+      { label: t("understood"), cls: "primary", action: function() { addMsg("user", t("understood")); clearActions(); stepConsent(); }}
+    ]);
+  });
+}
+function stepRedirectNoParticipation() {
+  var html = '<div class="msg-redirect">' + t("redirectNoParticipation").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
+}
+function stepRedirectNotKS() {
+  var html = '<div class="msg-redirect">' + t("redirectNotKS").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
+}
+function stepRedirectUnclear() {
+  var html = '<div class="msg-warning">' + t("redirectUnclear").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
+}
+function showRestartButton() {
+  showSurveyBanner();
+  showButtons([
+    { label: t("restart"), action: startFlow },
+    { label: t("goHome"), action: function() { window.location.href = "index.html"; }}
+  ]);
+}
+function stepConsent() {
+  var html = t("consentText").replace(/\n/g, "<br>");
+  assistantSayRaw(html, function() {
+    clearActions();
+    var wrap = document.createElement("div");
+    wrap.className = "actions";
+    wrap.innerHTML =
+      '<div class="consent-row">' +
+        '<input type="checkbox" id="consent-cb">' +
+        '<label class="consent-label" for="consent-cb">' + t("consentCheckbox") + '</label>' +
+      '</div>' +
+      '<div class="action-buttons" style="margin-top:12px">' +
+        '<button class="action-btn gold" id="consent-btn" disabled>' + t("agree") + '</button>' +
+      '</div>';
+    actionZone.appendChild(wrap);
+    document.getElementById("consent-cb").addEventListener("change", function() {
+      document.getElementById("consent-btn").disabled = !this.checked;
+    });
+    document.getElementById("consent-btn").addEventListener("click", function() {
+      addMsg("user", t("agree"));
+      clearActions();
+      trackEvent("01_consent", "step_completed");
+      trackEvent("02_description", "step_started");
+      sendConsent().then(stepDescribe);
+    });
+  });
+}
+async function sendConsent() {
+  try {
+    await fetch(API_BASE + "/api/consent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ consent_given: true, language: lang })
+    });
+  } catch(e) {}
+}
+function stepDescribe() {
+  assistantSay("describePrompt", function() {
+    clearActions();
+    var wrap = document.createElement("div");
+    wrap.className = "input-area";
+    wrap.innerHTML =
+      '<textarea class="text-input" id="desc-input" placeholder="' + escapeHtml(t("describePlaceholder")) + '"></textarea>' +
+      '<div class="input-row">' +
+        '<button class="send-btn" id="desc-send" disabled>' + t("next") + '</button>' +
+      '</div>';
+    actionZone.appendChild(wrap);
+    var inp = document.getElementById("desc-input");
+    var btn = document.getElementById("desc-send");
+    inp.addEventListener("input", function() { btn.disabled = inp.value.trim().length < 10; });
+    btn.addEventListener("click", function() {
+      userDescription = inp.value.trim();
+      var preview = userDescription.length > 200 ? userDescription.substring(0, 200) + "..." : userDescription;
+      addMsg("user", escapeHtml(preview));
+      clearActions();
+      trackEvent("02_description", "step_completed");
+      stepUpload();
+    });
+    inp.focus();
+  });
+}
+function stepUpload() {
+  assistantSay("uploadPrompt", function() {
+    clearActions();
+    var wrap = document.createElement("div");
+    wrap.className = "input-area";
+    wrap.innerHTML =
+      '<div class="upload-zone" id="upload-zone">' +
+        '<div class="upload-icon">📄</div>' +
+        '<div class="upload-label" id="upload-label">' + t("uploadDrop") + '</div>' +
+        '<div class="upload-label" style="font-size:12px;margin-top:4px">' + t("uploadFormats") + '</div>' +
+        '<div class="upload-filename hidden" id="upload-filename"></div>' +
+        '<input type="file" class="file-input" id="file-input" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.odt">' +
+      '</div>' +
+      '<div class="action-buttons" style="margin-top:12px">' +
+        '<button class="action-btn gold" id="upload-submit" disabled>' + t("generate") + '</button>' +
+        '<button class="action-btn" id="upload-skip">' + t("skipUpload") + '</button>' +
+      '</div>';
+    actionZone.appendChild(wrap);
+    var zone = document.getElementById("upload-zone");
+    var fileInp = document.getElementById("file-input");
+    var fnEl = document.getElementById("upload-filename");
+    var subBtn = document.getElementById("upload-submit");
+    var skipBtn = document.getElementById("upload-skip");
+    zone.addEventListener("click", function() { fileInp.click(); });
+    fileInp.addEventListener("change", function() {
+      if (fileInp.files.length > 0) {
+        userFile = fileInp.files[0];
+        fnEl.textContent = userFile.name;
+        fnEl.classList.remove("hidden");
+        zone.classList.add("has-file");
+        document.getElementById("upload-label").textContent = "✓";
+        subBtn.disabled = false;
+      }
+    });
+    subBtn.addEventListener("click", function() {
+      addMsg("user", "📄 " + escapeHtml(userFile ? userFile.name : ""));
+      clearActions();
+      stepGenerate();
+    });
+    skipBtn.addEventListener("click", function() {
+      userFile = null;
+      addMsg("user", t("skipUpload"));
+      clearActions();
+      stepGenerate();
+    });
+  });
+}
+async function stepGenerate() {
+  trackEvent("03_jurisdiction", "step_started");
+  addMsg("assistant",
+    '<div class="spinner-wrap"><div class="spinner"></div>' +
+    '<div class="spinner-text" id="processing-text">' + t("processing") + '</div></div>'
+  );
+  var wakeTimer = setTimeout(function() {
+    var el = document.getElementById("processing-text");
+    if (el) el.textContent = t("waking");
+  }, 8000);
+  try {
+    var formData = new FormData();
+    formData.append("text", userDescription);
+    formData.append("language", lang);
+    formData.append("is_representative", isRepresentative ? "true" : "false");
+    // Эти три поля всегда "true" в момент вызова stepGenerate(): пользователь
+    // уже подтвердил их на предыдущих шагах анкеты (q1, q2, stepDeadline) —
+    // иначе фронтенд перенаправил бы его раньше (см. stepRedirectNoParticipation,
+    // stepRedirectNotKS/Unclear, stepRedirectDeadline) и stepGenerate() не был бы
+    // вызван вовсе. Backend использует их, чтобы не пересматривать заново то,
+    // что уже проверено интерфейсом (см. main.py / llama_analyzer.py).
+    formData.append("is_case_participant", "true");
+    formData.append("act_is_npa", "true");
+    formData.append("within_one_year", "true");
+    if (userFile) formData.append("file", userFile);
+    var resp = await fetch(API_BASE + "/generate-appeal", { method: "POST", body: formData });
+    clearTimeout(wakeTimer);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var data = await resp.json();
+    chatEl.lastElementChild.remove();
+    if (data.within_jurisdiction === false || data.redirect) {
+      trackEvent("03_jurisdiction", "step_completed", { jurisdiction_reason: "other_out_of_jurisdiction" });
+      var redirectHtml = '<div class="msg-redirect">' + t("resultRedirect") + '</div>';
+      if (data.reasoning) {
+        redirectHtml += '<br>' + escapeHtml(data.reasoning).replace(/\n/g, "<br>");
+      }
+      if (data.redirect_info) {
+        redirectHtml += '<div class="msg-info" style="margin-top:10px">' +
+          escapeHtml(data.redirect_info.organ || "") +
+          (data.redirect_info.url
+            ? '<br><a href="' + escapeHtml(data.redirect_info.url) + '" target="_blank" rel="noopener" style="color:var(--blue)">' + escapeHtml(data.redirect_info.url) + '</a>'
+            : '') +
+          '</div>';
+      }
+      addMsg("assistant", redirectHtml);
+      showRestartButton();
+    } else {
+      trackEvent("03_jurisdiction", "step_completed", { jurisdiction_reason: "within_jurisdiction" });
+      trackEvent("04_draft", "step_started");
+      trackEvent("04_draft", "step_completed");
+      var draft = data.appeal_text || data.generated_text || data.text || JSON.stringify(data, null, 2);
+      var resultHtml = t("resultIntro").replace(/\n/g, "<br>") +
+        '<div class="result-box" id="result-text">' + escapeHtml(draft) + '</div>' +
+        renderNpCitations(data.suggested_np_citations);
+      addMsg("assistant", resultHtml);
+      showSurveyBanner();
+      showButtons([
+        { label: t("copy"), cls: "primary", action: copyResult },
+        { label: t("restart"), action: startFlow }
+      ]);
+    }
+  } catch(err) {
+    clearTimeout(wakeTimer);
+    if (chatEl.lastElementChild) chatEl.lastElementChild.remove();
+    addMsg("assistant", '<div class="msg-redirect">' + t("errorGeneric") + '<br><small>' + escapeHtml(err.message) + '</small></div>');
+    showRestartButton();
+  }
+}
+function renderNpCitations(citations) {
+  if (!citations || !citations.length) return "";
+  // FR-4: если ВСЕ карточки — только fuzzy-совпадения (нет ни одного точного
+  // совпадения по статье), заголовок секции честно отражает более низкую
+  // уверенность вместо формулировки "уже рассматривал эту норму".
+  var allFuzzy = citations.every(function(c) { return c.possibly_relevant; });
+  var cards = citations.map(function(c) {
+    var superseded = c.superseded
+      ? '<div class="np-citation-superseded">⚠️ ' + t("npSupersededTag") + '</div>'
+      : "";
+    var possible = c.possibly_relevant
+      ? '<div class="np-citation-possible">🔍 ' + t("npPossibleTag") + '</div>'
+      : "";
+    var link = c.source_url
+      ? '<a class="np-citation-link" href="' + escapeHtml(c.source_url) + '" target="_blank" rel="noopener">' + escapeHtml(c.source_url) + '</a>'
+      : "";
+    return (
+      '<div class="np-citation-card">' +
+        '<span class="np-citation-number">№' + escapeHtml(c.number || "") + '</span>' +
+        (c.date ? ' · ' + escapeHtml(c.date) : '') +
+        superseded +
+        possible +
+        (c.summary ? '<div class="np-citation-summary">' + escapeHtml(c.summary) + '</div>' : '') +
+        link +
+      '</div>'
+    );
+  }).join("");
+  return (
+    '<div class="np-citations">' +
+      '<div class="np-citations-title">📚 ' + (allFuzzy ? t("npFoundTitleFuzzy") : t("npFoundTitle")) + '</div>' +
+      cards +
+      '<div class="np-citations-note">' + t("npNote") + '</div>' +
+    '</div>'
+  );
+}
+function copyResult() {
+  var el = document.getElementById("result-text");
+  if (!el) return;
+  trackEvent("04_draft", "draft_downloaded");
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    var btns = actionZone.querySelectorAll(".action-btn");
+    if (btns[0]) {
+      btns[0].textContent = t("copied");
+      setTimeout(function() { btns[0].textContent = t("copy"); }, 1500);
+    }
+  });
+}
+document.querySelectorAll(".lang-btn").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    document.querySelectorAll(".lang-btn").forEach(function(b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    lang = btn.dataset.lang;
+    document.documentElement.lang = lang === "kk" ? "kk" : lang === "en" ? "en" : "ru";
+    document.querySelectorAll("[data-i18n]").forEach(function(el) {
+      var key = el.dataset.i18n;
+      if (T[key]) el.textContent = T[key][lang];
+    });
+    applyFeedbackTranslations();
+    renderNpDbActuality();
+    startFlow();
+  });
+});
+/* ---------------- FEEDBACK WIDGET ---------------- */
+function applyFeedbackTranslations() {
+  document.getElementById("fbButtonLabel").textContent = t("fbButton");
+  document.getElementById("fbTitle").textContent = t("fbTitle");
+  document.getElementById("fbSub").textContent = t("fbSub");
+  document.getElementById("fbMessage").placeholder = t("fbMessagePlaceholder");
+  document.getElementById("fbContact").placeholder = t("fbContactPlaceholder");
+  document.getElementById("fbSend").textContent = t("fbSend");
+  document.getElementById("fbRoleOptEmpty").textContent = t("fbRoleEmpty");
+  document.getElementById("fbRoleOptCitizen").textContent = t("fbRoleCitizen");
+  document.getElementById("fbRoleOptLawyer").textContent = t("fbRoleLawyer");
+}
+var fbButton = document.getElementById("fbButton");
+var fbPanel  = document.getElementById("fbPanel");
+function openFeedback() {
+  fbPanel.classList.add("open");
+  fbButton.style.display = "none";
+  document.getElementById("fbMessage").focus();
+}
+function closeFeedback() {
+  fbPanel.classList.remove("open");
+  fbButton.style.display = "flex";
+}
+fbButton.addEventListener("click", openFeedback);
+document.getElementById("fbClose").addEventListener("click", closeFeedback);
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape" && fbPanel.classList.contains("open")) closeFeedback();
+});
+document.getElementById("fbSend").addEventListener("click", async function() {
+  var msgEl = document.getElementById("fbMessage");
+  var contactEl = document.getElementById("fbContact");
+  var statusEl = document.getElementById("fbStatus");
+  var sendBtn = document.getElementById("fbSend");
+  var message = msgEl.value.trim();
+  if (!message) {
+    statusEl.className = "error";
+    statusEl.textContent = t("fbEmpty");
+    return;
+  }
+  sendBtn.disabled = true;
+  statusEl.className = "";
+  statusEl.textContent = t("fbSending");
+  try {
+    var res = await fetch(API_BASE + "/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: message,
+        contact: contactEl.value.trim() || null,
+        language: lang,
+        page: "chat",
+        step: CURRENT_STEP,
+        role: document.getElementById("fbRole").value || null
+      })
+    });
+    sendBtn.disabled = false;
+    if (!res.ok) throw new Error("send failed");
+    statusEl.className = "ok";
+    statusEl.textContent = t("fbThanks");
+    msgEl.value = "";
+    contactEl.value = "";
+    setTimeout(function() { closeFeedback(); statusEl.textContent = ""; }, 1800);
+  } catch (err) {
+    sendBtn.disabled = false;
+    statusEl.className = "error";
+    statusEl.textContent = t("fbError");
+  }
+});
+/* ---------------- NFR-3: дата актуальности базы НП КС РК ---------------- */
+var npDbUpdatedAt = null;
+function renderNpDbActuality() {
+  var el = document.getElementById("npDbActuality");
+  if (!el || !npDbUpdatedAt) return;
+  el.textContent = " · " + t("npDbActuality") + " " + npDbUpdatedAt;
+  el.classList.remove("hidden");
+}
+function fetchNpDbActuality() {
+  fetch(API_BASE + "/api/np/last-updated")
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.updated_at) {
+        npDbUpdatedAt = data.updated_at;
+        renderNpDbActuality();
+      }
+    })
+    .catch(function() {});
+}
+applyFeedbackTranslations();
+fetchNpDbActuality();
+startFlow();
 </script>
 </body>
 </html>
  
+
+
