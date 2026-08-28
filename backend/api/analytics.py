@@ -28,7 +28,8 @@ from pydantic import BaseModel, Field
  
 import os
  
-ADMIN_ACCESS_CODE = os.environ.get("ADMIN_ACCESS_CODE", "")  # тот же код, что и в feedback.py
+ADMIN_ACCESS_CODE = os.environ.get("ADMIN_ACCESS_CODE", "")  # тот же код, что и в feedback.py — ПОЛНЫЙ доступ
+VIEWER_ACCESS_CODE = os.environ.get("VIEWER_ACCESS_CODE", "")  # NFR-3: код ТОЛЬКО ДЛЯ ПРОСМОТРА (например, для научного руководителя пилота)
  
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
  
@@ -61,8 +62,23 @@ def _query(cypher: str, params: dict = None):
  
  
 def _check_admin(x_admin_code: Optional[str]):
+    """ПОЛНЫЙ доступ — просмотр + экспорт + правка категорий отзывов (NFR-3)."""
     if not ADMIN_ACCESS_CODE or x_admin_code != ADMIN_ACCESS_CODE:
         raise HTTPException(status_code=403, detail="Неверный код доступа администратора")
+
+
+def _check_admin_or_viewer(x_admin_code: Optional[str]) -> str:
+    """
+    NFR-3: ролевой доступ. ADMIN_ACCESS_CODE даёт полный доступ (просмотр
+    дашборда + экспорт), VIEWER_ACCESS_CODE — только просмотр дашборда
+    (например, для научного руководителя пилота, готовящего научное
+    заключение — см. NFR-3 в ТЗ). Возвращает "full" или "view".
+    """
+    if ADMIN_ACCESS_CODE and x_admin_code == ADMIN_ACCESS_CODE:
+        return "full"
+    if VIEWER_ACCESS_CODE and x_admin_code == VIEWER_ACCESS_CODE:
+        return "view"
+    raise HTTPException(status_code=403, detail="Неверный код доступа")
  
  
 # ---------------------------------------------------------------------------
@@ -150,6 +166,7 @@ def record_event(event: AnalyticsEvent):
             device=record["device"],
             jurisdiction_reason=record.get("jurisdiction_reason"),
             is_new_visitor=record["is_new_visitor"],
+            region=record.get("region"),
         )
         if not sheets_result.get("success"):
             print(f"⚠️ Sheets analytics write failed: {sheets_result.get('error')}")
@@ -201,11 +218,120 @@ def _fetch_events(since_iso: str) -> list[dict]:
         RETURN e.id AS id, e.session_id AS session_id, e.event_type AS event_type,
                e.step AS step, e.language AS language, e.device AS device,
                e.jurisdiction_reason AS jurisdiction_reason, e.is_new_visitor AS is_new_visitor,
-               e.timestamp AS timestamp
+               e.region AS region, e.timestamp AS timestamp
         """,
         {"since": since_iso},
     )
     return rows
+
+
+def _parse_ts(ts: Optional[str]):
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _format_duration(seconds: Optional[float]) -> Optional[str]:
+    """Человекочитаемая строка вида '2 мин 14 сек' для FR-6."""
+    if seconds is None:
+        return None
+    seconds = int(round(seconds))
+    minutes, secs = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    parts = []
+    if hours:
+        parts.append(f"{hours} ч")
+    if minutes or hours:
+        parts.append(f"{minutes} мин")
+    parts.append(f"{secs} сек")
+    return " ".join(parts)
+
+
+def _compute_step_durations(events: list[dict]) -> tuple[dict, dict]:
+    """
+    FR-6: среднее время на каждом шаге и на прохождение всей воронки.
+    Считается по разнице между первым step_started и первым step_completed
+    для одного и того же session_id (значит нужны ОБА события в паре —
+    сессии без завершения шага в среднее не попадают, что ожидаемо).
+    """
+    by_session: dict[str, list[dict]] = defaultdict(list)
+    for e in events:
+        by_session[e["session_id"]].append(e)
+
+    step_durations: dict[str, list[float]] = defaultdict(list)
+    funnel_durations: list[float] = []
+
+    for evs in by_session.values():
+        started: dict[str, datetime] = {}
+        completed: dict[str, datetime] = {}
+        for e in evs:
+            ts = _parse_ts(e.get("timestamp"))
+            if ts is None:
+                continue
+            step = e["step"]
+            if e["event_type"] == "step_started" and (step not in started or ts < started[step]):
+                started[step] = ts
+            elif e["event_type"] == "step_completed" and (step not in completed or ts < completed[step]):
+                completed[step] = ts
+
+        for step in STEP_ORDER:
+            if step in started and step in completed and completed[step] >= started[step]:
+                step_durations[step].append((completed[step] - started[step]).total_seconds())
+
+        if (
+            "01_consent" in started
+            and "04_draft" in completed
+            and completed["04_draft"] >= started["01_consent"]
+        ):
+            funnel_durations.append((completed["04_draft"] - started["01_consent"]).total_seconds())
+
+    avg_step_seconds = {}
+    for step in STEP_ORDER:
+        durs = step_durations[step]
+        avg = round(sum(durs) / len(durs)) if durs else None
+        avg_step_seconds[step] = {
+            "avg_seconds": avg,
+            "avg_human": _format_duration(avg),
+            "sample_size": len(durs),
+        }
+
+    avg_funnel = round(sum(funnel_durations) / len(funnel_durations)) if funnel_durations else None
+    funnel_total = {
+        "avg_seconds": avg_funnel,
+        "avg_human": _format_duration(avg_funnel),
+        "sample_size": len(funnel_durations),
+    }
+    return avg_step_seconds, funnel_total
+
+
+def _survey_weekly_trend(surveys: list[dict]) -> list[dict]:
+    """FR-13: динамика удовлетворённости/NPS по неделям (ISO-неделя)."""
+    buckets: dict[str, list[dict]] = defaultdict(list)
+    for s in surveys:
+        ts = _parse_ts(s.get("timestamp"))
+        if not ts:
+            continue
+        year, week, _ = ts.isocalendar()
+        key = f"{year}-W{week:02d}"
+        buckets[key].append(s)
+
+    trend = []
+    for key in sorted(buckets.keys()):
+        items = buckets[key]
+        avg_sat = round(sum(i["satisfaction"] for i in items) / len(items), 2)
+        promoters = sum(1 for i in items if i["nps"] >= 9)
+        detractors = sum(1 for i in items if i["nps"] <= 6)
+        nps = round((promoters - detractors) / len(items) * 100, 1)
+        trend.append({
+            "week": key,
+            "responses_count": len(items),
+            "avg_satisfaction": avg_sat,
+            "nps_score": nps,
+        })
+    return trend
  
  
 def _fetch_surveys(since_iso: str) -> list[dict]:
@@ -220,14 +346,97 @@ def _fetch_surveys(since_iso: str) -> list[dict]:
     return rows
  
  
+STEP_EXPLANATIONS = {
+    "01_consent": {
+        "title": "Шаг 1 — Согласие",
+        "explanation": (
+            "Гражданин отвечает на вводные вопросы (участвовал ли лично в деле, "
+            "какой акт оспаривает, есть ли представитель) и даёт согласие на "
+            "обработку данных. Это первый экран сервиса — самый массовый по "
+            "заходам и самый частый по уходу пользователей."
+        ),
+    },
+    "02_description": {
+        "title": "Шаг 2 — Описание проблемы",
+        "explanation": (
+            "Пользователь своими словами описывает ситуацию и, при желании, "
+            "прикладывает документ (судебный акт, решение). На основе этого "
+            "текста система в следующем шаге определяет норму закона, которую "
+            "нужно проверить на соответствие Конституции."
+        ),
+    },
+    "03_jurisdiction": {
+        "title": "Шаг 3 — Проверка юрисдикции",
+        "explanation": (
+            "Система (через ИИ-анализ) определяет, входит ли обращение в "
+            "компетенцию Конституционного Суда РК, или должно быть направлено "
+            "в другой орган. Если не входит — пользователю объясняется причина "
+            "и куда обратиться вместо этого."
+        ),
+    },
+    "04_draft": {
+        "title": "Шаг 4 — Черновик обращения",
+        "explanation": (
+            "Если обращение признано в компетенции КС РК, система генерирует "
+            "черновик официального обращения по образцу. Пользователь может "
+            "скопировать или скачать готовый текст — это финальный шаг воронки."
+        ),
+    },
+}
+
+FUNNEL_METRIC_EXPLANATIONS = {
+    "reached": "Сколько человек ДОШЛИ до этого шага (открыли его) за выбранный период.",
+    "completed": "Сколько из дошедших УСПЕШНО ЗАВЕРШИЛИ этот шаг и перешли дальше.",
+    "drop_off": (
+        "ОТВАЛ — сколько человек дошли до шага, но НЕ завершили его "
+        "(закрыли вкладку, передумали, отвлеклись). Это число людей, "
+        "которые не пошли дальше."
+    ),
+    "drop_off_rate_pct": (
+        "% ОТВАЛА — какая доля дошедших до шага НЕ завершила его. "
+        "Например, 40% отвала на шаге 1 значит: из 100 человек, открывших "
+        "сервис, 40 ушли, не дав согласие, и только 60 пошли дальше. "
+        "Чем выше это число — тем хуже работает конкретный шаг и тем "
+        "больше приоритет на его доработку."
+    ),
+}
+
+JURISDICTION_REASON_EXPLANATIONS = {
+    "within_jurisdiction": "В компетенции КС РК — обращение можно готовить дальше.",
+    "not_participant": "Не участник дела — заявитель не был стороной в судебном деле, по которому вынесен акт (ст. 45).",
+    "wrong_object": "Оспаривается акт применения, а не сама норма — жаловаться нужно на закон/норму, а не на конкретное решение по делу.",
+    "deadline_expired": "Истёк годичный срок — с даты вынесения судебного акта прошло больше года.",
+    "no_valid_poa": "Нет/неполная доверенность — для обращения через представителя доверенность должна перечислять все нужные полномочия.",
+    "improper_subject": "Ненадлежащий субъект — например, обратилось юридическое лицо, а закон ограничивает круг заявителей гражданами.",
+    "other_out_of_jurisdiction": "Другая причина вне компетенции КС РК (пересмотр акта, разъяснение нормы, пробел в законе и т.п.).",
+}
+
+SUMMARY_METRIC_EXPLANATIONS = {
+    "unique_visitors": "Сколько разных людей заходили на сервис за выбранный период (считается по анонимному ID сессии в браузере, без ФИО/IP).",
+    "overall_completion_rate_pct": "Какая доля людей, начавших с шага 1 (согласие), дошла до конца — до готового черновика на шаге 4.",
+    "out_of_jurisdiction_rate_pct": "Какая доля проверенных на шаге 3 обращений оказалась ВНЕ компетенции Конституционного Суда РК (т.е. КС РК не может их рассматривать — нужно обращаться в другой орган).",
+    "avg_satisfaction": "Средняя оценка удовлетворённости сервисом по опроснику, по шкале от 1 (совсем не понравилось) до 5 (полностью устроило).",
+    "nps_score": (
+        "NPS (Net Promoter Score, индекс готовности рекомендовать) — "
+        "показывает, сколько людей порекомендовали бы сервис другим. "
+        "Считается из вопроса опросника «оцените от 0 до 10, "
+        "порекомендуете ли вы сервис». Те, кто поставил 9-10, — "
+        "'сторонники'; кто поставил 0-6, — 'критики'. NPS = "
+        "(% сторонников − % критиков), число от −100 до +100. "
+        "Чем выше — тем лучше; выше 0 уже неплохо, выше 50 — отлично."
+    ),
+}
+
+
 @router.get("/dashboard")
 def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(None)):
     """
     FR-14: сводная панель — единый ответ со всеми метриками для дашборда.
     Малая выборка (риск из ТЗ п.6): всегда возвращаем абсолютные числа
     наравне с процентами.
+    NFR-3: доступен и с полным кодом, и с кодом "только просмотр".
     """
-    _check_admin(x_admin_code)
+    access_level = _check_admin_or_viewer(x_admin_code)
  
     since_iso = _since_iso(period_days)
     events = _fetch_events(since_iso)
@@ -245,7 +454,14 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
  
     # --- FR-4: устройство ---
     device_breakdown = Counter(e["device"] for e in events)
- 
+
+    # --- FR-4: регион (агрегированно, только если пользователь дал согласие — см. NFR-1) ---
+    region_breakdown = Counter(e["region"] for e in events if e.get("region"))
+    region_reported_sessions = len({e["session_id"] for e in events if e.get("region")})
+
+    # --- FR-6: среднее время на шаге и на всю воронку ---
+    avg_step_seconds, funnel_total_time = _compute_step_durations(events)
+
     # --- FR-5/FR-6: воронка ---
     sessions_per_step: dict[str, set] = defaultdict(set)
     completed_per_step: dict[str, set] = defaultdict(set)
@@ -254,7 +470,7 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
             sessions_per_step[e["step"]].add(e["session_id"])
         if e["event_type"] == "step_completed":
             completed_per_step[e["step"]].add(e["session_id"])
- 
+
     funnel = []
     for step in STEP_ORDER:
         reached = len(sessions_per_step[step])
@@ -263,10 +479,13 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
         drop_off_rate = round(drop_off / reached * 100, 1) if reached else 0.0
         funnel.append({
             "step": step,
+            "title": STEP_EXPLANATIONS[step]["title"],
+            "explanation": STEP_EXPLANATIONS[step]["explanation"],
             "reached": reached,
             "completed": completed,
             "drop_off": drop_off,
             "drop_off_rate_pct": drop_off_rate,
+            "avg_time": avg_step_seconds[step],
         })
  
     # --- FR-7: разбивка решений шага 03 ---
@@ -302,27 +521,35 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
  
     return {
         "period_days": period_days,
+        "access_level": access_level,  # NFR-3: "full" или "view" — фронт скрывает кнопки экспорта/правки для "view"
         "summary": {
             "unique_visitors": unique_visitors,
             "overall_completion_rate_pct": overall_completion_rate,
             "out_of_jurisdiction_rate_pct": out_of_jurisdiction_rate,
             "avg_satisfaction": avg_satisfaction,
             "nps_score": nps_score,
+            "funnel_total_time": funnel_total_time,
         },
+        "summary_explanations": SUMMARY_METRIC_EXPLANATIONS,
         "visitors": {
             "unique": unique_visitors,
             "new": new_visitors,
             "returning": returning_visitors,
             "by_language": dict(language_breakdown),
             "by_device": dict(device_breakdown),
+            "by_region": dict(region_breakdown),
+            "region_reported_sessions": region_reported_sessions,
         },
         "funnel": funnel,
+        "funnel_metric_explanations": FUNNEL_METRIC_EXPLANATIONS,
         "jurisdiction_breakdown": dict(jurisdiction_reasons),
+        "jurisdiction_reason_explanations": JURISDICTION_REASON_EXPLANATIONS,
         "drafts_downloaded": drafts_downloaded,
         "survey": {
             "responses_count": len(surveys),
             "avg_satisfaction": avg_satisfaction,
             "nps_score": nps_score,
+            "weekly_trend": _survey_weekly_trend(surveys),
         },
     }
  
@@ -506,4 +733,3 @@ def categorize_feedback_with_groq(text: str) -> dict:
 # 503 "Ошибка подключения к Neo4j", пока кто-то вручную не нажмёт
 # "Resume" в консоли console.neo4j.io. Сами данные при этом НЕ теряются —
 # это отличие от прежней JSONL-версии, где рестарт Render стирал файлы.
- 
