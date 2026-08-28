@@ -22,10 +22,12 @@ from judicial_analyzer import generate_case_summary, search_precedents
 from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys, init_feedback_module, update_feedback_category
 from analytics import router as analytics_router, init_analytics_router
 from np_resolutions import router as np_router, init_np_module, find_resolutions_for_article, get_suggested_citations
+from forum import router as forum_router, init_forum_module
 load_dotenv()
 app = FastAPI(title="Constitutional Assistant")
 app.include_router(analytics_router)
 app.include_router(np_router)
+app.include_router(forum_router)
 # --- Rate Limiter ---
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -126,6 +128,7 @@ def run_query(query: str, params: dict = {}) -> List[Dict]:
 init_analytics_router(run_query)
 init_feedback_module(run_query)
 init_np_module(run_query)
+init_forum_module(run_query)
 def query_bankruptcy_context(category: str = "bankruptcy") -> List[Dict]:
     query = """
     MATCH (law:Law {category: $category})-[:HAS_ARTICLE]->(articles:Article)
