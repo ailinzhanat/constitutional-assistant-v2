@@ -19,7 +19,7 @@ from gov_redirect import find_relevant_organs, format_redirect_message
 from groq_analyzer import analyze_complaint
 from groq_generator import generate_appeal_text
 from judicial_analyzer import generate_case_summary, search_precedents
-from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys, init_feedback_module
+from feedback import save_feedback, list_feedback, count_feedback, save_survey, list_surveys, count_surveys, init_feedback_module, update_feedback_category
 from analytics import router as analytics_router, init_analytics_router
 from np_resolutions import router as np_router, init_np_module, find_resolutions_for_article, get_suggested_citations
 load_dotenv()
@@ -39,7 +39,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
 NEO4J_URI = os.getenv("NEO4J_URI", "neo4j+s://8b6c1184.databases.neo4j.io")
@@ -47,10 +47,19 @@ NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "")
 JUDICIAL_ACCESS_CODE = os.getenv("JUDICIAL_ACCESS_CODE")
 ADMIN_ACCESS_CODE = os.getenv("ADMIN_ACCESS_CODE")
+VIEWER_ACCESS_CODE = os.getenv("VIEWER_ACCESS_CODE")  # NFR-3: код "только просмотр" (например, для научного руководителя пилота)
 def check_admin_access(x_admin_code: Optional[str] = Header(None)):
+    """ПОЛНЫЙ доступ — используется там, где возможны изменения (правка категории отзыва и т.п.)."""
     if not ADMIN_ACCESS_CODE or x_admin_code != ADMIN_ACCESS_CODE:
         raise HTTPException(status_code=401, detail="Неверный код доступа администратора")
     return True
+def check_admin_or_viewer_access(x_admin_code: Optional[str] = Header(None)):
+    """NFR-3: доступ на ПРОСМОТР — принимает и полный код, и код "только просмотр"."""
+    if ADMIN_ACCESS_CODE and x_admin_code == ADMIN_ACCESS_CODE:
+        return True
+    if VIEWER_ACCESS_CODE and x_admin_code == VIEWER_ACCESS_CODE:
+        return True
+    raise HTTPException(status_code=401, detail="Неверный код доступа")
 def check_judicial_access(x_judicial_code: Optional[str] = Header(None)):
     if not JUDICIAL_ACCESS_CODE or x_judicial_code != JUDICIAL_ACCESS_CODE:
         raise HTTPException(status_code=401, detail="Неверный код доступа для внутреннего инструмента судьи")
@@ -241,7 +250,9 @@ async def submit_feedback(request: Request, body: dict):
     """
     Принимает два типа запросов:
     - { "type": "survey", "data": { ...17 полей опросника... } }
-    - { "message": "...", "contact": "...", "language": "RU", "page": "..." }
+    - { "message": "...", "contact": "...", "language": "RU", "page": "...",
+        "step": "01_consent"|"02_description"|"03_jurisdiction"|"04_draft" (FR-9, необязательно),
+        "role": "citizen"|"lawyer" (FR-9, необязательно) }
     """
     if body.get("type") == "survey":
         result = save_survey(body.get("data", {}))
@@ -254,16 +265,39 @@ async def submit_feedback(request: Request, body: dict):
             contact=body.get("contact"),
             language=body.get("language", "RU"),
             page=body.get("page"),
+            step=body.get("step"),
+            role=body.get("role"),
         )
         if not result.get("success"):
             raise HTTPException(status_code=400, detail=result.get("error"))
         return {"status": "success", "feedback_id": result["feedback_id"]}
 @app.get("/api/feedback")
-async def get_feedback(_auth: bool = Depends(check_admin_access)):
-    items = list_feedback()
-    return {"count": count_feedback(), "items": items}
+async def get_feedback(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    step: Optional[str] = None,
+    role: Optional[str] = None,
+    _auth: bool = Depends(check_admin_or_viewer_access),
+):
+    """FR-9: единый список отзывов с фильтрами по дате, шагу интерфейса и роли автора."""
+    items = list_feedback(date_from=date_from, date_to=date_to, step=step, role=role)
+    return {"count": count_feedback(), "filtered_count": len(items), "items": items}
+@app.patch("/api/feedback/{feedback_id}/category")
+async def patch_feedback_category(feedback_id: str, body: dict, _auth: bool = Depends(check_admin_access)):
+    """
+    FR-10: ручная корректировка категории модератором. Требует ПОЛНЫЙ код
+    доступа (не "только просмотр") — см. NFR-3.
+    Тело запроса: { "category": "непонятная формулировка" }
+    """
+    category = (body.get("category") or "").strip()
+    if not category:
+        raise HTTPException(status_code=400, detail="Поле category обязательно")
+    result = update_feedback_category(feedback_id, category)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("error"))
+    return {"status": "success"}
 @app.get("/api/surveys")
-async def get_surveys(_auth: bool = Depends(check_admin_access)):
+async def get_surveys(_auth: bool = Depends(check_admin_or_viewer_access)):
     """Возвращает все ответы на опросник (type=survey) для панели администратора."""
     items = list_surveys()
     return {"count": count_surveys(), "items": items}
