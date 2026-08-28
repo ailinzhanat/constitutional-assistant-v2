@@ -10,41 +10,57 @@
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:24px; }
   h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:15px; margin:0 0 12px; }
   .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
   .login-box { max-width:360px; margin:80px auto; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; }
   .login-box input { width:100%; padding:10px; margin:10px 0; border:1px solid var(--border); border-radius:8px; font-size:14px; }
   .login-box button, .toolbar button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:14px; cursor:pointer; }
+  .login-box button:disabled, .toolbar button:disabled { background:#a9b6d6; cursor:not-allowed; }
   .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
   select { padding:8px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
-  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:24px; }
+  .view-badge { font-size:12px; padding:4px 10px; border-radius:20px; background:#eef1f8; color:var(--muted); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:12px; margin-bottom:12px; }
   .metric { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
-  .metric .label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .metric .label { font-size:12px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
   .metric .value { font-size:24px; font-weight:600; }
   .metric .value small { font-size:13px; font-weight:400; color:var(--muted); }
+  .metric .explain { font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.45; }
   .panel { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px; }
-  .panel h2 { font-size:15px; margin:0 0 12px; }
+  .panel .panel-note { font-size:12.5px; color:var(--muted); margin:-6px 0 14px; line-height:1.5; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
-  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
   th { color:var(--muted); font-weight:500; }
   .error { color:#b42318; font-size:13px; }
   .chart-wrap { position:relative; height:280px; }
   .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
   @media (max-width:700px){ .two-col{ grid-template-columns:1fr; } }
+  .glossary { background:#f9fafc; border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; font-size:13px; line-height:1.6; }
+  .glossary dt { font-weight:600; margin-top:8px; }
+  .glossary dt:first-child { margin-top:0; }
+  .glossary dd { margin:2px 0 0; color:var(--muted); }
+  .step-card { border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .step-card h3 { font-size:13.5px; margin:0 0 4px; }
+  .step-card p { font-size:12.5px; color:var(--muted); margin:0 0 8px; line-height:1.5; }
+  .step-stats { display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; }
+  .step-stats b { font-size:15px; display:block; }
+  .footer-link { font-size:13px; margin-top:6px; }
+  .footer-link a { color:var(--accent); text-decoration:none; }
+  .empty-note { color:var(--muted); font-size:13px; padding:8px 0; }
 </style>
 </head>
 <body>
 
 <div id="login" class="login-box">
   <h1>Вход в аналитику</h1>
-  <p class="sub">Введите код администратора</p>
+  <p class="sub">Введите код администратора (полный доступ) или код только для просмотра.</p>
   <input type="password" id="adminCode" placeholder="Код доступа" />
   <button onclick="login()">Войти</button>
   <p class="error" id="loginError"></p>
 </div>
 
-<div id="dashboard" style="display:none; max-width:960px; margin:0 auto;">
-  <h1>Аналитика Constitutional Assistant</h1>
-  <p class="sub">Данные агрегированы и обезличены. Обновляются не реже раза в сутки.</p>
+<div id="dashboard" style="display:none; max-width:980px; margin:0 auto;">
+  <h1>Аналитика Constitutional Assistant <span class="view-badge" id="accessBadge"></span></h1>
+  <p class="sub">Данные агрегированы и обезличены — по ним нельзя определить конкретного человека. Обновляются в реальном времени при каждом заходе на эту страницу.</p>
 
   <div class="toolbar">
     <select id="periodSelect" onchange="loadDashboard()">
@@ -52,27 +68,63 @@
       <option value="30" selected>Последние 30 дней</option>
       <option value="90">Последние 90 дней</option>
     </select>
-    <button onclick="exportReport('excel')">Скачать Excel</button>
-    <button onclick="exportReport('pdf')">Скачать PDF</button>
+    <button id="exportExcelBtn" onclick="exportReport('excel')">Скачать Excel</button>
+    <button id="exportPdfBtn" onclick="exportReport('pdf')">Скачать PDF</button>
   </div>
 
   <div class="grid" id="summaryGrid"></div>
 
   <div class="panel">
     <h2>Воронка прохождения шагов 01–04</h2>
+    <p class="panel-note">
+      Воронка показывает путь пользователя от первого экрана до готового черновика.
+      <b>Дошли</b> — сколько человек открыли шаг. <b>Завершили</b> — сколько из них прошли его до конца
+      и перешли дальше. <b>Отвал</b> — сколько дошедших НЕ завершили шаг (передумали, закрыли вкладку).
+      <b>% отвала</b> — какая доля дошедших до шага ушла, не завершив его: чем это число выше, тем хуже
+      работает конкретный шаг и тем больше смысла его дорабатывать в первую очередь.
+    </p>
     <div class="chart-wrap"><canvas id="funnelChart" role="img" aria-label="Столбчатая диаграмма воронки прохождения шагов">Данные воронки по шагам</canvas></div>
     <table id="funnelTable"></table>
+    <div id="stepCards" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Среднее время прохождения</h2>
+    <p class="panel-note">Считается только по тем, кто реально начал и завершил шаг (или всю воронку) — это честное среднее время, а не оценка "на глаз".</p>
+    <table id="timeTable"></table>
   </div>
 
   <div class="two-col">
     <div class="panel">
-      <h2>Причины отказа (шаг 03)</h2>
+      <h2>Причины отказа (шаг 03 — проверка юрисдикции)</h2>
+      <p class="panel-note">Показывает, по какой причине КС РК не может рассмотреть обращение, если это выяснилось на шаге 3.</p>
       <div class="chart-wrap"><canvas id="jurisdictionChart" role="img" aria-label="Круговая диаграмма причин отказа по юрисдикции">Причины отказа</canvas></div>
     </div>
     <div class="panel">
       <h2>Язык интерфейса</h2>
       <div class="chart-wrap"><canvas id="languageChart" role="img" aria-label="Круговая диаграмма распределения по языкам">Распределение по языкам</canvas></div>
     </div>
+  </div>
+
+  <div class="panel" id="regionPanel" style="display:none;">
+    <h2>Регион (агрегированно)</h2>
+    <p class="panel-note">Показывается только для тех сессий, где пользователь дал согласие на передачу региона — без точной геолокации.</p>
+    <div class="chart-wrap"><canvas id="regionChart" role="img" aria-label="Столбчатая диаграмма распределения по регионам">Распределение по регионам</canvas></div>
+  </div>
+
+  <div class="panel" id="surveyTrendPanel" style="display:none;">
+    <h2>Опросник: динамика по неделям</h2>
+    <p class="panel-note">
+      Средняя удовлетворённость (шкала 1–5) и NPS (индекс готовности рекомендовать сервис, от −100 до +100)
+      по неделям — помогает увидеть, стали ли пользователи довольнее после доработок.
+    </p>
+    <div class="chart-wrap"><canvas id="surveyTrendChart" role="img" aria-label="Линейный график динамики удовлетворённости и NPS по неделям">Динамика опросника</canvas></div>
+  </div>
+
+  <div class="panel">
+    <h2>Отзывы пользователей</h2>
+    <p class="panel-note">Всего новых отзывов за период: <b id="feedbackCount">—</b>. Полный список с фильтрами по дате, шагу и категории — на отдельной странице.</p>
+    <p class="footer-link"><a href="feedback-admin.html">Открыть список отзывов →</a></p>
   </div>
 
   <p class="error" id="dashError"></p>
@@ -114,43 +166,70 @@ async function loadDashboard(isLogin) {
     document.getElementById('login').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
 
+    applyAccessLevel(data.access_level);
     renderSummary(data);
     setTimeout(() => {
-      renderFunnel(data.funnel);
+      renderFunnel(data.funnel, data.funnel_metric_explanations);
+      renderTimeTable(data.funnel, data.summary.funnel_total_time);
       renderJurisdiction(data.jurisdiction_breakdown);
       renderLanguage(data.visitors.by_language);
+      renderRegion(data.visitors.by_region, data.visitors.region_reported_sessions);
+      renderSurveyTrend(data.survey.weekly_trend);
     }, 50);
+
+    loadFeedbackCount();
   } catch (e) {
     document.getElementById('dashError').textContent = 'Не удалось загрузить данные: ' + e.message;
   }
 }
 
+// NFR-3: код "только просмотр" не даёт экспортировать отчёты
+function applyAccessLevel(level) {
+  const badge = document.getElementById('accessBadge');
+  const isFull = level === 'full';
+  badge.textContent = isFull ? 'полный доступ' : 'только просмотр';
+  document.getElementById('exportExcelBtn').style.display = isFull ? '' : 'none';
+  document.getElementById('exportPdfBtn').style.display = isFull ? '' : 'none';
+}
+
+async function loadFeedbackCount() {
+  try {
+    const res = await fetch(`${API_BASE}/api/feedback`, { headers: { 'X-Admin-Code': adminCode } });
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('feedbackCount').textContent = data.count ?? '—';
+  } catch (e) { /* тихо игнорируем — это вспомогательная цифра */ }
+}
+
 function renderSummary(data) {
   const s = data.summary;
+  const ex = data.summary_explanations || {};
   const items = [
-    { label: 'Уникальные посетители', value: s.unique_visitors },
-    { label: '% успешного прохождения', value: s.overall_completion_rate_pct + '%' },
-    { label: '% вне компетенции КС РК', value: s.out_of_jurisdiction_rate_pct + '%' },
-    { label: 'Средняя удовлетворённость', value: s.avg_satisfaction ?? '—', hint: '(1–5)' },
-    { label: 'NPS', value: s.nps_score ?? '—' },
+    { label: 'Уникальные посетители', value: s.unique_visitors, explain: ex.unique_visitors },
+    { label: '% успешного прохождения воронки', value: s.overall_completion_rate_pct + '%', explain: ex.overall_completion_rate_pct },
+    { label: '% обращений вне компетенции КС РК', value: s.out_of_jurisdiction_rate_pct + '%', explain: ex.out_of_jurisdiction_rate_pct },
+    { label: 'Средняя удовлетворённость (1–5)', value: s.avg_satisfaction ?? '—', explain: ex.avg_satisfaction },
+    { label: 'NPS (готовность рекомендовать)', value: s.nps_score ?? '—', explain: ex.nps_score },
+    { label: 'Среднее время всей воронки', value: (s.funnel_total_time && s.funnel_total_time.avg_human) || '—', explain: 'Сколько в среднем занимает путь от первого экрана (согласие) до готового черновика у тех, кто дошёл до конца.' },
   ];
   document.getElementById('summaryGrid').innerHTML = items.map(i => `
     <div class="metric">
       <div class="label">${i.label}</div>
-      <div class="value">${i.value} ${i.hint ? `<small>${i.hint}</small>` : ''}</div>
+      <div class="value">${i.value}</div>
+      ${i.explain ? `<div class="explain">${i.explain}</div>` : ''}
     </div>
   `).join('');
 }
 
 const STEP_LABELS = {
   '01_consent': '01 Согласие',
-  '02_description': '02 Описание',
-  '03_jurisdiction': '03 Юрисдикция',
-  '04_draft': '04 Черновик',
+  '02_description': '02 Описание проблемы',
+  '03_jurisdiction': '03 Проверка юрисдикции',
+  '04_draft': '04 Черновик обращения',
 };
 
-function renderFunnel(funnel) {
-  if (typeof Chart === "undefined") { waitForChart(() => renderFunnel(funnel)); return; }
+function renderFunnel(funnel, explanations) {
+  if (typeof Chart === "undefined") { waitForChart(() => renderFunnel(funnel, explanations)); return; }
 
   const labels = funnel.map(f => STEP_LABELS[f.step] || f.step);
   const reached = funnel.map(f => f.reached);
@@ -180,6 +259,42 @@ function renderFunnel(funnel) {
         <td>${f.drop_off_rate_pct}%</td>
       </tr>
     `).join('')}
+  `;
+
+  // FR: подробное объяснение каждого шага "по-человечески"
+  document.getElementById('stepCards').innerHTML = funnel.map(f => `
+    <div class="step-card">
+      <h3>${f.title || (STEP_LABELS[f.step] || f.step)}</h3>
+      <p>${f.explanation || ''}</p>
+      <div class="step-stats">
+        <div>Дошли<br><b>${f.reached}</b></div>
+        <div>Завершили<br><b>${f.completed}</b></div>
+        <div>Отвал<br><b>${f.drop_off} чел. (${f.drop_off_rate_pct}%)</b></div>
+        <div>Среднее время<br><b>${(f.avg_time && f.avg_time.avg_human) || '— (пока мало данных)'}</b></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTimeTable(funnel, funnelTotalTime) {
+  const rows = funnel.map(f => `
+    <tr>
+      <td>${STEP_LABELS[f.step] || f.step}</td>
+      <td>${(f.avg_time && f.avg_time.avg_human) || '—'}</td>
+      <td>${(f.avg_time && f.avg_time.sample_size) || 0} чел.</td>
+    </tr>
+  `).join('');
+  const totalRow = `
+    <tr style="font-weight:600;">
+      <td>Вся воронка целиком (01 → 04)</td>
+      <td>${(funnelTotalTime && funnelTotalTime.avg_human) || '—'}</td>
+      <td>${(funnelTotalTime && funnelTotalTime.sample_size) || 0} чел.</td>
+    </tr>
+  `;
+  document.getElementById('timeTable').innerHTML = `
+    <tr><th>Шаг</th><th>Среднее время</th><th>По скольким сессиям посчитано</th></tr>
+    ${rows}
+    ${totalRow}
   `;
 }
 
@@ -222,12 +337,57 @@ function renderLanguage(byLanguage) {
   });
 }
 
+function renderRegion(byRegion, reportedSessions) {
+  const panel = document.getElementById('regionPanel');
+  if (!byRegion || !Object.keys(byRegion).length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  if (typeof Chart === "undefined") { waitForChart(() => renderRegion(byRegion, reportedSessions)); return; }
+
+  const labels = Object.keys(byRegion);
+  const values = Object.values(byRegion);
+  if (charts.region) charts.region.destroy();
+  charts.region = new Chart(document.getElementById('regionChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Сессии', data: values, backgroundColor: '#2a5bd7' }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+}
+
+function renderSurveyTrend(trend) {
+  const panel = document.getElementById('surveyTrendPanel');
+  if (!trend || !trend.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  if (typeof Chart === "undefined") { waitForChart(() => renderSurveyTrend(trend)); return; }
+
+  const labels = trend.map(t => t.week);
+  const satisfaction = trend.map(t => t.avg_satisfaction);
+  const nps = trend.map(t => t.nps_score);
+  if (charts.surveyTrend) charts.surveyTrend.destroy();
+  charts.surveyTrend = new Chart(document.getElementById('surveyTrendChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Удовлетворённость (1–5)', data: satisfaction, borderColor: '#2a5bd7', backgroundColor: '#2a5bd7', yAxisID: 'y', tension: 0.25 },
+        { label: 'NPS (−100…+100)', data: nps, borderColor: '#eda100', backgroundColor: '#eda100', yAxisID: 'y1', tension: 0.25 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { type: 'linear', position: 'left', min: 1, max: 5, title: { display: true, text: 'Удовлетворённость' } },
+        y1: { type: 'linear', position: 'right', min: -100, max: 100, grid: { drawOnChartArea: false }, title: { display: true, text: 'NPS' } },
+      }
+    }
+  });
+}
+
 async function exportReport(fmt) {
   const period = document.getElementById('periodSelect').value;
   const res = await fetch(`${API_BASE}/api/analytics/export?period_days=${period}&fmt=${fmt}`, {
     headers: { 'X-Admin-Code': adminCode }
   });
-  if (!res.ok) { alert('Ошибка экспорта'); return; }
+  if (!res.ok) { alert('Ошибка экспорта (нужен полный код доступа, не "только просмотр")'); return; }
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
