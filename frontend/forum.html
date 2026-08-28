@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Форум для юристов — Constitutional Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Georgia&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0D1B2A; --navy-light: #152238;
+    --gold: #C8A23C; --gold-hover: #DBBA5A;
+    --bg-white: #FFFFFF; --bg-page: #F7F5F1;
+    --text: #1A1A1A; --text-secondary: #6B6355; --text-muted: #9A9084;
+    --border: #DDD8D0; --radius: 10px; --radius-sm: 6px;
+    --green: #3F7D73; --red: #A6493D;
+    --font: "IBM Plex Sans", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:var(--font); background:var(--bg-page); color:var(--text); }
+  header {
+    background:var(--navy); color:#fff; padding:16px 24px; display:flex; align-items:center;
+    justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+  header .title { font-weight:700; font-size:17px; }
+  header .title a { color:#fff; text-decoration:none; }
+  header .title small { display:block; font-weight:400; font-size:12px; color:var(--gold); }
+  .lang-select button { background:none; border:1px solid rgba(255,255,255,0.3); color:#fff;
+    padding:4px 10px; border-radius:14px; font-size:12px; cursor:pointer; margin-left:4px; }
+  .lang-select button.active { background:var(--gold); color:var(--navy); border-color:var(--gold); font-weight:600; }
+  .auth-box { display:flex; align-items:center; gap:10px; font-size:13px; }
+  .auth-box .role-badge { background:rgba(200,162,60,0.2); color:var(--gold); padding:3px 9px; border-radius:12px; font-size:11.5px; }
+  .btn { font-family:var(--font); font-weight:600; font-size:13.5px; padding:9px 16px;
+    border:none; border-radius:var(--radius-sm); background:var(--gold); color:var(--navy); cursor:pointer; }
+  .btn:hover { background:var(--gold-hover); }
+  .btn.ghost { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.35); }
+  .btn.secondary { background:var(--bg-white); color:var(--navy); border:1px solid var(--border); }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .wrap { max-width:920px; margin:0 auto; padding:24px 20px 70px; }
+  .notice { background:#FFF7E6; border:1px solid #F0D999; color:#7A5A0A; padding:12px 16px;
+    border-radius:var(--radius-sm); font-size:13px; margin-bottom:18px; line-height:1.5; }
+  .card { background:var(--bg-white); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:14px; }
+  .cats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .cat-chip { font-size:12.5px; padding:6px 12px; border-radius:16px; border:1px solid var(--border);
+    background:var(--bg-white); cursor:pointer; color:var(--text-secondary); }
+  .cat-chip.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .thread-row { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+  .thread-row h3 { margin:0 0 5px; font-size:15px; cursor:pointer; }
+  .thread-row h3:hover { color:var(--navy); text-decoration:underline; }
+  .thread-meta { font-size:12px; color:var(--text-muted); display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .tag { background:#F0EDE8; color:var(--text-secondary); padding:1px 8px; border-radius:10px; font-size:11px; }
+  .status-badge { padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; }
+  .status-review { background:#EEF1F8; color:#2A5BD7; }
+  .status-accepted { background:#FFF3DA; color:#8A5E00; }
+  .status-implemented { background:#E5F5F1; color:var(--green); }
+  .status-rejected { background:#FBEAE7; color:var(--red); }
+  .vote-count { font-size:12px; color:var(--text-muted); white-space:nowrap; }
+  textarea, input[type=text], input[type=email], input[type=password], select {
+    width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px;
+    font-family:var(--font); font-size:13.5px; margin-bottom:10px; color:var(--text); background:#fff;
+  }
+  textarea { min-height:100px; resize:vertical; }
+  label.field-label { font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px; }
+  .form-row { margin-bottom:12px; }
+  .err { color:var(--red); font-size:13px; margin:6px 0; }
+  .ok { color:var(--green); font-size:13px; margin:6px 0; }
+  .reply { border-top:1px solid var(--border); padding-top:14px; margin-top:14px; }
+  .reply .quote { font-size:12px; color:var(--text-muted); background:#F7F5F1; padding:6px 10px; border-radius:6px; margin-bottom:6px; }
+  .tabs { display:flex; gap:6px; margin-bottom:14px; }
+  .tabs button { flex:1; padding:9px; border:1px solid var(--border); background:#fff; border-radius:var(--radius-sm); cursor:pointer; font-family:var(--font); font-size:13px; }
+  .tabs button.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .modal-overlay { position:fixed; inset:0; background:rgba(13,27,42,0.6); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .modal { background:#fff; border-radius:var(--radius); max-width:520px; padding:26px; max-height:80vh; overflow-y:auto; }
+  .empty { color:var(--text-muted); text-align:center; padding:40px 0; font-size:14px; }
+  .back-link { display:inline-block; margin-bottom:14px; font-size:13px; color:var(--text-secondary); cursor:pointer; }
+  .vote-btns button { font-size:12px; padding:4px 10px; border-radius:12px; border:1px solid var(--border); background:#fff; cursor:pointer; margin-right:6px; }
+  .vote-btns button.support:hover { border-color:var(--green); color:var(--green); }
+  .vote-btns button.needs:hover { border-color:#B8934A; color:#B8934A; }
+  .np-chip { display:inline-block; margin-top:6px; font-size:12px; background:#EEF1F8; color:#2A5BD7; padding:4px 10px; border-radius:8px; }
+  .summary-item { font-size:13px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .summary-item:last-child { border-bottom:none; }
+  .report-link { font-size:11.5px; color:var(--text-muted); cursor:pointer; text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <a href="index.html">Constitutional Assistant</a>
+    <small id="hdrSub">Форум для юридического сообщества</small>
+  </div>
+  <div class="lang-select">
+    <button class="lang-btn active" data-lang="ru">РУС</button>
+    <button class="lang-btn" data-lang="kk">ҚАЗ</button>
+    <button class="lang-btn" data-lang="en">ENG</button>
+  </div>
+  <div class="auth-box" id="authBox"></div>
+</header>
+
+<div class="wrap">
+
+  <div class="notice" id="scopeNotice">
+    Форум — для профессионального обсуждения методологии и текста сервиса юристами, адвокатами и научным
+    сообществом. Это не канал юридической консультации по конкретным делам граждан. Персональные данные третьих
+    лиц публиковать запрещено.
+  </div>
+
+  <div id="monthlySummaryBlock" class="card" style="display:none;">
+    <h3 style="margin:0 0 10px; font-size:14px;">📌 Что изменилось по предложениям форума (последние 30 дней)</h3>
+    <div id="monthlySummaryItems"></div>
+  </div>
+
+  <div id="mainView"></div>
+
+</div>
+
+<div class="modal-overlay" id="rulesModal" style="display:none;">
+  <div class="modal">
+    <h2 style="font-family:Georgia,serif; margin:0 0 10px; color:var(--navy);">Правила форума</h2>
+    <p id="rulesText" style="font-size:13.5px; line-height:1.6; color:var(--text-secondary);"></p>
+    <button class="btn" style="width:100%; margin-top:12px;" onclick="closeRulesModal()">Понятно</button>
+  </div>
+</div>
+
+<script>
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
+let lang = "ru";
+let forumToken = localStorage.getItem("forum_token") || null;
+let currentUser = null; // {user_id, display_name, role, organization}
+let categories = [];
+let currentCategory = "";
+let currentThreadId = null;
+
+const I18N = {
+  hdrSub: { ru: "Форум для юридического сообщества", kk: "Заң қауымдастығына арналған форум", en: "Legal community forum" },
+  login: { ru: "Войти", kk: "Кіру", en: "Log in" },
+  register: { ru: "Регистрация", kk: "Тіркелу", en: "Register" },
+  logout: { ru: "Выйти", kk: "Шығу", en: "Log out" },
+  createThread: { ru: "+ Новая тема", kk: "+ Жаңа тақырып", en: "+ New thread" },
+  allCategories: { ru: "Все разделы", kk: "Барлық бөлімдер", en: "All categories" },
+};
+
+function t(key) { return (I18N[key] && I18N[key][lang]) || key; }
+
+document.querySelectorAll(".lang-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    lang = btn.dataset.lang;
+    document.getElementById("hdrSub").textContent = t("hdrSub");
+    renderAuthBox();
+    renderMainView();
+  });
+});
+
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s == null ? "" : String(s);
+  return d.innerHTML;
+}
+function fmtDate(iso) {
+  if (!iso) return "";
+  try { return new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+  catch (e) { return iso; }
+}
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (forumToken) headers["X-Forum-Token"] = forumToken;
+  const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    const err = new Error((data && (data.detail?.message || data.detail)) || "Ошибка запроса");
+    err.status = res.status;
+    err.detail = data && data.detail;
+    throw err;
+  }
+  return data;
+}
+
+// ---------------- Правила форума (FR-11) ----------------
+async function maybeShowRules() {
+  if (localStorage.getItem("forum_rules_seen")) return;
+  try {
+    const data = await api("/api/forum/rules");
+    document.getElementById("rulesText").textContent = data.rules[lang] || data.rules.ru;
+    document.getElementById("rulesModal").style.display = "flex";
+  } catch (e) { /* не критично, если недоступно */ }
+}
+function closeRulesModal() {
+  localStorage.setItem("forum_rules_seen", "1");
+  document.getElementById("rulesModal").style.display = "none";
+}
+
+// ---------------- Auth box ----------------
+function renderAuthBox() {
+  const box = document.getElementById("authBox");
+  if (currentUser) {
+    const roleLabels = { citizen: "Гражданин", lawyer_pending: "Юрист (на проверке)", lawyer_verified: "Юрист ✓", lawyer_rejected: "Заявка отклонена" };
+    box.innerHTML = `
+      <span>${esc(currentUser.display_name)}</span>
+      <span class="role-badge">${roleLabels[currentUser.role] || currentUser.role}</span>
+      <button class="btn ghost" id="notifBtn">🔔 <span id="notifCount"></span></button>
+      <button class="btn ghost" id="logoutBtn">${t("logout")}</button>
+    `;
+    document.getElementById("logoutBtn").onclick = logout;
+    document.getElementById("notifBtn").onclick = showNotifications;
+    loadNotifCount();
+  } else {
+    box.innerHTML = `<button class="btn ghost" id="loginBtn">${t("login")}</button><button class="btn" id="registerBtn">${t("register")}</button>`;
+    document.getElementById("loginBtn").onclick = () => renderAuthView("login");
+    document.getElementById("registerBtn").onclick = () => renderAuthView("register");
+  }
+}
+
+async function loadNotifCount() {
+  try {
+    const data = await api("/api/forum/notifications");
+    const el = document.getElementById("notifCount");
+    if (el) el.textContent = data.unread_count > 0 ? `(${data.unread_count})` : "";
+  } catch (e) {}
+}
+
+async function showNotifications() {
+  try {
+    const data = await api("/api/forum/notifications");
+    const items = data.items.map(n => `
+      <div class="summary-item" style="cursor:pointer;" onclick="openThread('${n.thread_id}'); markNotifRead('${n.notification_id}')">
+        ${n.read ? "" : "🔵 "}${esc(n.message)} <span style="color:var(--text-muted);">· ${fmtDate(n.created_at)}</span>
+      </div>
+    `).join("") || `<div class="empty">Уведомлений пока нет</div>`;
+    alertModal("Уведомления", items);
+  } catch (e) { alertModal("Уведомления", `<div class="err">${esc(e.message)}</div>`); }
+}
+async function markNotifRead(id) {
+  try { await api(`/api/forum/notifications/${id}/read`, { method: "POST" }); loadNotifCount(); } catch (e) {}
+}
+function alertModal(title, htmlContent) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal"><h2 style="font-family:Georgia,serif;color:var(--navy);margin:0 0 12px;">${esc(title)}</h2>${htmlContent}<button class="btn secondary" style="width:100%;margin-top:14px;" onclick="this.closest('.modal-overlay').remove()">Закрыть</button></div>`;
+  document.body.appendChild(overlay);
+}
+
+function logout() {
+  forumToken = null;
+  currentUser = null;
+  localStorage.removeItem("forum_token");
+  renderAuthBox();
+  renderMainView();
+}
+
+async function tryRestoreSession() {
+  if (!forumToken) return;
+  try { currentUser = await api("/api/forum/me"); }
+  catch (e) { forumToken = null; localStorage.removeItem("forum_token"); }
+}
+
+// ---------------- Auth forms (login / register) ----------------
+function renderAuthView(mode) {
+  const view = document.getElementById("mainView");
+  view.innerHTML = `
+    <div class="card" style="max-width:420px; margin:0 auto;">
+      <div class="tabs">
+        <button id="tabLogin" class="${mode === "login" ? "active" : ""}">${t("login")}</button>
+        <button id="tabRegister" class="${mode === "register" ? "active" : ""}">${t("register")}</button>
+      </div>
+      <div id="authFormArea"></div>
+    </div>
+  `;
+  document.getElementById("tabLogin").onclick = () => renderAuthView("login");
+  document.getElementById("tabRegister").onclick = () => renderAuthView("register");
+  if (mode === "login") renderLoginForm(); else renderRegisterForm();
+}
+
+function renderLoginForm() {
+  document.getElementById("authFormArea").innerHTML = `
+    <div class="form-row"><label class="field-label">Email</label><input type="email" id="liEmail"></div>
+    <div class="form-row"><label class="field-label">Пароль</label><input type="password" id="liPassword"></div>
+    <button class="btn" style="width:100%;" id="liSubmit">${t("login")}</button>
+    <div id="liMsg"></div>
+  `;
+  document.getElementById("liSubmit").onclick = async () => {
+    const msg = document.getElementById("liMsg");
+    msg.innerHTML = "";
+    try {
+      const data = await api("/api/forum/login", { method: "POST", body: JSON.stringify({ email: document.getElementById("liEmail").value.trim(), password: document.getElementById("liPassword").value }) });
+      forumToken = data.token;
+      localStorage.setItem("forum_token", forumToken);
+      currentUser = await api("/api/forum/me");
+      renderAuthBox();
+      renderMainView();
+    } catch (e) { msg.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  };
+}
+
+function renderRegisterForm() {
+  document.getElementById("authFormArea").innerHTML = `
+    <div class="form-row"><label class="field-label">Имя и фамилия (как будет видно другим)</label><input type="text" id="reName"></div>
+    <div class="form-row"><label class="field-label">Email</label><input type="email" id="reEmail"></div>
+    <div class="form-row"><label class="field-label">Пароль (минимум 8 символов)</label><input type="password" id="rePassword"></div>
+    <div class="form-row">
+      <label class="field-label">Кто вы?</label>
+      <select id="reRole">
+        <option value="citizen">Гражданин (только чтение форума)</option>
+        <option value="lawyer">Юрист / адвокат / научный сотрудник (для создания тем нужна верификация)</option>
+      </select>
+    </div>
+    <div class="form-row" id="reOrgRow" style="display:none;">
+      <label class="field-label">Коллегия адвокатов / палата юр.консультантов / организация</label>
+      <input type="text" id="reOrg">
+    </div>
+    <div class="form-row" style="display:flex; gap:8px; align-items:flex-start;">
+      <input type="checkbox" id="rePdn" style="width:auto; margin-top:3px;">
+      <label for="rePdn" style="font-size:12.5px; color:var(--text-secondary);">Согласен(-на) на обработку персональных данных при регистрации на форуме (отдельно от согласия в основном интерфейсе)</label>
+    </div>
+    <button class="btn" style="width:100%;" id="reSubmit">${t("register")}</button>
+    <div id="reMsg"></div>
+  `;
+  document.getElementById("reRole").addEventListener("change", (e) => {
+    document.getElementById("reOrgRow").style.display = e.target.value === "lawyer" ? "block" : "none";
+  });
+  document.getElementById("reSubmit").onclick = async () => {
+    const msg = document.getElementById("reMsg");
+    msg.innerHTML = "";
+    if (!document.getElementById("rePdn").checked) { msg.innerHTML = `<div class="err">Нужно согласие на обработку персональных данных</div>`; return; }
+    try {
+      const data = await api("/api/forum/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: document.getElementById("reEmail").value.trim(),
+          password: document.getElementById("rePassword").value,
+          display_name: document.getElementById("reName").value.trim(),
+          role_requested: document.getElementById("reRole").value,
+          organization: document.getElementById("reOrg").value.trim() || null,
+          pdn_consent: true,
+        })
+      });
+      forumToken = data.token;
+      localStorage.setItem("forum_token", forumToken);
+      currentUser = await api("/api/forum/me");
+      if (currentUser.role === "lawyer_pending") {
+        renderVerificationUpload();
+      } else {
+        renderAuthBox();
+        renderMainView();
+      }
+    } catch (e) { msg.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  };
+}
+
+function renderVerificationUpload() {
+  renderAuthBox();
+  document.getElementById("mainView").innerHTML = `
+    <div class="card" style="max-width:480px; margin:0 auto;">
+      <h3 style="margin-top:0;">Загрузите документ для верификации</h3>
+      <p style="font-size:13px; color:var(--text-secondary);">
+        Удостоверение адвоката, подтверждение членства в палате юридических консультантов или академическая
+        позиция. Документ увидит только модератор — не публикуется на форуме. Проверка занимает до 3 рабочих дней.
+      </p>
+      <input type="file" id="verifyFile" accept=".pdf,.jpg,.jpeg,.png">
+      <button class="btn" style="width:100%; margin-top:10px;" id="verifySubmit">Загрузить</button>
+      <div id="verifyMsg"></div>
+      <p class="back-link" onclick="renderMainView()">Пропустить пока и посмотреть форум →</p>
+    </div>
+  `;
+  document.getElementById("verifySubmit").onclick = async () => {
+    const fileInput = document.getElementById("verifyFile");
+    const msg = document.getElementById("verifyMsg");
+    if (!fileInput.files.length) { msg.innerHTML = `<div class="err">Выберите файл</div>`; return; }
+    const fd = new FormData();
+    fd.append("file", fileInput.files[0]);
+    try {
+      await fetch(API_BASE + "/api/forum/verification-document", { method: "POST", headers: { "X-Forum-Token": forumToken }, body: fd })
+        .then(async r => { if (!r.ok) throw new Error((await r.json()).detail || "Ошибка загрузки"); });
+      msg.innerHTML = `<div class="ok">Документ отправлен на проверку модератору.</div>`;
+      setTimeout(renderMainView, 1500);
+    } catch (e) { msg.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  };
+}
+
+// ---------------- Категории и список тем ----------------
+async function loadCategories() {
+  try { categories = (await api("/api/forum/categories")).categories; } catch (e) { categories = []; }
+}
+
+async function renderMainView() {
+  currentThreadId = null;
+  const view = document.getElementById("mainView");
+  view.innerHTML = `<div class="empty">Загрузка…</div>`;
+
+  const catChips = [`<span class="cat-chip ${currentCategory === "" ? "active" : ""}" data-cat="">${t("allCategories")}</span>`]
+    .concat(categories.map(c => `<span class="cat-chip ${currentCategory === c.key ? "active" : ""}" data-cat="${c.key}">${esc(c.title)}</span>`));
+
+  let threadsHtml = `<div class="empty">Загрузка тем…</div>`;
+  let createBtnHtml = "";
+  if (currentUser && currentUser.role === "lawyer_verified") {
+    createBtnHtml = `<button class="btn" id="createThreadBtn" style="margin-bottom:14px;">${t("createThread")}</button>`;
+  }
+
+  view.innerHTML = `
+    <div class="cats">${catChips.join("")}</div>
+    ${createBtnHtml}
+    <div id="threadsList">${threadsHtml}</div>
+  `;
+  document.querySelectorAll(".cat-chip").forEach(chip => {
+    chip.onclick = () => { currentCategory = chip.dataset.cat; renderMainView(); };
+  });
+  if (createBtnHtml) document.getElementById("createThreadBtn").onclick = renderCreateThreadForm;
+
+  try {
+    const qs = currentCategory ? `?category=${encodeURIComponent(currentCategory)}` : "";
+    const data = await api(`/api/forum/threads${qs}`);
+    document.getElementById("threadsList").innerHTML = data.items.length
+      ? data.items.map(threadRowHtml).join("")
+      : `<div class="empty">Пока нет тем в этом разделе. ${currentUser && currentUser.role === "lawyer_verified" ? "Будьте первым!" : ""}</div>`;
+    document.querySelectorAll("[data-thread-id]").forEach(el => {
+      el.onclick = () => openThread(el.dataset.threadId);
+    });
+  } catch (e) {
+    document.getElementById("threadsList").innerHTML = `<div class="err">Не удалось загрузить темы: ${esc(e.message)}</div>`;
+  }
+
+  loadMonthlySummary();
+}
+
+const STATUS_CLASS = { "на рассмотрении": "status-review", "принято в разработку": "status-accepted", "внедрено": "status-implemented", "отклонено": "status-rejected" };
+
+function threadRowHtml(t) {
+  const catTitle = (categories.find(c => c.key === t.category) || {}).title || t.category;
+  return `
+    <div class="card thread-row" data-thread-id="${t.thread_id}" style="cursor:pointer;">
+      <div>
+        ${t.pinned ? "📌 " : ""}<h3>${esc(t.title)}</h3>
+        <div class="thread-meta">
+          <span>${esc(catTitle)}</span>
+          <span class="status-badge ${STATUS_CLASS[t.status] || ""}">${esc(t.status)}</span>
+          <span>${esc(t.author_display_name)}</span>
+          <span>${fmtDate(t.created_at)}</span>
+          <span>💬 ${t.reply_count}</span>
+          ${(t.tags || []).map(tag => `<span class="tag">#${esc(tag)}</span>`).join("")}
+        </div>
+      </div>
+      <div class="vote-count">👍 ${t.votes.support} · ❓ ${t.votes.needs_clarification}</div>
+    </div>
+  `;
+}
+
+async function loadMonthlySummary() {
+  try {
+    const data = await api("/api/forum/monthly-summary?period_days=30");
+    const block = document.getElementById("monthlySummaryBlock");
+    if (!data.items.length) { block.style.display = "none"; return; }
+    block.style.display = "block";
+    document.getElementById("monthlySummaryItems").innerHTML = data.items.map(i => `
+      <div class="summary-item">✅ <b>${esc(i.title)}</b> — внедрено (версия ${esc(i.implemented_version || "—")})${i.linked_step ? ` · раздел: ${esc(i.linked_step)}` : ""}</div>
+    `).join("");
+  } catch (e) { document.getElementById("monthlySummaryBlock").style.display = "none"; }
+}
+
+// ---------------- Создание темы ----------------
+function renderCreateThreadForm() {
+  const view = document.getElementById("mainView");
+  view.innerHTML = `
+    <p class="back-link" onclick="renderMainView()">← Назад к списку тем</p>
+    <div class="card">
+      <h3 style="margin-top:0;">${t("createThread")}</h3>
+      <div class="form-row">
+        <label class="field-label">Раздел</label>
+        <select id="ctCategory">${categories.map(c => `<option value="${c.key}">${esc(c.title)}</option>`).join("")}</select>
+      </div>
+      <div class="form-row"><label class="field-label">Заголовок</label><input type="text" id="ctTitle"></div>
+      <div class="form-row"><label class="field-label">Текст темы</label><textarea id="ctBody"></textarea></div>
+      <div class="form-row"><label class="field-label">Теги через запятую (например: ст45, представитель)</label><input type="text" id="ctTags" placeholder="ст45, маршрутизация"></div>
+      <div class="form-row"><label class="field-label">Привязка к шагу интерфейса (необязательно)</label>
+        <select id="ctStep">
+          <option value="">Не привязано</option>
+          <option value="01_consent">01 Согласие</option>
+          <option value="02_description">02 Описание проблемы</option>
+          <option value="03_jurisdiction">03 Проверка юрисдикции</option>
+          <option value="04_draft">04 Черновик обращения</option>
+        </select>
+      </div>
+      <div class="form-row"><label class="field-label">Номер НП КС РК (необязательно, например 85-НП)</label><input type="text" id="ctNp"></div>
+      <div class="form-row"><label class="field-label">Обезличенный пример обращения (необязательно — БЕЗ персональных данных)</label><textarea id="ctAttachment"></textarea></div>
+      <button class="btn" id="ctSubmit">Опубликовать</button>
+      <div id="ctMsg"></div>
+    </div>
+  `;
+  document.getElementById("ctSubmit").onclick = async () => {
+    const msg = document.getElementById("ctMsg");
+    msg.innerHTML = "";
+    try {
+      const data = await api("/api/forum/threads", {
+        method: "POST",
+        body: JSON.stringify({
+          category: document.getElementById("ctCategory").value,
+          title: document.getElementById("ctTitle").value.trim(),
+          body: document.getElementById("ctBody").value.trim(),
+          tags: document.getElementById("ctTags").value.split(",").map(s => s.trim()).filter(Boolean),
+          linked_step: document.getElementById("ctStep").value || null,
+          np_reference: document.getElementById("ctNp").value.trim() || null,
+          attachment_text: document.getElementById("ctAttachment").value.trim() || null,
+          language: lang,
+        })
+      });
+      openThread(data.thread_id);
+    } catch (e) {
+      if (e.status === 422 && e.detail && e.detail.detected) {
+        msg.innerHTML = `<div class="err">Похоже на персональные данные: ${e.detail.detected.join(", ")}. Уберите их и попробуйте снова.</div>`;
+      } else {
+        msg.innerHTML = `<div class="err">${esc(e.message)}</div>`;
+      }
+    }
+  };
+}
+
+// ---------------- Тема + ответы ----------------
+async function openThread(threadId) {
+  currentThreadId = threadId;
+  const view = document.getElementById("mainView");
+  view.innerHTML = `<div class="empty">Загрузка…</div>`;
+  try {
+    const th = await api(`/api/forum/threads/${threadId}`);
+    const catTitle = (categories.find(c => c.key === th.category) || {}).title || th.category;
+    const canAct = currentUser && currentUser.role === "lawyer_verified";
+    view.innerHTML = `
+      <p class="back-link" onclick="renderMainView()">← Назад к списку тем</p>
+      <div class="card">
+        <div class="thread-meta" style="margin-bottom:8px;">
+          <span>${esc(catTitle)}</span>
+          <span class="status-badge ${STATUS_CLASS[th.status] || ""}">${esc(th.status)}</span>
+          ${th.closed ? '<span class="status-badge status-rejected">закрыта</span>' : ""}
+        </div>
+        <h2 style="margin:0 0 8px; font-family:Georgia,serif;">${esc(th.title)}</h2>
+        <div class="thread-meta" style="margin-bottom:12px;">
+          <span>${esc(th.author_display_name)}</span><span>${fmtDate(th.created_at)}</span>
+          ${(th.tags || []).map(tag => `<span class="tag">#${esc(tag)}</span>`).join("")}
+        </div>
+        <p style="white-space:pre-wrap; line-height:1.6;">${esc(th.body)}</p>
+        ${th.linked_step ? `<div class="np-chip">🔗 Привязано к шагу: ${esc(th.linked_step)}</div>` : ""}
+        ${th.np_reference_resolved ? `<div class="np-chip">📚 №${esc(th.np_reference_resolved.number)} от ${esc(th.np_reference_resolved.date)} — ${esc(th.np_reference_resolved.title || th.np_reference_resolved.summary || "")}</div>` : ""}
+        ${th.attachment_text ? `<div class="card" style="background:#F7F5F1; margin-top:10px;"><b style="font-size:12.5px;">Пример обращения (обезличенно):</b><p style="white-space:pre-wrap; font-size:13px; margin:6px 0 0;">${esc(th.attachment_text)}</p></div>` : ""}
+        ${th.status_note ? `<div class="notice" style="margin-top:10px;">Комментарий модератора: ${esc(th.status_note)}</div>` : ""}
+        <div style="margin-top:12px; display:flex; align-items:center; justify-content:space-between;">
+          <div class="vote-btns">
+            <button class="support" onclick="castVote('thread','${th.thread_id}','support')">👍 Поддерживаю (${th.votes.support})</button>
+            <button class="needs" onclick="castVote('thread','${th.thread_id}','needs_clarification')">❓ Требует уточнения (${th.votes.needs_clarification})</button>
+          </div>
+          <span class="report-link" onclick="reportItem('thread','${th.thread_id}')">Пожаловаться</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px; margin:20px 0 10px;">Ответы (${th.replies.length})</h3>
+      <div id="repliesList">${th.replies.map(replyHtml).join("") || '<div class="empty">Пока нет ответов</div>'}</div>
+
+      ${canAct && !th.closed ? `
+        <div class="card">
+          <h3 style="margin-top:0; font-size:14px;">Ваш ответ</h3>
+          <textarea id="replyBody"></textarea>
+          <div class="form-row"><label class="field-label">Номер НП КС РК (необязательно)</label><input type="text" id="replyNp"></div>
+          <button class="btn" id="replySubmit">Ответить</button>
+          <div id="replyMsg"></div>
+        </div>
+      ` : (!canAct ? `<p style="font-size:12.5px; color:var(--text-muted);">Отвечать могут только верифицированные юристы.</p>` : "")}
+    `;
+    if (canAct && !th.closed) {
+      document.getElementById("replySubmit").onclick = async () => {
+        const msg = document.getElementById("replyMsg");
+        msg.innerHTML = "";
+        try {
+          await api(`/api/forum/threads/${threadId}/replies`, {
+            method: "POST",
+            body: JSON.stringify({ body: document.getElementById("replyBody").value.trim(), np_reference: document.getElementById("replyNp").value.trim() || null }),
+          });
+          openThread(threadId);
+        } catch (e) {
+          if (e.status === 422 && e.detail && e.detail.detected) {
+            msg.innerHTML = `<div class="err">Похоже на персональные данные: ${e.detail.detected.join(", ")}.</div>`;
+          } else {
+            msg.innerHTML = `<div class="err">${esc(e.message)}</div>`;
+          }
+        }
+      };
+    }
+  } catch (e) {
+    view.innerHTML = `<p class="back-link" onclick="renderMainView()">← Назад</p><div class="err">Не удалось загрузить тему: ${esc(e.message)}</div>`;
+  }
+}
+
+function replyHtml(r) {
+  return `
+    <div class="card reply">
+      ${r.quoted_step ? `<div class="quote">🔗 цитирует шаг: ${esc(r.quoted_step)}</div>` : ""}
+      <div class="thread-meta" style="margin-bottom:6px;"><span>${esc(r.author_display_name)}</span><span>${fmtDate(r.created_at)}</span></div>
+      <p style="white-space:pre-wrap; margin:0 0 8px;">${esc(r.body)}</p>
+      ${r.np_reference_resolved ? `<div class="np-chip">📚 №${esc(r.np_reference_resolved.number)} — ${esc(r.np_reference_resolved.title || "")}</div>` : ""}
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        <div class="vote-btns">
+          <button class="support" onclick="castVote('reply','${r.reply_id}','support')">👍 ${r.votes.support}</button>
+          <button class="needs" onclick="castVote('reply','${r.reply_id}','needs_clarification')">❓ ${r.votes.needs_clarification}</button>
+        </div>
+        <span class="report-link" onclick="reportItem('reply','${r.reply_id}')">Пожаловаться</span>
+      </div>
+    </div>
+  `;
+}
+
+async function castVote(targetType, targetId, value) {
+  if (!currentUser || currentUser.role !== "lawyer_verified") { alertModal("Голосование", `<p>Голосовать могут только верифицированные юристы.</p>`); return; }
+  try { await api("/api/forum/vote", { method: "POST", body: JSON.stringify({ target_type: targetType, target_id: targetId, value }) }); if (currentThreadId) openThread(currentThreadId); }
+  catch (e) { alertModal("Ошибка", `<div class="err">${esc(e.message)}</div>`); }
+}
+
+async function reportItem(targetType, targetId) {
+  if (!currentUser) { alertModal("Жалоба", `<p>Нужно войти, чтобы отправить жалобу.</p>`); return; }
+  const reason = prompt("Опишите причину жалобы:");
+  if (!reason) return;
+  try {
+    await api("/api/forum/report", { method: "POST", body: JSON.stringify({ target_type: targetType, target_id: targetId, reason }) });
+    alertModal("Жалоба отправлена", `<p>Материал скрыт до решения модератора. Спасибо.</p>`);
+    if (currentThreadId) openThread(currentThreadId); else renderMainView();
+  } catch (e) { alertModal("Ошибка", `<div class="err">${esc(e.message)}</div>`); }
+}
+
+// ---------------- Старт ----------------
+(async function init() {
+  await loadCategories();
+  await tryRestoreSession();
+  renderAuthBox();
+  await renderMainView();
+  maybeShowRules();
+})();
+</script>
+</body>
+</html>
