@@ -33,6 +33,10 @@ GENERATION_PROMPT_TEMPLATE = """Ты — не юрист и не даёшь юр
 3. Пиши ВЕСЬ текст ТОЛЬКО на языке: {language}. Никаких слов на других языках.
 4. Если информации недостаточно для раздела — пиши [требуется уточнение], не придумывай.
 5. Строго следуй структуре официального образца ниже.
+6. Если ниже указана статья Конституции, которую гражданин сам назвал как нарушенную —
+   используй ИМЕННО её номер в разделе II ("Согласно статье ... Конституции..."), не
+   подбирай другую статью самостоятельно. Если гражданин её не указал — определи наиболее
+   подходящую по смыслу жалобы статью сам.
 
 СИТУАЦИЯ ГРАЖДАНИНА:
 \"\"\"
@@ -42,6 +46,7 @@ GENERATION_PROMPT_TEMPLATE = """Ты — не юрист и не даёшь юр
 АНАЛИЗ (определено системой):
 - Тип дела: {case_type}
 - Обоснование: {reasoning}
+- Статья Конституции, указанная гражданином как нарушенная: {constitution_article_section}
 
 ПРАВОВОЙ КОНТЕКСТ (из базы знаний, используй ТОЛЬКО это):
 {legal_context}
@@ -155,6 +160,18 @@ def _format_template_structure(template_data: Optional[Dict[str, Any]]) -> str:
     return ""
 
 
+def _format_constitution_article(constitution_article: Optional[str]) -> str:
+    """
+    Форматирует статью Конституции, которую гражданин сам указал в анкете
+    (чек-лист "предварительное рассмотрение обращения", п.6) как норму,
+    закрепляющую нарушенное право. Если гражданин её не указал — явно
+    просим модель определить статью самостоятельно, а не молчать об этом.
+    """
+    if constitution_article and constitution_article.strip():
+        return constitution_article.strip()
+    return "(гражданин не указал — определи сам по смыслу жалобы)"
+
+
 def generate_appeal_text(
     complaint_text: str,
     language: str = "RU",
@@ -163,11 +180,18 @@ def generate_appeal_text(
     violation_data: Optional[Dict[str, Any]] = None,
     template_data: Optional[Dict[str, Any]] = None,
     is_representative: bool = False,
+    constitution_article: Optional[str] = None,
     api_key: Optional[str] = None,
     timeout: int = 60,
 ) -> Dict[str, Any]:
     """
     Генерирует текст обращения через Gemini API по официальному образцу КС РК.
+
+    constitution_article: статья Конституции, которую гражданин сам указал в
+    анкете (chat.html, шаг после описания проблемы) как закрепляющую его
+    нарушенное право — соответствует п.6 чек-листа предварительного
+    рассмотрения обращения. Передаётся в промпт, чтобы модель использовала
+    именно её, а не подбирала статью самостоятельно.
 
     Returns:
         dict с ключами: appeal_text, success, error
@@ -193,6 +217,7 @@ def generate_appeal_text(
         reasoning=reasoning or "не указано",
         legal_context=_format_legal_context(violation_data),
         representative_line=representative_line,
+        constitution_article_section=_format_constitution_article(constitution_article),
     )
 
     try:
