@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чек-лист (предварительный отбор) — Constitutional Assistant</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --border:#e2e4e9; --text:#1a1d24; --muted:#6b7280; --accent:#2a5bd7; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); margin:0; padding:24px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:15px; margin:0 0 12px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .login-box { max-width:360px; margin:80px auto; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; }
+  .login-box input { width:100%; padding:10px; margin:10px 0; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+  .login-box button, .toolbar button { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:14px; cursor:pointer; }
+  .login-box button:disabled, .toolbar button:disabled { background:#a9b6d6; cursor:not-allowed; }
+  .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+  select { padding:8px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+  .view-badge { font-size:12px; padding:4px 10px; border-radius:20px; background:#eef1f8; color:var(--muted); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:12px; margin-bottom:12px; }
+  .metric { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .metric .label { font-size:12px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+  .metric .value { font-size:24px; font-weight:600; }
+  .metric .value small { font-size:13px; font-weight:400; color:var(--muted); }
+  .metric .explain { font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .panel { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:20px; }
+  .panel .panel-note { font-size:12.5px; color:var(--muted); margin:-6px 0 14px; line-height:1.5; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; }
+  .error { color:#b42318; font-size:13px; }
+  .chart-wrap { position:relative; height:280px; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media (max-width:700px){ .two-col{ grid-template-columns:1fr; } }
+  .footer-link { font-size:13px; margin-top:6px; }
+  .footer-link a { color:var(--accent); text-decoration:none; }
+  .empty-note { color:var(--muted); font-size:13px; padding:8px 0; }
+</style>
+</head>
+<body>
+
+<div id="login" class="login-box">
+  <h1>Вход в аналитику чек-листа</h1>
+  <p class="sub">Введите код администратора (полный доступ) или код только для просмотра — тот же, что и для основной аналитики.</p>
+  <input type="password" id="adminCode" placeholder="Код доступа" />
+  <button onclick="login()">Войти</button>
+  <p class="error" id="loginError"></p>
+</div>
+
+<div id="dashboard" style="display:none; max-width:980px; margin:0 auto;">
+  <h1>Предварительный отбор по чек-листу <span class="view-badge" id="accessBadge"></span></h1>
+  <p class="sub">
+    Показывает, скольких людей отсеивают отсекающие вопросы чек-листа (субъект обращения, гражданство,
+    участие в деле, срок, оформление представителя) — ДО того, как человек дал согласие и начал описывать
+    проблему. Это отдельный, более ранний этап, чем «Проверка юрисдикции» (шаг 03) в основной аналитике:
+    там причину определяет ИИ уже после согласия и описания, а здесь — сами вопросы чек-листа.
+    Данные агрегированы и обезличены.
+  </p>
+
+  <div class="toolbar">
+    <select id="periodSelect" onchange="loadDashboard()">
+      <option value="7">Последние 7 дней</option>
+      <option value="30" selected>Последние 30 дней</option>
+      <option value="90">Последние 90 дней</option>
+    </select>
+  </div>
+
+  <div class="grid" id="summaryGrid"></div>
+
+  <div class="two-col">
+    <div class="panel">
+      <h2>Причины отсева на чек-листе</h2>
+      <p class="panel-note">По какой именно причине человека не пустили дальше на самых первых вопросах.</p>
+      <div class="chart-wrap"><canvas id="prescreenChart" role="img" aria-label="Круговая диаграмма причин отсева по чек-листу">Причины отсева по чек-листу</canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Прошли / не прошли отбор</h2>
+      <p class="panel-note">Доля тех, кто успешно ответил на все отсекающие вопросы и перешёл к согласию, против тех, кого отсеяли.</p>
+      <div class="chart-wrap"><canvas id="passRateChart" role="img" aria-label="Круговая диаграмма прошедших и не прошедших предварительный отбор">Прошли / не прошли отбор</canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Подробная разбивка</h2>
+    <table id="reasonTable"></table>
+    <p id="emptyNote" class="empty-note" style="display:none;">За выбранный период отсева по чек-листу не было.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Основная аналитика</h2>
+    <p class="panel-note">Воронка шагов 01–04, причины отказа на шаге 3, отзывы и опросник — на общей странице аналитики.</p>
+    <p class="footer-link"><a href="analytics-admin.html">← Открыть основную аналитику</a></p>
+  </div>
+
+  <p class="error" id="dashError"></p>
+</div>
+
+<script>
+const API_BASE = "https://constitutional-assistant-api2.onrender.com";
+let adminCode = "";
+let charts = {};
+
+function waitForChart(callback) {
+  if (typeof Chart !== "undefined") {
+    callback();
+  } else {
+    setTimeout(() => waitForChart(callback), 100);
+  }
+}
+
+function login() {
+  adminCode = document.getElementById('adminCode').value.trim();
+  if (!adminCode) return;
+  loadDashboard(true);
+}
+
+async function loadDashboard(isLogin) {
+  const period = document.getElementById('periodSelect')?.value || 30;
+  document.getElementById('dashError').textContent = '';
+  try {
+    const res = await fetch(`${API_BASE}/api/analytics/dashboard?period_days=${period}`, {
+      headers: { 'X-Admin-Code': adminCode }
+    });
+    if (res.status === 403) {
+      if (isLogin) document.getElementById('loginError').textContent = 'Неверный код доступа';
+      return;
+    }
+    if (!res.ok) throw new Error('Ошибка сервера');
+    const data = await res.json();
+
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    applyAccessLevel(data.access_level);
+    const prescreen = data.prescreen || { started: 0, passed: 0, blocked: 0, blocked_breakdown: {}, blocked_reason_explanations: {} };
+    renderSummary(prescreen);
+    setTimeout(() => {
+      renderReasons(prescreen.blocked_breakdown);
+      renderPassRate(prescreen.passed, prescreen.blocked);
+      renderTable(prescreen.blocked_breakdown, prescreen.blocked_reason_explanations);
+    }, 50);
+  } catch (e) {
+    document.getElementById('dashError').textContent = 'Не удалось загрузить данные: ' + e.message;
+  }
+}
+
+// NFR-3: код "только просмотр" — здесь экспорта нет, но бейдж показываем для единообразия с основной страницей
+function applyAccessLevel(level) {
+  const badge = document.getElementById('accessBadge');
+  badge.textContent = level === 'full' ? 'полный доступ' : 'только просмотр';
+}
+
+function renderSummary(prescreen) {
+  const total = prescreen.started || 0;
+  const blockedRate = total ? Math.round((prescreen.blocked / total) * 1000) / 10 : 0;
+  const items = [
+    { label: 'Начали чек-лист', value: prescreen.started, explain: 'Сколько человек открыли самый первый экран сервиса (значит, дошли и до отсекающих вопросов чек-листа).' },
+    { label: 'Прошли отбор', value: prescreen.passed, explain: 'Успешно ответили на все отсекающие вопросы и перешли к согласию на обработку данных.' },
+    { label: 'Отсеяно', value: prescreen.blocked, explain: 'Получили жёсткий отказ уже на чек-листе — до согласия и описания проблемы.' },
+    { label: '% отсева на чек-листе', value: blockedRate + '%', explain: 'Какая доля из начавших была отсеяна отсекающими вопросами чек-листа.' },
+  ];
+  document.getElementById('summaryGrid').innerHTML = items.map(i => `
+    <div class="metric">
+      <div class="label">${i.label}</div>
+      <div class="value">${i.value ?? 0}</div>
+      ${i.explain ? `<div class="explain">${i.explain}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+const PRESCREEN_LABELS = {
+  not_participant: 'Не участник дела',
+  wrong_object: 'Оспаривается акт, не норма',
+  deadline_expired: 'Истёк срок',
+  no_valid_poa: 'Нет/неполная доверенность',
+  improper_subject: 'Ненадлежащий субъект (юрлицо/негражданин)',
+  other_out_of_jurisdiction: 'Другое (неясная жалоба)',
+};
+
+function renderReasons(breakdown) {
+  if (typeof Chart === "undefined") { waitForChart(() => renderReasons(breakdown)); return; }
+  const labels = Object.keys(breakdown || {}).map(k => PRESCREEN_LABELS[k] || k);
+  const values = Object.values(breakdown || {});
+  if (charts.reasons) charts.reasons.destroy();
+  if (!values.length) return;
+  charts.reasons = new Chart(document.getElementById('prescreenChart'), {
+    type: 'pie',
+    data: { labels, datasets: [{ data: values, backgroundColor: ['#ed93b1','#eda100','#7f77dd','#e34948','#888780','#378add'] }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function renderPassRate(passed, blocked) {
+  if (typeof Chart === "undefined") { waitForChart(() => renderPassRate(passed, blocked)); return; }
+  if (charts.passRate) charts.passRate.destroy();
+  if (!passed && !blocked) return;
+  charts.passRate = new Chart(document.getElementById('passRateChart'), {
+    type: 'pie',
+    data: {
+      labels: ['Прошли отбор', 'Отсеяно'],
+      datasets: [{ data: [passed || 0, blocked || 0], backgroundColor: ['#5dcaa5', '#e34948'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function renderTable(breakdown, explanations) {
+  const entries = Object.entries(breakdown || {});
+  const table = document.getElementById('reasonTable');
+  const emptyNote = document.getElementById('emptyNote');
+  if (!entries.length) {
+    table.innerHTML = '';
+    emptyNote.style.display = 'block';
+    return;
+  }
+  emptyNote.style.display = 'none';
+  table.innerHTML = `
+    <tr><th>Причина</th><th>Сколько человек</th><th>Пояснение</th></tr>
+    ${entries.map(([key, count]) => `
+      <tr>
+        <td>${PRESCREEN_LABELS[key] || key}</td>
+        <td>${count}</td>
+        <td>${(explanations && explanations[key]) || ''}</td>
+      </tr>
+    `).join('')}
+  `;
+}
+</script>
+</body>
+</html>
