@@ -363,6 +363,7 @@ async def generate_appeal(
     is_case_participant: Optional[str] = Form(None),
     act_is_npa: Optional[str] = Form(None),
     within_one_year: Optional[str] = Form(None),
+    constitution_article: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
 ):
     problem_text = text or problem_description or ""
@@ -427,6 +428,7 @@ async def generate_appeal(
         violation_data=violation_data,
         template_data=template_data,
         is_representative=representative,
+        constitution_article=constitution_article,
     )
     # FR-6/FR-7: если найдена оспариваемая норма, проверяем — выносил ли
     # КС РК уже НП по ней, и если да — предлагаем ссылки как доп. аргумент
@@ -476,6 +478,7 @@ async def generate_appeal(
         "generation_error": generation.get("error"),
         "prior_np_found": prior_np_found,
         "suggested_np_citations": suggested_np_citations,
+        "constitution_article": constitution_article,
     }
 # ============================================================================
 # STARTUP/SHUTDOWN
