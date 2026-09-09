@@ -275,7 +275,10 @@ async function resolveReport(reportId, action, btn){
 }
 
 // ---------------- Темы: статусы, закрепление, закрытие (FR-5/FR-6) ----------------
+// Источник данных — /api/forum/moderation/all-threads (не /api/forum/threads),
+// потому что модератору нужно видеть и скрытые по жалобам темы тоже.
 let threadStatusFilter = "";
+let lastThreadsData = [];
 async function renderThreads(){
   const c = document.getElementById("content");
   c.innerHTML = `
@@ -284,18 +287,47 @@ async function renderThreads(){
         <option value="">Все статусы</option>
         ${ALLOWED_STATUSES.map(s => `<option value="${esc(s)}" ${s===threadStatusFilter?"selected":""}>${esc(s)}</option>`).join("")}
       </select>
+      <button class="btn small ghost" id="btnExportCsv">↓ Скачать CSV (все темы и ответы)</button>
     </div>
     <div id="threadsListAdmin" class="empty">Загрузка…</div>
   `;
   document.getElementById("thStatusFilter").onchange = (e) => { threadStatusFilter = e.target.value; renderThreads(); };
+  document.getElementById("btnExportCsv").onclick = exportThreadsCsv;
   try{
     const qs = threadStatusFilter ? `?status=${encodeURIComponent(threadStatusFilter)}` : "";
-    const data = await fapi(`/api/forum/threads${qs}`);
+    const data = await fapi(`/api/forum/moderation/all-threads${qs}`);
+    lastThreadsData = data.items;
     const list = document.getElementById("threadsListAdmin");
     if(!data.items.length){ list.innerHTML = `<div class="empty">Тем не найдено.</div>`; return; }
     list.innerHTML = data.items.map(threadAdminHtml).join("");
     data.items.forEach(t => wireThreadForm(t));
   }catch(e){ document.getElementById("threadsListAdmin").innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function exportThreadsCsv(){
+  const btn = document.getElementById("btnExportCsv");
+  const orig = btn.textContent;
+  btn.textContent = "Готовим файл…"; btn.disabled = true;
+  try{
+    const threads = lastThreadsData.length ? lastThreadsData : (await fapi("/api/forum/moderation/all-threads")).items;
+    const rows = [["Тип","Дата","Категория","Заголовок / (Reply → Thread ID)","Текст","Автор","Статус","Скрыто","Голоса за","Голоса «нужно уточнить»"]];
+    for(const t of threads){
+      const full = await fapi(`/api/forum/moderation/threads/${t.thread_id}`);
+      const catTitle = (categories.find(c => c.key === full.category) || {}).title || full.category;
+      rows.push(["тема", fmtDate(full.created_at), catTitle, full.title, full.body, full.author_display_name,
+        full.status, full.hidden ? "да" : "нет", full.votes.support, full.votes.needs_clarification]);
+      for(const r of (full.replies||[])){
+        rows.push(["ответ", fmtDate(r.created_at), catTitle, `→ ${full.thread_id}`, r.body, r.author_display_name,
+          "", r.hidden ? "да" : "нет", r.votes.support, r.votes.needs_clarification]);
+      }
+    }
+    const csv = "﻿" + rows.map(row => row.map(cell => '"' + String(cell==null?"":cell).replace(/"/g,'""') + '"').join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+    a.download = "forum_" + new Date().toISOString().slice(0,10) + ".csv";
+    a.click();
+  }catch(e){ alert("Не удалось собрать CSV: " + e.message); }
+  finally{ btn.textContent = orig; btn.disabled = false; }
 }
 
 function threadAdminHtml(t){
@@ -310,6 +342,7 @@ function threadAdminHtml(t){
         <span>💬 ${t.reply_count}</span>
         ${t.pinned ? `<span>📌 закреплена</span>` : ""}
         ${t.closed ? `<span>🔒 закрыта</span>` : ""}
+        ${t.hidden ? `<span class="sla-chip">скрыта по жалобе</span>` : ""}
       </div>
       <div class="title-text" style="font-size:15px;">${esc(t.title)}</div>
       <div class="row-actions">
