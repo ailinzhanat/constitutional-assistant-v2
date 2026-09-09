@@ -85,7 +85,7 @@ def _check_admin_or_viewer(x_admin_code: Optional[str]) -> str:
 # Модели
 # ---------------------------------------------------------------------------
  
-StepId = Literal["01_consent", "02_description", "03_jurisdiction", "04_draft"]
+StepId = Literal["00_prescreen", "01_consent", "02_description", "03_jurisdiction", "04_draft"]
 EventType = Literal["step_started", "step_completed", "step_abandoned", "draft_downloaded"]
  
 # FR-7: причины отказа на шаге 03 (соответствуют подп.1-5 п.2 ст.47 Конституционного закона)
@@ -106,7 +106,7 @@ class AnalyticsEvent(BaseModel):
     step: StepId
     language: Literal["kk", "ru", "en"]
     device: Literal["mobile", "desktop"]
-    jurisdiction_reason: Optional[JurisdictionReason] = None  # заполняется только для шага 03
+    jurisdiction_reason: Optional[JurisdictionReason] = None  # заполняется для шага 03, и (те же коды причин, кроме within_jurisdiction) для нового шага 00_prescreen
     region: Optional[str] = None  # агрегированный регион, если пользователь дал согласие; без точной геолокации
     is_new_visitor: bool = True
     timestamp: Optional[str] = None  # если не передано — берём серверное время
@@ -411,6 +411,16 @@ JURISDICTION_REASON_EXPLANATIONS = {
     "other_out_of_jurisdiction": "Другая причина вне компетенции КС РК (пересмотр акта, разъяснение нормы, пробел в законе и т.п.).",
 }
 
+PRESCREEN_EXPLANATION = (
+    "Шаг 0 — Предварительный отбор: до согласия и описания проблемы система "
+    "задаёт гражданину несколько отсекающих вопросов из чек-листа предварительного "
+    "рассмотрения обращения (субъект обращения, гражданство, участие в деле, "
+    "надлежащее оформление представительства и т.п.). Это ОТДЕЛЬНАЯ, более ранняя "
+    "проверка, чем шаг 3 «Проверка юрисдикции» (тот делает ИИ-анализ уже после того, "
+    "как человек согласился и описал свою проблему) — поэтому её события и метрики "
+    "считаются отдельно и не входят в воронку/разбивку шага 3."
+)
+
 SUMMARY_METRIC_EXPLANATIONS = {
     "unique_visitors": "Сколько разных людей заходили на сервис за выбранный период (считается по анонимному ID сессии в браузере, без ФИО/IP).",
     "overall_completion_rate_pct": "Какая доля людей, начавших с шага 1 (согласие), дошла до конца — до готового черновика на шаге 4.",
@@ -493,7 +503,21 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
         e["jurisdiction_reason"] for e in events
         if e["step"] == "03_jurisdiction" and e.get("jurisdiction_reason")
     )
- 
+
+    # --- Новое: разбивка отсева на шаге 0 (предварительный отбор по чек-листу) ---
+    # Отдельно от jurisdiction_reasons шага 03 — намеренно НЕ смешиваем эти две
+    # выборки, чтобы не исказить старые метрики (overall_completion_rate_pct,
+    # out_of_jurisdiction_rate_pct и разбивку по шагу 3, которые считаются только
+    # по существующим шагам 01-04).
+    prescreen_reasons = Counter(
+        e["jurisdiction_reason"] for e in events
+        if e["step"] == "00_prescreen" and e.get("jurisdiction_reason")
+    )
+    prescreen_started = len(sessions_per_step.get("00_prescreen", set()))
+    prescreen_completed_total = len(completed_per_step.get("00_prescreen", set()))
+    prescreen_blocked = sum(prescreen_reasons.values())
+    prescreen_passed = prescreen_completed_total - prescreen_blocked
+
     # --- FR-8: черновики скачаны ---
     drafts_downloaded = sum(1 for e in events if e["event_type"] == "draft_downloaded")
  
@@ -544,6 +568,14 @@ def get_dashboard(period_days: int = 30, x_admin_code: Optional[str] = Header(No
         "funnel_metric_explanations": FUNNEL_METRIC_EXPLANATIONS,
         "jurisdiction_breakdown": dict(jurisdiction_reasons),
         "jurisdiction_reason_explanations": JURISDICTION_REASON_EXPLANATIONS,
+        "prescreen": {
+            "explanation": PRESCREEN_EXPLANATION,
+            "started": prescreen_started,
+            "passed": prescreen_passed,
+            "blocked": prescreen_blocked,
+            "blocked_breakdown": dict(prescreen_reasons),
+            "blocked_reason_explanations": JURISDICTION_REASON_EXPLANATIONS,
+        },
         "drafts_downloaded": drafts_downloaded,
         "survey": {
             "responses_count": len(surveys),
