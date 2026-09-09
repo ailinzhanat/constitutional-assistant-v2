@@ -377,6 +377,28 @@ const T = {
     ru: "Здравствуйте! Я — Конституционный ассистент, пилотный сервис, который помогает шаг за шагом подготовить обращение в Конституционный Суд Республики Казахстан.\n\nЧтобы обращение соответствовало статьям 44 и 45 Конституционного закона «О Конституционном Суде Республики Казахстан», ответьте, пожалуйста, на несколько важных вопросов.",
     en: "Hello! I am the Constitutional Assistant, a pilot service that helps you prepare an appeal to the Constitutional Court of the Republic of Kazakhstan step by step.\n\nTo ensure your appeal meets Articles 44 and 45 of the Constitutional Law \"On the Constitutional Court\", please answer a few important questions."
   },
+  qSubjectType: {
+    kk: "Сіз жеке тұлға (азамат) ретінде ме, әлде заңды тұлға (ұйым, компания) ретінде өтініш бересіз бе?",
+    ru: "Вы обращаетесь как физическое лицо (гражданин) или как юридическое лицо (организация, компания)?",
+    en: "Are you applying as an individual (a private person) or as a legal entity (an organization, a company)?"
+  },
+  optIndividual: { kk: "Жеке тұлға", ru: "Физическое лицо", en: "Individual" },
+  optLegalEntity: { kk: "Заңды тұлға", ru: "Юридическое лицо", en: "Legal entity" },
+  redirectLegalEntity: {
+    kk: "Қазақстан Республикасы Конституциясының 73-бабы 3-тармағына сәйкес, Конституциялық Сот Қазақстан Республикасы азаматтарының өтініштері бойынша олардың Конституцияда көзделген құқықтары мен бостандықтарын тікелей қозғайтын Қазақстан Республикасының нормативтік құқықтық актілерінің Конституцияға сәйкестігін қарайды.\n\nЗаңды тұлғалар Конституциялық Сотқа өтініш беру субъектісі болып табылмайды — өтінішті тек азамат жеке өзі бере алады.\n\nЕгер ұйымның қызметкерінің немесе басшысының жеке конституциялық құқықтары да сол актімен қозғалған болса, ол өтінішті жеке тұлға ретінде өз атынан бере алады.\n\n<strong>Нормативтік негіздеме:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/K950001000_' target='_blank' rel='noopener'>Қазақстан Республикасы Конституциясының 73-бабы 3-тармағы (ІПС Әділет)</a>",
+    ru: "Согласно пункту 3 статьи 73 Конституции Республики Казахстан, Конституционный Суд по обращениям граждан Республики Казахстан рассматривает на соответствие Конституции нормативные правовые акты Республики Казахстан, непосредственно затрагивающие их права и свободы, предусмотренные Конституцией.\n\nЮридические лица не являются субъектами обращения в Конституционный Суд РК — обратиться может только гражданин лично.\n\nЕсли личные конституционные права сотрудника или руководителя организации также были затронуты этим же актом, он может подать обращение от своего имени как физическое лицо.\n\n<strong>Нормативное основание:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/K950001000_' target='_blank' rel='noopener'>Пункт 3 статьи 73 Конституции Республики Казахстан (ИПС Әділет)</a>",
+    en: "According to Paragraph 3 of Article 73 of the Constitution of the Republic of Kazakhstan, the Constitutional Court, upon appeals from citizens of the Republic of Kazakhstan, reviews the compliance with the Constitution of normative legal acts of the Republic of Kazakhstan that directly affect their rights and freedoms as provided for in the Constitution.\n\nLegal entities are not eligible to apply to the Constitutional Court of the Republic of Kazakhstan — only a citizen may file the appeal personally.\n\nIf an employee or head of the organization was personally affected in their own constitutional rights by the same act, they may file the appeal on their own behalf as an individual.\n\n<strong>Legal basis:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/K950001000_' target='_blank' rel='noopener'>Paragraph 3, Article 73 of the Constitution of the Republic of Kazakhstan (Әділет)</a>"
+  },
+  qCitizenship: {
+    kk: "Сіз Қазақстан Республикасының азаматысыз ба?",
+    ru: "Вы являетесь гражданином Республики Казахстан?",
+    en: "Are you a citizen of the Republic of Kazakhstan?"
+  },
+  redirectNotCitizen: {
+    kk: "Қазақстан Республикасы Конституциясының 73-бабы 3-тармағына сәйкес, Конституциялық Сотқа өтініш беру құқығы Қазақстан Республикасының азаматтарына берілген.\n\nЕгер сіз ҚР азаматы болмасаңыз, құқықтарыңызды қорғаудың басқа жолдары туралы заңгерден кеңес алуды ұсынамыз.\n\n<strong>Нормативтік негіздеме:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/K950001000_' target='_blank' rel='noopener'>Қазақстан Республикасы Конституциясының 73-бабы 3-тармағы (ІПС Әділет)</a>",
+    ru: "Согласно пункту 3 статьи 73 Конституции Республики Казахстан, право на обращение в Конституционный Суд по вопросу соответствия НПА Конституции предоставлено гражданам Республики Казахстан.\n\nЕсли вы не являетесь гражданином РК, рекомендуем проконсультироваться с юристом о других способах защиты ваших прав.\n\n<strong>Нормативное основание:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/K950001000_' target='_blank' rel='noopener'>Пункт 3 статьи 73 Конституции Республики Казахстан (ИПС Әділет)</a>",
+    en: "According to Paragraph 3 of Article 73 of the Constitution of the Republic of Kazakhstan, the right to apply to the Constitutional Court regarding the compliance of a normative legal act with the Constitution is granted to citizens of the Republic of Kazakhstan.\n\nIf you are not a citizen of the Republic of Kazakhstan, we recommend consulting a lawyer about other ways to protect your rights.\n\n<strong>Legal basis:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/K950001000_' target='_blank' rel='noopener'>Paragraph 3, Article 73 of the Constitution of the Republic of Kazakhstan (Әділет)</a>"
+  },
   q1: {
     kk: "Сот актісі сіз жеке қатысқан іс бойынша шығарылды ма, және сот қолданған заң нормасы дәл сіздің құқықтарыңыз бен бостандықтарыңызды қозғайды ма?\n\nБұл маңызды, себебі Конституциялық заңның 45-бабы өтініш берушінің сот актісі шығарылған нақты іске қатысушы болуын талап етеді.",
     ru: "Судебный акт, о котором идёт речь, вынесен по делу, в котором участвовали лично вы, и норма закона, применённая судом, затрагивает именно ваши права и свободы?\n\nЭто важно, потому что статья 45 Конституционного закона требует, чтобы заявитель сам был участником конкретного дела, по которому вынесен судебный акт.",
@@ -414,6 +436,18 @@ const T = {
     ru: "Согласно пункту 4 статьи 41 Конституционного закона (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>ИПС Әділет</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Параграф</a>) и пункту 15 главы 2 Регламента Конституционного Суда РК (нормативное постановление от 5 января 2023 года № 1):\n\nПредставителями при рассмотрении обращений граждан могут быть только законные представители, адвокаты, юридические консультанты, являющиеся членами палаты юридических консультантов, а также уполномоченные лица организаций, которым законом, уставом или положением предоставлено право защищать права и интересы членов этих организаций, права и интересы других лиц.\n\nК обращению нужно приложить:\n\n<strong>Если представитель — адвокат:</strong>\n• удостоверение адвоката;\n• письменное уведомление о защите (представительстве);\n• нотариально удостоверенная доверенность.\n\n<strong>Если представитель — юридический консультант:</strong>\n• документ, подтверждающий членство в палате юридических консультантов;\n• нотариально удостоверенная доверенность.\n\nВ доверенности должно быть прямо указано право представителя: подавать обращение в КС РК, быть представителем и участвовать в заседаниях, знакомиться с материалами конституционного производства, подавать ходатайства, обосновывать обращение, вести дело на всех стадиях, подписывать и направлять обращение.",
     en: "According to Paragraph 4 of Article 41 of the Constitutional Law (<a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Әділет</a> | <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Paragraph</a>) and Paragraph 15, Chapter 2 of the Rules of the Constitutional Court (Normative Resolution No. 1 of January 5, 2023):\n\nRepresentatives in the consideration of citizens' appeals may only be legal representatives, lawyers, legal consultants who are members of the chamber of legal consultants, as well as authorized persons of organizations that are granted by law, charter, or regulation the right to protect the rights and interests of their members and other persons.\n\nThe appeal must include:\n\n<strong>If the representative is a lawyer:</strong>\n• lawyer's certificate;\n• written notice of defense (representation);\n• notarized power of attorney.\n\n<strong>If the representative is a legal consultant:</strong>\n• document confirming chamber membership;\n• notarized power of attorney.\n\nThe power of attorney must explicitly state the right to: file an appeal to the CC, participate in hearings, review materials, file motions, substantiate the appeal, conduct the case at all stages, sign and send the appeal."
   },
+  qRepDocsReady: {
+    kk: "Жоғарыда аталған құжаттардың барлығы (тиісті өкілеттіктер көрсетілген сенімхат, адвокат куәлігі немесе заң кеңесшілер палатасы мүшелігін растайтын құжат, адвокаттар үшін — қорғау туралы жазбаша хабарлама) сізде бар ма?",
+    ru: "У вас есть все перечисленные выше документы (доверенность с нужными полномочиями, удостоверение адвоката или документ о членстве в палате юридических консультантов, для адвокатов — письменное уведомление о защите)?",
+    en: "Do you have all the documents listed above (a power of attorney stating the required authority, a lawyer's certificate or proof of chamber membership for a legal consultant, and — for lawyers — the written notice of defense)?"
+  },
+  repDocsYes: { kk: "Иә, бәрі бар", ru: "Да, всё есть", en: "Yes, I have everything" },
+  repDocsNo: { kk: "Жоқ, әлі толық емес", ru: "Нет, ещё не всё готово", en: "No, not everything is ready yet" },
+  redirectRepDocsMissing: {
+    kk: "Конституциялық заңның 41-бабының 4-тармағы мен ҚР Конституциялық Сотының Регламентінің 15-тармағына сәйкес, өкіл арқылы өтініш беру үшін жоғарыда аталған құжаттар міндетті түрде тіркелуі тиіс. Оларсыз өтініш қайтарылуы мүмкін.\n\nҚұжаттарды жинап болғаннан кейін қайта бастауыңызды сұраймыз. Немесе өтінішті сот актісі шығарылған іске жеке қатысушы ретінде өз атыңыздан беруге болады.\n\n<strong>Нормативтік негіздеме:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Конституциялық заңның 41-бабы, 4-тармағы (ІПС Әділет)</a>",
+    ru: "Согласно пункту 4 статьи 41 Конституционного закона и пункту 15 Регламента Конституционного Суда РК, для подачи обращения через представителя перечисленные документы обязательны — без них обращение может быть возвращено.\n\nРекомендуем вернуться после того, как соберёте документы. Либо вы можете подать обращение самостоятельно, как участник дела, по которому вынесен судебный акт.\n\n<strong>Нормативное основание:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Ст. 41 п. 4 Конституционного закона «О КС РК» (ИПС Әділет)</a>",
+    en: "According to Paragraph 4 of Article 41 of the Constitutional Law and Paragraph 15 of the Rules of the Constitutional Court, the documents listed above are mandatory for filing through a representative — without them the appeal may be returned.\n\nWe recommend coming back once you have gathered the documents, or filing the appeal yourself, as the participant in the case in which the judicial act was issued.\n\n<strong>Legal basis:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Art. 41(4) of the Constitutional Law (Әділет)</a>"
+  },
   redirectNoParticipation: {
     kk: "Конституциялық заңның 45-бабы бойынша өтініш беру үшін сот актісі шығарылған іске жеке қатысу міндетті шарт.\n\nЕгер сіз басқа адамның құқықтарын қорғағыңыз келсе — заңды өкіл ретінде сенімхат арқылы іс-әрекет жасауға болады. Бұл жағдайда өтініш берушінің өзі — іске қатысушы — қол қоюы керек.\n\n<strong>Нормативтік негіздеме:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>«ҚР Конституциялық Соты туралы» Конституциялық заңның 45-бабы (ІПС Әділет)</a>\n• <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>45-бап — Параграф</a>",
     ru: "Статья 45 Конституционного закона требует, чтобы заявитель лично был участником дела, по которому вынесен судебный акт.\n\nЕсли вы хотите защитить права другого лица — это возможно в качестве законного представителя (адвоката, юридического консультанта) по доверенности. В таком случае автором обращения является сам участник дела.\n\n<strong>Нормативное основание:</strong>\n• <a href='https://adilet.zan.kz/rus/docs/Z2200000153' target='_blank' rel='noopener'>Ст. 45 Конституционного закона «О Конституционном Суде РК» (ИПС Әділет)</a>\n• <a href='https://online.zakon.kz/Document/?doc_id=39441762' target='_blank' rel='noopener'>Ст. 45 — Параграф</a>",
@@ -449,6 +483,16 @@ const T = {
     ru: "Например: Часть 5 статьи 68 Уголовного кодекса противоречит статье 13 Конституции, потому что...",
     en: "E.g.: Part 5 of Article 68 of the Criminal Code contradicts Article 13 of the Constitution, because..."
   },
+  constArticlePrompt: {
+    kk: "Енді Конституцияның қай бабы (тармағы) сіз бұзылды деп санайтын құқық пен бостандықты бекітетінін көрсетіңіз.",
+    ru: "Теперь укажите, какая статья (пункт) Конституции закрепляет то право или свободу, которое, на ваш взгляд, было нарушено.",
+    en: "Now specify which article (paragraph) of the Constitution guarantees the right or freedom that, in your view, was violated."
+  },
+  constArticlePlaceholder: {
+    kk: "Мысалы: Конституцияның 24-бабы (еңбек бостандығы құқығы)",
+    ru: "Например: Статья 24 Конституции (право на свободу труда)",
+    en: "E.g.: Article 24 of the Constitution (right to freedom of labor)"
+  },
   uploadPrompt: {
     kk: "Егер қолыңызда сот актілері болса — тіркеңіз (бірінші инстанция шешімі және бар болса апелляциялық шешім). Егер әзірге жоқ болса — файлсыз жалғастыруға болады.\n\nФорматтар: PDF, Word, сурет (JPG/PNG) немесе мәтіндік файл.",
     ru: "Если у вас есть судебные акты — приложите их (решение суда первой инстанции и, при наличии, апелляционной). Если пока нет на руках — можно продолжить без файла.\n\nФорматы: PDF, Word, изображение (JPG/PNG) или текстовый файл.",
@@ -457,6 +501,19 @@ const T = {
   uploadDrop: { kk: "Файлды таңдау үшін басыңыз", ru: "Нажмите, чтобы выбрать файл", en: "Click to select a file" },
   uploadFormats: { kk: "PDF, DOCX, JPG, PNG, TXT, ODT", ru: "PDF, DOCX, JPG, PNG, TXT, ODT", en: "PDF, DOCX, JPG, PNG, TXT, ODT" },
   skipUpload: { kk: "Файлсыз жалғастыру", ru: "Продолжить без файла", en: "Continue without file" },
+  qActs: {
+    kk: "Дауланатын норма қолданылған сот актісі (бірінші инстанция) және, болған жағдайда, апелляциялық инстанция актісі қолыңызда бар ма?",
+    ru: "У вас на руках есть судебный акт (первой инстанции), в котором применена оспариваемая норма, и, если он был, акт апелляционной инстанции?",
+    en: "Do you have on hand the first-instance judicial act applying the disputed provision, and, if there was one, the appellate-instance act?"
+  },
+  actsBoth: { kk: "Иә, екеуі де бар", ru: "Да, оба на руках", en: "Yes, I have both" },
+  actsFirstOnly: { kk: "Тек бірінші инстанция (апелляция болмаған немесе көшірмесі жоқ)", ru: "Только первой инстанции (апелляции не было или нет копии)", en: "Only the first-instance one (there was no appeal, or I don't have a copy)" },
+  actsNone: { kk: "Ешқандай акт қолымда жоқ", ru: "Актов на руках нет", en: "I don't have any acts on hand" },
+  actsNoteSoft: {
+    kk: "Ескерту: сот актісінің болуы және оның апелляциялық инстанцияда қаралуы — өтініштің қабылдануы үшін маңызды талаптар. Актісіз де жобаны жалғастыра аласыз, бірақ КС РК-ге ресми өтініш беру алдында актіні тіркеу қажет болады.",
+    ru: "Обратите внимание: наличие судебного акта и прохождение апелляционной инстанции — важные условия допустимости обращения. Вы можете продолжить и без акта, но перед официальной подачей в КС РК акт нужно будет приложить.",
+    en: "Note: having the judicial act and it having gone through the appellate instance are important admissibility conditions. You can continue without the act for now, but before formally filing with the Constitutional Court you will need to attach it."
+  },
   processing: { kk: "Өтінішіңіз талданып жатыр... Бір минутқа дейін созылуы мүмкін.", ru: "Анализирую обращение... Это может занять до минуты.", en: "Analyzing your appeal... This may take up to a minute." },
   waking: { kk: "Сервер жүктеліп жатыр (тегін хостинг), күте тұрыңыз...", ru: "Сервер просыпается (бесплатный хостинг), подождите...", en: "Server is waking up (free hosting), please wait..." },
   resultIntro: { kk: "Міне сіздің өтініш жобаңыз. Юристке тексертуден кейін пайдалануға болады.", ru: "Вот черновик вашего обращения. Его можно использовать после проверки юристом.", en: "Here is your draft appeal. It can be used after review by a lawyer." },
@@ -486,6 +543,7 @@ const API_BASE = "https://constitutional-assistant-api2.onrender.com";
 let lang = "ru";
 let isRepresentative = false;
 let userDescription = "";
+let constitutionArticle = "";
 let userFile = null;
 // ── Analytics ──────────────────────────────────────────────────────────────────
 const ANALYTICS_SESSION_ID = (function() {
@@ -602,9 +660,37 @@ function startFlow() {
   clearActions();
   isRepresentative = false;
   userDescription = "";
+  constitutionArticle = "";
   userFile = null;
+  trackEvent("00_prescreen", "step_started");
   trackEvent("01_consent", "step_started");
-  assistantSay("greeting", stepQ1);
+  assistantSay("greeting", stepSubjectType);
+}
+function stepSubjectType() {
+  assistantSay("qSubjectType", function() {
+    showButtons([
+      { label: t("optIndividual"), cls: "primary", action: function() { addMsg("user", t("optIndividual")); clearActions(); stepCitizenship(); }},
+      { label: t("optLegalEntity"), action: function() { addMsg("user", t("optLegalEntity")); clearActions(); stepRedirectLegalEntity(); }}
+    ]);
+  });
+}
+function stepRedirectLegalEntity() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "improper_subject" });
+  var html = '<div class="msg-redirect">' + t("redirectLegalEntity").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
+}
+function stepCitizenship() {
+  assistantSay("qCitizenship", function() {
+    showButtons([
+      { label: t("yes"), cls: "primary", action: function() { addMsg("user", t("yes")); clearActions(); stepQ1(); }},
+      { label: t("no"), action: function() { addMsg("user", t("no")); clearActions(); stepRedirectNotCitizen(); }}
+    ]);
+  });
+}
+function stepRedirectNotCitizen() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "improper_subject" });
+  var html = '<div class="msg-redirect">' + t("redirectNotCitizen").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
 }
 function stepQ1() {
   assistantSay("q1", function() {
@@ -639,6 +725,7 @@ function stepDeadline() {
   });
 }
 function stepRedirectDeadline() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "deadline_expired" });
   var html = '<div class="msg-warning">' + t("redirectDeadline").replace(/\n/g, "<br>") + '</div>';
   assistantSayRaw(html, showRestartButton);
 }
@@ -660,19 +747,35 @@ function stepRepresentativeInfo() {
     '<div class="msg-info" style="margin-top:14px">' + infoNote + '</div>';
   assistantSayRaw(html, function() {
     showButtons([
-      { label: t("understood"), cls: "primary", action: function() { addMsg("user", t("understood")); clearActions(); stepConsent(); }}
+      { label: t("understood"), cls: "primary", action: function() { addMsg("user", t("understood")); clearActions(); stepRepDocsConfirm(); }}
     ]);
   });
 }
+function stepRepDocsConfirm() {
+  assistantSay("qRepDocsReady", function() {
+    showButtons([
+      { label: t("repDocsYes"), cls: "primary", action: function() { addMsg("user", t("repDocsYes")); clearActions(); stepConsent(); }},
+      { label: t("repDocsNo"), action: function() { addMsg("user", t("repDocsNo")); clearActions(); stepRedirectRepDocsMissing(); }}
+    ]);
+  });
+}
+function stepRedirectRepDocsMissing() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "no_valid_poa" });
+  var html = '<div class="msg-redirect">' + t("redirectRepDocsMissing").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, showRestartButton);
+}
 function stepRedirectNoParticipation() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "not_participant" });
   var html = '<div class="msg-redirect">' + t("redirectNoParticipation").replace(/\n/g, "<br>") + '</div>';
   assistantSayRaw(html, showRestartButton);
 }
 function stepRedirectNotKS() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "wrong_object" });
   var html = '<div class="msg-redirect">' + t("redirectNotKS").replace(/\n/g, "<br>") + '</div>';
   assistantSayRaw(html, showRestartButton);
 }
 function stepRedirectUnclear() {
+  trackEvent("00_prescreen", "step_completed", { jurisdiction_reason: "other_out_of_jurisdiction" });
   var html = '<div class="msg-warning">' + t("redirectUnclear").replace(/\n/g, "<br>") + '</div>';
   assistantSayRaw(html, showRestartButton);
 }
@@ -684,6 +787,7 @@ function showRestartButton() {
   ]);
 }
 function stepConsent() {
+  trackEvent("00_prescreen", "step_completed");
   var html = t("consentText").replace(/\n/g, "<br>");
   assistantSayRaw(html, function() {
     clearActions();
@@ -739,9 +843,49 @@ function stepDescribe() {
       addMsg("user", escapeHtml(preview));
       clearActions();
       trackEvent("02_description", "step_completed");
-      stepUpload();
+      stepConstArticle();
     });
     inp.focus();
+  });
+}
+function stepConstArticle() {
+  assistantSay("constArticlePrompt", function() {
+    clearActions();
+    var wrap = document.createElement("div");
+    wrap.className = "input-area";
+    wrap.innerHTML =
+      '<textarea class="text-input" id="const-article-input" placeholder="' + escapeHtml(t("constArticlePlaceholder")) + '"></textarea>' +
+      '<div class="input-row">' +
+        '<button class="send-btn" id="const-article-send" disabled>' + t("next") + '</button>' +
+      '</div>';
+    actionZone.appendChild(wrap);
+    var inp = document.getElementById("const-article-input");
+    var btn = document.getElementById("const-article-send");
+    inp.addEventListener("input", function() { btn.disabled = inp.value.trim().length < 3; });
+    btn.addEventListener("click", function() {
+      constitutionArticle = inp.value.trim();
+      addMsg("user", escapeHtml(constitutionArticle));
+      clearActions();
+      stepActsConfirm();
+    });
+    inp.focus();
+  });
+}
+function stepActsConfirm() {
+  assistantSay("qActs", function() {
+    showButtons([
+      { label: t("actsBoth"), cls: "primary", action: function() { addMsg("user", t("actsBoth")); clearActions(); stepUpload(); }},
+      { label: t("actsFirstOnly"), action: function() { addMsg("user", t("actsFirstOnly")); clearActions(); stepActsSoftNote(); }},
+      { label: t("actsNone"), action: function() { addMsg("user", t("actsNone")); clearActions(); stepActsSoftNote(); }}
+    ]);
+  });
+}
+function stepActsSoftNote() {
+  var html = '<div class="msg-warning">' + t("actsNoteSoft").replace(/\n/g, "<br>") + '</div>';
+  assistantSayRaw(html, function() {
+    showButtons([
+      { label: t("understood"), cls: "primary", action: function() { addMsg("user", t("understood")); clearActions(); stepUpload(); }}
+    ]);
   });
 }
 function stepUpload() {
@@ -804,6 +948,7 @@ async function stepGenerate() {
   try {
     var formData = new FormData();
     formData.append("text", userDescription);
+    formData.append("constitution_article", constitutionArticle);
     formData.append("language", lang);
     formData.append("is_representative", isRepresentative ? "true" : "false");
     // Эти три поля всегда "true" в момент вызова stepGenerate(): пользователь
