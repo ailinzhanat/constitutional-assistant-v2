@@ -5,7 +5,7 @@ import os
 import requests
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
-from gemini_generator import _format_legal_context, _format_template_structure, GENERATION_PROMPT_TEMPLATE
+from gemini_generator import _format_legal_context, _format_template_structure, _format_constitution_article, GENERATION_PROMPT_TEMPLATE
 load_dotenv()
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 # ВАЖНО: llama-3.3-70b-versatile объявлена Groq устаревшей (deprecation
@@ -21,11 +21,18 @@ def generate_appeal_text(
     violation_data: Optional[Dict[str, Any]] = None,
     template_data: Optional[Dict[str, Any]] = None,
     is_representative: bool = False,
+    constitution_article: Optional[str] = None,
     api_key: Optional[str] = None,
     timeout: int = 60,
 ) -> Dict[str, Any]:
     """
     Генерирует текст обращения через Groq по официальному образцу КС РК.
+
+    constitution_article: статья Конституции, которую гражданин сам указал в
+    анкете (chat.html) как закрепляющую его нарушенное право (п.6 чек-листа
+    предварительного рассмотрения обращения) — используется моделью вместо
+    самостоятельного подбора статьи. См. gemini_generator._format_constitution_article.
+
     Returns:
         dict с ключами: appeal_text, success, error
     """
@@ -44,6 +51,7 @@ def generate_appeal_text(
         reasoning=reasoning or "не указано",
         legal_context=_format_legal_context(violation_data),
         representative_line=representative_line,
+        constitution_article_section=_format_constitution_article(constitution_article),
     )
     try:
         response = requests.post(
@@ -76,3 +84,4 @@ def generate_appeal_text(
                 "error": "Не удалось подключиться к Groq API."}
     except Exception as e:
         return {"appeal_text": None, "success": False, "error": f"Ошибка генерации: {str(e)}"}
+        
