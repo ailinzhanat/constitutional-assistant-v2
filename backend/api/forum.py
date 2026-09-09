@@ -581,6 +581,29 @@ def create_thread(body: ThreadCreateRequest, x_forum_token: Optional[str] = Head
         "MERGE (:ForumSubscription {user_id: $user_id, thread_id: $thread_id})",
         {"user_id": user["user_id"], "thread_id": thread_id},
     )
+
+    # Резервная копия в Google Sheets (best-effort — как и Survey/Feedback/Analytics,
+    # не должна ронять создание темы, если Sheets временно недоступны)
+    try:
+        from sheets_writer import write_forum_thread_to_sheets
+        sheets_result = write_forum_thread_to_sheets({
+            "thread_id": thread_id,
+            "category": body.category,
+            "title": body.title.strip()[:300],
+            "body": body.body.strip()[:20000],
+            "tags": ", ".join(t.strip()[:40] for t in body.tags[:10]),
+            "author_display_name": user["display_name"],
+            "language": body.language,
+            "linked_step": body.linked_step,
+            "np_reference": body.np_reference,
+            "attachment_text": (body.attachment_text or "").strip()[:20000] or None,
+            "status": "на рассмотрении",
+        })
+        if not sheets_result.get("success"):
+            print(f"⚠️ Sheets forum thread write failed: {sheets_result.get('error')}")
+    except Exception as e:
+        print(f"⚠️ Sheets forum thread import/write error: {e}")
+
     return {"status": "success", "thread_id": thread_id, "np_reference_resolved": np_ref}
 
 
@@ -618,6 +641,81 @@ def list_threads(category: Optional[str] = None, status: Optional[str] = None, t
         votes = _vote_counts("thread", r["thread_id"])
         r["votes"] = votes
     return {"count": len(rows), "items": rows}
+
+
+@router.get("/moderation/all-threads")
+def list_all_threads_moderation(status: Optional[str] = None, x_admin_code: Optional[str] = Header(None)):
+    """
+    Полный список тем ДЛЯ МОДЕРАТОРА — в отличие от публичного /threads,
+    включает скрытые (hidden) темы, чтобы модератор не терял из виду то,
+    что было скрыто по жалобе. Используется панелью «Все темы» и CSV-экспортом.
+    """
+    require_moderator(x_admin_code)
+    where = []
+    params: dict = {}
+    if status:
+        where.append("t.status = $status")
+        params["status"] = status
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+    rows = _query(
+        f"""
+        MATCH (t:ForumThread)
+        {where_sql}
+        OPTIONAL MATCH (r:ForumReply {{thread_id: t.thread_id}})
+        WITH t, count(r) AS reply_count
+        RETURN t.thread_id AS thread_id, t.category AS category, t.title AS title,
+               t.author_display_name AS author_display_name, t.created_at AS created_at,
+               t.status AS status, t.pinned AS pinned, t.closed AS closed, t.hidden AS hidden,
+               reply_count
+        ORDER BY t.created_at DESC
+        """,
+        params,
+    )
+    for r in rows:
+        r["votes"] = _vote_counts("thread", r["thread_id"])
+    return {"count": len(rows), "items": rows}
+
+
+@router.get("/moderation/threads/{thread_id}")
+def get_thread_moderation(thread_id: str, x_admin_code: Optional[str] = Header(None)):
+    """
+    Полная детализация темы (текст + все ответы) ДЛЯ МОДЕРАТОРА — в отличие
+    от публичного /threads/{id}, не 404-ит на скрытых темах и возвращает
+    скрытые ответы тоже. Используется для CSV-экспорта и просмотра жалоб.
+    """
+    require_moderator(x_admin_code)
+    rows = _query(
+        """
+        MATCH (t:ForumThread {thread_id: $thread_id})
+        RETURN t.thread_id AS thread_id, t.category AS category, t.title AS title, t.body AS body,
+               t.tags AS tags, t.author_display_name AS author_display_name, t.language AS language,
+               t.linked_step AS linked_step, t.np_reference AS np_reference,
+               t.attachment_text AS attachment_text, t.created_at AS created_at,
+               t.status AS status, t.status_note AS status_note, t.implemented_version AS implemented_version,
+               t.pinned AS pinned, t.closed AS closed, t.hidden AS hidden
+        """,
+        {"thread_id": thread_id},
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="Тема не найдена")
+    thread = rows[0]
+    thread["votes"] = _vote_counts("thread", thread_id)
+    thread["np_reference_resolved"] = _np_reference_lookup(thread.get("np_reference"))
+
+    replies = _query(
+        """
+        MATCH (r:ForumReply {thread_id: $thread_id})
+        RETURN r.reply_id AS reply_id, r.body AS body, r.author_display_name AS author_display_name,
+               r.quoted_step AS quoted_step, r.np_reference AS np_reference, r.created_at AS created_at,
+               r.hidden AS hidden
+        ORDER BY r.created_at ASC
+        """,
+        {"thread_id": thread_id},
+    )
+    for r in replies:
+        r["votes"] = _vote_counts("reply", r["reply_id"])
+    thread["replies"] = replies
+    return thread
 
 
 @router.get("/threads/{thread_id}")
@@ -729,6 +827,23 @@ def create_reply(thread_id: str, body: ReplyCreateRequest, x_forum_token: Option
     )
     _query("MERGE (:ForumSubscription {user_id: $user_id, thread_id: $thread_id})", {"user_id": user["user_id"], "thread_id": thread_id})
     _notify_subscribers(thread_id, f"{user['display_name']} ответил(а) в теме", exclude_user_id=user["user_id"])
+
+    # Резервная копия в Google Sheets (best-effort)
+    try:
+        from sheets_writer import write_forum_reply_to_sheets
+        sheets_result = write_forum_reply_to_sheets({
+            "reply_id": reply_id,
+            "thread_id": thread_id,
+            "body": body.body.strip()[:20000],
+            "author_display_name": user["display_name"],
+            "quoted_step": body.quoted_step,
+            "np_reference": body.np_reference,
+        })
+        if not sheets_result.get("success"):
+            print(f"⚠️ Sheets forum reply write failed: {sheets_result.get('error')}")
+    except Exception as e:
+        print(f"⚠️ Sheets forum reply import/write error: {e}")
+
     return {"status": "success", "reply_id": reply_id}
 
 
