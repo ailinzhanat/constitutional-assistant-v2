@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Опросник — Constitutional Assistant</title>
+<title>Опросник исследования — Constitutional Assistant</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -27,272 +27,100 @@
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
-
-html, body {
-  min-height: 100%;
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 15px;
-  line-height: 1.55;
-}
-
-/* ── HEADER (identical to chat.html) ── */
-.header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px;
-  background: var(--navy);
-  position: sticky; top: 0; z-index: 100;
-}
+html, body { min-height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: var(--navy); position: sticky; top: 0; z-index: 100; }
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-logo { width: 36px; height: 36px; flex-shrink: 0; }
 .header-text { display: flex; flex-direction: column; }
-.header-title {
-  font-family: var(--font-serif);
-  font-size: 16px; font-weight: 700;
-  color: var(--bg-white); letter-spacing: 0.2px;
-  text-decoration: none;
-}
+.header-title { font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--bg-white); letter-spacing: 0.2px; text-decoration: none; }
 .header-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.5px; }
 .lang-select { display: flex; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; overflow: hidden; }
-.lang-btn {
-  border: none; background: transparent;
-  padding: 6px 12px; font-size: 11px; font-weight: 600;
-  color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.15s;
-  text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font);
-  border-right: 1px solid rgba(255,255,255,0.1);
-}
+.lang-btn { border: none; background: transparent; padding: 6px 12px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.15s; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font); border-right: 1px solid rgba(255,255,255,0.1); }
 .lang-btn:last-child { border-right: none; }
 .lang-btn.active { background: var(--gold); color: var(--navy); }
 .lang-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); }
-
-/* ── LAYOUT ── */
-.page { max-width: 640px; margin: 0 auto; padding: 32px 20px 64px; }
-
-/* ── PAGE INTRO (styled like assistant bubble) ── */
-.intro-bubble {
-  background: var(--navy);
-  color: var(--text-light);
-  border-radius: var(--radius);
-  border-bottom-left-radius: 4px;
-  padding: 18px 20px;
-  margin-bottom: 28px;
-  box-shadow: var(--shadow);
-  font-size: 14.5px;
-  line-height: 1.6;
-}
+.page { max-width: 680px; margin: 0 auto; padding: 32px 20px 64px; }
+.intro-bubble { background: var(--navy); color: var(--text-light); border-radius: var(--radius); border-bottom-left-radius: 4px; padding: 18px 20px; margin-bottom: 28px; box-shadow: var(--shadow); font-size: 14.5px; line-height: 1.6; }
 .intro-bubble strong { color: var(--gold); font-weight: 600; }
-.intro-bubble .eyebrow {
-  font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.1em; color: var(--gold);
-  margin-bottom: 8px; font-family: var(--font);
-}
-
-/* ── BLOCK HEADER ── */
+.intro-bubble .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold); margin-bottom: 8px; font-family: var(--font); }
+.draft-note { background: #FBF3DE; border: 1px solid var(--gold); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12.5px; color: #6B5A21; margin-bottom: 20px; }
 .block { margin-bottom: 8px; }
-.block-header {
-  background: var(--navy);
-  color: var(--gold);
-  padding: 10px 16px;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.08em;
-}
-.block-body {
-  background: var(--bg-white);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow);
-}
-
-/* ── QUESTION ── */
+.block-header { background: var(--navy); color: var(--gold); padding: 10px 16px; border-radius: var(--radius-sm) var(--radius-sm) 0 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.block-body { background: var(--bg-white); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+.construct-title { font-size: 12.5px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.05em; margin: 22px 0 10px; }
+.construct-title:first-child { margin-top: 0; }
+.scale-hint { font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; }
 .question { margin-bottom: 24px; }
 .question:last-child { margin-bottom: 0; }
-.q-label {
-  display: block;
-  font-size: 14px; color: var(--text);
-  margin-bottom: 12px; line-height: 1.5;
-}
-.q-num {
-  display: inline-block;
-  background: var(--navy); color: var(--gold);
-  font-size: 10px; font-weight: 700;
-  padding: 2px 7px; border-radius: 4px;
-  margin-right: 8px; letter-spacing: 0.05em;
-  vertical-align: middle;
-}
-
-/* ── OPTIONS ── */
+.q-label { display: block; font-size: 14px; color: var(--text); margin-bottom: 12px; line-height: 1.5; }
+.q-num { display: inline-block; background: var(--navy); color: var(--gold); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-right: 8px; letter-spacing: 0.05em; vertical-align: middle; }
 .options { display: flex; flex-direction: column; gap: 8px; }
-.option-label {
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  font-size: 14px; color: var(--text-secondary);
-  background: var(--bg);
-}
+.option-label { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; transition: border-color 0.15s, background 0.15s; font-size: 14px; color: var(--text-secondary); background: var(--bg); }
 .option-label:hover { border-color: var(--navy); background: var(--bg-white); color: var(--text); }
-.option-label input[type="radio"],
-.option-label input[type="checkbox"] {
-  accent-color: var(--navy); width: 16px; height: 16px; flex-shrink: 0;
-}
-.option-label:has(input:checked) {
-  border-color: var(--navy); background: var(--navy);
-  color: var(--text-light);
-}
-
-/* ── SCALE TABLE ── */
+.option-label input[type="radio"], .option-label input[type="checkbox"] { accent-color: var(--navy); width: 16px; height: 16px; flex-shrink: 0; }
+.option-label:has(input:checked) { border-color: var(--navy); background: var(--navy); color: var(--text-light); }
+.inline-text { width: 100%; margin-top: 8px; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font); font-size: 13.5px; padding: 9px 12px; }
+.inline-text:focus { outline: none; border-color: var(--navy); background: var(--bg-white); }
 .scale-list { display: flex; flex-direction: column; gap: 0; }
-.scale-row-item {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
+.scale-row-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .scale-row-item:last-child { border-bottom: none; }
 .scale-text { font-size: 13.5px; color: var(--text-secondary); flex: 1; }
 .scale-nums { display: flex; gap: 4px; flex-shrink: 0; }
-.scale-nums label {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  cursor: pointer;
-}
+.scale-nums label { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
 .scale-nums label input { accent-color: var(--navy); }
-.scale-nums label span { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-
-/* ── NPS ── */
-.nps-wrap { margin-top: 4px; }
-.nps-row { display: flex; gap: 5px; flex-wrap: wrap; }
-.nps-btn {
-  width: 42px; height: 42px;
-  background: var(--bg); border: 1.5px solid var(--border);
-  color: var(--text-secondary); border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 13px; font-weight: 600;
-  font-family: var(--font); transition: all 0.15s;
-}
-.nps-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--bg-white); }
-.nps-btn.selected { background: var(--navy); color: var(--gold); border-color: var(--navy); }
-.nps-labels {
-  display: flex; justify-content: space-between;
-  margin-top: 8px; font-size: 11px; color: var(--text-muted);
-}
-
-/* ── SAT BUTTONS (1-5) ── */
-.sat-row { display: flex; gap: 8px; margin-top: 4px; }
-.sat-btn {
-  flex: 1; height: 46px;
-  background: var(--bg); border: 1.5px solid var(--border);
-  color: var(--text-secondary); border-radius: var(--radius-sm);
-  cursor: pointer; font-size: 15px; font-weight: 700;
-  font-family: var(--font); transition: all 0.15s;
-}
-.sat-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--bg-white); }
-.sat-btn.selected { background: var(--navy); color: var(--gold); border-color: var(--navy); }
-
-/* ── TEXTAREA / SELECT ── */
-textarea, select {
-  width: 100%;
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 14px;
-  padding: 11px 14px;
-  transition: border-color 0.15s;
-  line-height: 1.55;
-}
+.scale-nums label span { font-size: 10.5px; color: var(--text-muted); font-weight: 600; }
+.scale-nums label.na-opt { margin-left: 6px; padding-left: 6px; border-left: 1px dashed var(--border); }
+.attention-row { background: #FBF3DE; border-radius: var(--radius-sm); }
+.attention-row .scale-text { color: #6B5A21; font-weight: 600; }
+textarea, select { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font); font-size: 14px; padding: 11px 14px; transition: border-color 0.15s; line-height: 1.55; }
 textarea { resize: vertical; min-height: 84px; }
 textarea:focus, select:focus { outline: none; border-color: var(--navy); background: var(--bg-white); }
 textarea::placeholder { color: var(--text-muted); }
-select { appearance: none; cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A9084' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 14px center;
-}
+select { appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239A9084' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
 select option { background: var(--bg-white); }
-
-/* ── CONSENT BLOCK ── */
-.consent-block {
-  background: var(--bg-white);
-  border: 1.5px solid var(--border);
-  border-left: 3px solid var(--gold);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  margin-bottom: 20px;
-  font-size: 13.5px; color: var(--text-secondary); line-height: 1.65;
-}
+.consent-block { background: var(--bg-white); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 20px; margin-bottom: 20px; font-size: 13.5px; color: var(--text-secondary); line-height: 1.7; }
+.consent-block h3 { font-family: var(--font-serif); font-size: 18px; color: var(--text); margin-bottom: 4px; }
+.consent-block .subtitle { font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; }
+.consent-block p { margin-bottom: 12px; }
 .consent-block strong { color: var(--text); }
-
-/* ── SUBMIT BUTTON ── */
+.consent-block .section-label { font-weight: 700; color: var(--navy); display: block; margin-top: 14px; margin-bottom: 4px; }
+.sat-row { display: flex; gap: 8px; margin-top: 4px; }
+.sat-btn { flex: 1; height: 46px; background: var(--bg); border: 1.5px solid var(--border); color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; font-weight: 700; font-family: var(--font); transition: all 0.15s; }
+.sat-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--bg-white); }
+.sat-btn.selected { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+.nps-wrap { margin-top: 4px; }
+.nps-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.nps-btn { width: 42px; height: 42px; background: var(--bg); border: 1.5px solid var(--border); color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font); transition: all 0.15s; }
+.nps-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--bg-white); }
+.nps-btn.selected { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+.nps-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-muted); }
 .submit-area { margin-top: 32px; text-align: center; }
-.btn-submit {
-  background: var(--navy); color: var(--text-light);
-  border: none; border-radius: var(--radius-sm);
-  padding: 14px 48px; font-family: var(--font);
-  font-size: 15px; font-weight: 700; cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-  letter-spacing: 0.2px;
-}
+.btn-submit { background: var(--navy); color: var(--text-light); border: none; border-radius: var(--radius-sm); padding: 14px 48px; font-family: var(--font); font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s, transform 0.1s; letter-spacing: 0.2px; }
 .btn-submit:hover { background: var(--navy-light); }
 .btn-submit:active { transform: scale(.98); }
 .btn-submit:disabled { background: var(--text-muted); cursor: not-allowed; }
 .submit-note { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
-
-/* ── SUCCESS ── */
-.success-screen {
-  display: none; max-width: 480px; margin: 60px auto;
-  text-align: center; padding: 0 20px;
-}
+.closing-note { font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 18px; line-height: 1.6; }
+.success-screen { display: none; max-width: 480px; margin: 60px auto; text-align: center; padding: 0 20px; }
 .success-screen.show { display: block; }
-.success-icon {
-  width: 64px; height: 64px; border-radius: 50%;
-  background: var(--navy); color: var(--gold);
-  font-size: 28px; display: flex; align-items: center;
-  justify-content: center; margin: 0 auto 20px;
-}
-.success-screen h2 {
-  font-family: var(--font-serif); font-weight: normal;
-  font-size: 26px; margin-bottom: 14px; color: var(--text);
-}
+.success-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--navy); color: var(--gold); font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.success-screen h2 { font-family: var(--font-serif); font-weight: normal; font-size: 26px; margin-bottom: 14px; color: var(--text); }
 .success-screen p { color: var(--text-secondary); font-size: 14.5px; line-height: 1.65; }
-.home-link {
-  display: inline-block; margin-top: 24px;
-  padding: 11px 28px;
-  background: var(--navy); color: var(--text-light);
-  border-radius: var(--radius-sm); font-weight: 600;
-  font-size: 14px; text-decoration: none;
-  transition: background 0.15s;
-}
+.home-link { display: inline-block; margin-top: 24px; padding: 11px 28px; background: var(--navy); color: var(--text-light); border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; text-decoration: none; transition: background 0.15s; }
 .home-link:hover { background: var(--navy-light); }
-
-/* ── FOOTER ── */
-.footer {
-  text-align: center; padding: 16px 20px;
-  font-size: 11.5px; color: var(--text-muted);
-  border-top: 1px solid var(--border);
-  background: var(--bg-white);
-}
-
-/* ── DIVIDER ── */
-.divider { height: 1px; background: var(--border); margin: 4px 0 20px; }
-
+.footer { text-align: center; padding: 16px 20px; font-size: 11.5px; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--bg-white); }
 .hidden { display: none !important; }
-
 @media (max-width: 600px) {
   .page { padding: 20px 14px 48px; }
-  .nps-btn { width: 34px; height: 34px; font-size: 12px; }
+  .nps-btn { width: 32px; height: 32px; font-size: 11px; }
   .sat-btn { height: 42px; font-size: 14px; }
   .scale-row-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .scale-nums { align-self: flex-end; }
 }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
   <div class="header-left">
     <svg class="header-logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
@@ -320,117 +148,203 @@ select option { background: var(--bg-white); }
   </div>
 </div>
 
-<!-- SUCCESS -->
 <div class="success-screen" id="successScreen">
   <div class="success-icon">✓</div>
   <h2 id="successTitle">Спасибо за участие!</h2>
-  <p id="successText">Ваши ответы помогут сделать Constitutional Assistant понятнее и полезнее для граждан Республики Казахстан.</p>
+  <p id="successText">Ваши ответы помогут улучшить Constitutional Assistant.</p>
   <a href="index.html" class="home-link" id="homeLink">← На главную</a>
 </div>
 
-<!-- FORM -->
 <div id="formArea">
   <div class="page">
 
-    <!-- INTRO BUBBLE -->
     <div class="intro-bubble">
-      <div class="eyebrow" data-i18n="eyebrow">Исследование пилота</div>
-      <strong data-i18n="introTitle">Опросник: оценка Constitutional Assistant</strong><br>
-      <span data-i18n="introText">Опрос анонимный. Ответы используются только для доработки пилота.</span>
+      <div class="eyebrow" data-i18n="eyebrow">Пилотное исследование</div>
+      <strong data-i18n="introTitle">Опросник: оценка Constitutional Assistant</strong>
     </div>
+
+    <div class="draft-note" data-i18n="draftNote">Формулировки на казахском и русском языках — рабочий перевод английского оригинала (Annex 1), ожидает проверки и согласования исследователем/этическим комитетом. Английская версия соответствует утверждённому тексту.</div>
 
     <form id="surveyForm" novalidate>
 
-      <!-- CONSENT -->
-      <div class="consent-block" id="consentBlock">
-        <p id="consentText"><strong>Согласие на обработку данных.</strong> Подтвердите согласие на обработку ваших ответов в обезличенном виде согласно Закону РК от 21 мая 2013 года №&nbsp;94-V «О персональных данных и их защите».</p>
-        <div class="options" style="margin-top:14px">
-          <label class="option-label">
-            <input type="radio" name="consent" value="yes" required>
-            <span data-i18n="consentYes">Да, согласен(на) — продолжить</span>
-          </label>
-          <label class="option-label">
-            <input type="radio" name="consent" value="no">
-            <span data-i18n="consentNo">Нет — завершить опрос</span>
-          </label>
+      <!-- ICF -->
+      <div class="consent-block" id="icfBlock">
+        <h3 data-i18n="icfTitle">Форма информированного согласия</h3>
+        <div class="subtitle" data-i18n="icfProjectLabel">Тема исследования: «Constitutional Assistant: ИИ-интерфейс для доступа граждан к конституционному правосудию»</div>
+        <p data-i18n="icfResearcher">Исследователь: д-р Ассель Бекенова, преподаватель, Международная школа экономики, Университет Нархоз/Maqsut Narikbayev University</p>
+        <p data-i18n="icfIntro1">Благодарим вас за участие в нашем исследовании! Цель этого исследования — понять, как пользователи воспринимают пилотный интерфейс Constitutional Assistant — ИИ-инструмент, который помогает гражданам Казахстана готовить индивидуальные обращения в Конституционный Суд.</p>
+        <p data-i18n="icfIntro2">В рамках исследования вам нужно будет ответить на короткий опросник (сочетающий открытые и закрытые вопросы) о вашем опыте использования интерфейса Constitutional Assistant. Это займёт примерно 10–15 минут. Участие не оплачивается.</p>
+        <p data-i18n="icfVoluntary">Ваше участие полностью добровольное, и вы можете прекратить его в любой момент до отправки ответов, закрыв окно браузера. Поскольку опросник анонимный, после отправки ответы отозвать нельзя. Вы также можете пропустить любые вопросы, на которые не хотите отвечать.</p>
+        <p data-i18n="icfRisk">Это исследование не связано с какими-либо известными рисками, помимо обычных при заполнении онлайн-опросника.</p>
+        <span class="section-label" data-i18n="icfPrivacyLabel">Конфиденциальность данных</span>
+        <p data-i18n="icfPrivacyText">Исследование полностью анонимно. После отправки ответов их невозможно идентифицировать или удалить, если впоследствии вы захотите их отозвать.</p>
+        <span class="section-label" data-i18n="icfStorageLabel">Хранение данных и доступ к ним</span>
+        <p data-i18n="icfStorageText">Данные исследования будут надёжно храниться в базе данных проекта и использоваться исключительно в целях данного исследования и улучшения интерфейса Constitutional Assistant. Доступ к данным будет иметь только исследовательская группа. Это исследование было рассмотрено и одобрено Комитетом по научным исследованиям ISE при Maqsut Narikbayev University.</p>
+        <p data-i18n="icfContact">Если у вас есть вопросы, свяжитесь с д-ром Ассель Бекеновой по адресу: assel.bekenova@alumni.nu.edu.kz.</p>
+        <p data-i18n="icfComplaints">Если у вас есть жалобы по поводу исследования, вы можете обратиться к председателю Комитета по научным исследованиям ISE: ise_science_committee@kazguu.kz.</p>
+        <p data-i18n="icfThanks">Благодарим за ознакомление с этой информацией.</p>
+        <span class="section-label" data-i18n="icfConsentLabel">Форма согласия</span>
+        <p data-i18n="icfConsentIntro">Я прочитал(а) и понял(а) предоставленную информацию и:</p>
+        <div class="options" style="margin-top:10px">
+          <label class="option-label"><input type="radio" name="consent" value="yes" required><span data-i18n="consentYes">Согласен(на) участвовать в этом исследовании</span></label>
+          <label class="option-label"><input type="radio" name="consent" value="no"><span data-i18n="consentNo">Не хочу участвовать в этом исследовании</span></label>
         </div>
       </div>
 
-      <!-- MAIN BLOCKS (hidden until consent) -->
       <div id="mainContent" class="hidden">
 
         <!-- BLOCK 1 -->
         <div class="block">
-          <div class="block-header" data-i18n="block1">Блок 1 — О респонденте</div>
+          <div class="block-header" data-i18n="block1Title">Блок 1 — О респонденте</div>
           <div class="block-body">
+
             <div class="question">
               <label class="q-label"><span class="q-num">01</span><span data-i18n="q1">Ваша роль:</span></label>
               <div class="options">
-                <label class="option-label"><input type="radio" name="q1" value="citizen"><span data-i18n="q1a">Гражданин, обращавшийся за помощью в составлении обращения</span></label>
-                <label class="option-label"><input type="radio" name="q1" value="lawyer"><span data-i18n="q1b">Юрист / адвокат / юридический консультант</span></label>
-                <label class="option-label"><input type="radio" name="q1" value="academic"><span data-i18n="q1c">Преподаватель права / представитель научного сообщества</span></label>
-                <label class="option-label"><input type="radio" name="q1" value="other"><span data-i18n="q1d">Другое</span></label>
+                <label class="option-label"><input type="radio" name="q1_role" value="citizen"><span data-i18n="q1a">Гражданин, обратившийся за помощью в подготовке обращения</span></label>
+                <label class="option-label"><input type="radio" name="q1_role" value="lawyer"><span data-i18n="q1b">Юрист / адвокат / юридический консультант</span></label>
+                <label class="option-label"><input type="radio" name="q1_role" value="academic"><span data-i18n="q1c">Преподаватель права / представитель академического сообщества</span></label>
+                <label class="option-label"><input type="radio" name="q1_role" value="other"><span data-i18n="q1d">Другое:</span><input type="text" name="q1_other" class="inline-text" style="width:auto;flex:1;margin-top:0"></label>
               </div>
             </div>
+
             <div class="question">
-              <label class="q-label"><span class="q-num">02</span><span data-i18n="q2">Обращались ли вы раньше самостоятельно в Конституционный Суд РК или в суды общей юрисдикции?</span></label>
+              <label class="q-label"><span class="q-num">02</span><span data-i18n="q2">Обращались ли вы раньше самостоятельно в Конституционный Суд Республики Казахстан или в суды общей юрисдикции?</span></label>
               <div class="options">
                 <label class="option-label"><input type="radio" name="q2" value="many"><span data-i18n="q2a">Да, неоднократно</span></label>
                 <label class="option-label"><input type="radio" name="q2" value="once"><span data-i18n="q2b">Да, один раз</span></label>
-                <label class="option-label"><input type="radio" name="q2" value="never"><span data-i18n="q2c">Нет, впервые сталкиваюсь с этим через интерфейс</span></label>
+                <label class="option-label"><input type="radio" name="q2" value="never"><span data-i18n="q2c">Нет, это мой первый такой опыт — через интерфейс</span></label>
               </div>
             </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">03</span><span data-i18n="q3">Идентификатор сессии (скопируйте код, показанный на экране завершения):</span></label>
+              <input type="text" name="q3_session" class="inline-text" data-i18n-ph="q3ph" placeholder="Необязательно">
+              <p style="font-size:12px;color:var(--text-muted);margin-top:6px" data-i18n="q3note">Код используется только для сопоставления объективного системного журнала с вашими ответами и для возможности отзыва согласия. Он не связан с персональными данными.</p>
+            </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">04</span><span data-i18n="q4">На каком языке вы использовали интерфейс?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q4_lang" value="kk"><span data-i18n="q4a">Казахский</span></label>
+                <label class="option-label"><input type="radio" name="q4_lang" value="ru"><span data-i18n="q4b">Русский</span></label>
+                <label class="option-label"><input type="radio" name="q4_lang" value="en"><span data-i18n="q4c">Английский</span></label>
+                <label class="option-label"><input type="radio" name="q4_lang" value="multi"><span data-i18n="q4d">Использовал(а) более одного языка (уточните):</span><input type="text" name="q4_other" class="inline-text" style="width:auto;flex:1;margin-top:0"></label>
+              </div>
+            </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">05</span><span data-i18n="q5">Ваш возраст:</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q5_age" value="u25"><span data-i18n="q5a">До 25</span></label>
+                <label class="option-label"><input type="radio" name="q5_age" value="25-34"><span data-i18n="q5b">25–34</span></label>
+                <label class="option-label"><input type="radio" name="q5_age" value="35-44"><span data-i18n="q5c">35–44</span></label>
+                <label class="option-label"><input type="radio" name="q5_age" value="45-54"><span data-i18n="q5d">45–54</span></label>
+                <label class="option-label"><input type="radio" name="q5_age" value="55-64"><span data-i18n="q5e">55–64</span></label>
+                <label class="option-label"><input type="radio" name="q5_age" value="65+"><span data-i18n="q5f">65 и старше</span></label>
+              </div>
+            </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">06</span><span data-i18n="q6">Ваш пол:</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q6_gender" value="female"><span data-i18n="q6a">Женский</span></label>
+                <label class="option-label"><input type="radio" name="q6_gender" value="male"><span data-i18n="q6b">Мужской</span></label>
+                <label class="option-label"><input type="radio" name="q6_gender" value="na"><span data-i18n="q6c">Предпочитаю не указывать</span></label>
+              </div>
+            </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">07</span><span data-i18n="q7">Ваше образование:</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q7_edu" value="secondary"><span data-i18n="q7a">Среднее / среднее специальное</span></label>
+                <label class="option-label"><input type="radio" name="q7_edu" value="higher_nonlaw"><span data-i18n="q7b">Высшее, неюридическое</span></label>
+                <label class="option-label"><input type="radio" name="q7_edu" value="higher_law"><span data-i18n="q7c">Высшее юридическое</span></label>
+                <label class="option-label"><input type="radio" name="q7_edu" value="postgrad"><span data-i18n="q7d">Послевузовская степень</span></label>
+              </div>
+            </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">08</span><span data-i18n="q8">Как часто вы пользуетесь ИИ-ассистентами (ChatGPT и подобными)?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q8_ai" value="never"><span data-i18n="q8a">Никогда</span></label>
+                <label class="option-label"><input type="radio" name="q8_ai" value="tried"><span data-i18n="q8b">Пробовал(а) несколько раз</span></label>
+                <label class="option-label"><input type="radio" name="q8_ai" value="occasionally"><span data-i18n="q8c">Иногда</span></label>
+                <label class="option-label"><input type="radio" name="q8_ai" value="regularly"><span data-i18n="q8d">Регулярно</span></label>
+              </div>
+            </div>
+
+            <div class="question">
+              <label class="q-label"><span class="q-num">09</span><span data-i18n="q9">Как часто вы пользуетесь цифровыми государственными услугами (eGov и подобными)?</span></label>
+              <div class="options">
+                <label class="option-label"><input type="radio" name="q9_egov" value="never"><span data-i18n="q9a">Никогда</span></label>
+                <label class="option-label"><input type="radio" name="q9_egov" value="rarely"><span data-i18n="q9b">Редко</span></label>
+                <label class="option-label"><input type="radio" name="q9_egov" value="occasionally"><span data-i18n="q9c">Иногда</span></label>
+                <label class="option-label"><input type="radio" name="q9_egov" value="regularly"><span data-i18n="q9d">Регулярно</span></label>
+              </div>
+            </div>
+
           </div>
         </div>
 
         <!-- BLOCK 2 -->
         <div class="block">
-          <div class="block-header" data-i18n="block2">Блок 2 — Удобство использования</div>
+          <div class="block-header" data-i18n="block2Title">Блок 2 — Восприятие технологии, качество системы и доверие</div>
           <div class="block-body">
-            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px" data-i18n="scaleHint">Оцените от 1 (совсем не согласен) до 5 (полностью согласен):</p>
-            <div class="scale-list" id="scaleList"></div>
+            <p class="scale-hint" data-i18n="scaleHint">Шкала для всех утверждений этого блока: 1 = совершенно не согласен(на), 2 = скорее не согласен(на), 3 = ни то ни другое, 4 = скорее согласен(на), 5 = полностью согласен(на).</p>
+            <p class="scale-hint" data-i18n="naHint">В некоторых таблицах есть столбец «Н/П» (не применимо). Отметьте его, если указанная функция вас не касалась — это не считается пропущенным ответом.</p>
+
+            <div class="construct-title" data-i18n="c2A">2A. Лёгкость использования</div>
+            <div class="scale-list" id="scale2A"></div>
+
+            <div class="construct-title" data-i18n="c2B">2B. Воспринимаемая полезность</div>
+            <div class="scale-list" id="scale2B"></div>
+
+            <div class="construct-title" data-i18n="c2C">2C. Качество системы</div>
+            <div class="scale-list" id="scale2C"></div>
+
+            <div class="construct-title" data-i18n="c2D">2D. Качество информации</div>
+            <div class="scale-list" id="scale2D"></div>
+
+            <div class="construct-title" data-i18n="c2E">2E. Проверка внимания</div>
+            <div class="scale-list" id="scale2E"></div>
+
+            <div class="construct-title" data-i18n="c2F">2F. Доверие</div>
+            <div class="scale-list" id="scale2F"></div>
+
+            <div class="construct-title" data-i18n="c2G">2G. Воспринимаемый риск</div>
+            <div class="scale-list" id="scale2G"></div>
+
+            <div class="construct-title" data-i18n="c2H">2H. Благоприятствующие условия</div>
+            <div class="scale-list" id="scale2H"></div>
+
+            <div class="construct-title" data-i18n="c2I">2I. Социальное влияние</div>
+            <div class="scale-list" id="scale2I"></div>
+
+            <div class="construct-title" data-i18n="c2J">2J. Намерение использовать повторно</div>
+            <div class="scale-list" id="scale2J"></div>
+
             <div class="question" style="margin-top:20px">
-              <label class="q-label"><span class="q-num">06</span><span data-i18n="q6">Что вызвало наибольшие затруднения при использовании интерфейса?</span></label>
-              <textarea name="q6" data-i18n-ph="q6ph" placeholder="Опишите свободно..."></textarea>
+              <label class="q-label"><span class="q-num">40</span><span data-i18n="q40">Что вызвало у вас наибольшие затруднения при использовании интерфейса? (открытый вопрос)</span></label>
+              <textarea name="q40"></textarea>
             </div>
           </div>
         </div>
 
         <!-- BLOCK 3 -->
         <div class="block">
-          <div class="block-header" data-i18n="block3">Блок 3 — Правовая польза</div>
+          <div class="block-header" data-i18n="block3Title">Блок 3 — Практическая правовая польза</div>
           <div class="block-body">
-            <div class="question">
-              <label class="q-label"><span class="q-num">07</span><span data-i18n="q7">Помог ли ассистент понять разницу между обжалованием решения суда и оспариванием нормы закона?</span></label>
+            <p class="scale-hint" data-i18n="scaleHint2">Шкала для всех утверждений этого блока: 1 = совершенно не согласен(на) … 5 = полностью согласен(на).</p>
+            <div class="scale-list" id="scale3"></div>
+
+            <div class="question" style="margin-top:20px">
+              <label class="q-label"><span class="q-num">44</span><span data-i18n="q44">Если ассистент сообщил, что ваше обращение выходит за пределы компетенции Конституционного Суда — было ли понятно, куда обратиться дальше?</span></label>
               <div class="options">
-                <label class="option-label"><input type="radio" name="q7" value="yes"><span data-i18n="q7a">Да, стало понятно</span></label>
-                <label class="option-label"><input type="radio" name="q7" value="partial"><span data-i18n="q7b">Частично понятно</span></label>
-                <label class="option-label"><input type="radio" name="q7" value="no"><span data-i18n="q7c">Нет, осталось непонятно</span></label>
-              </div>
-            </div>
-            <div class="question">
-              <label class="q-label"><span class="q-num">08</span><span data-i18n="q8">Ассистент верно определил, входит ли ваше обращение в компетенцию КС РК?</span></label>
-              <div class="options">
-                <label class="option-label"><input type="radio" name="q8" value="yes"><span data-i18n="yes">Да</span></label>
-                <label class="option-label"><input type="radio" name="q8" value="no"><span data-i18n="no">Нет</span></label>
-                <label class="option-label"><input type="radio" name="q8" value="unsure"><span data-i18n="q8c">Не уверен(а) / затрудняюсь оценить</span></label>
-              </div>
-            </div>
-            <div class="question">
-              <label class="q-label"><span class="q-num">09</span><span data-i18n="q9">Если ассистент сообщил, что обращение вне компетенции КС — было ли понятно, куда обратиться дальше?</span></label>
-              <div class="options">
-                <label class="option-label"><input type="radio" name="q9" value="clear"><span data-i18n="q9a">Да, чётко указано</span></label>
-                <label class="option-label"><input type="radio" name="q9" value="partial"><span data-i18n="q9b">Указано, но недостаточно подробно</span></label>
-                <label class="option-label"><input type="radio" name="q9" value="na"><span data-i18n="q9c">Не применимо (моё обращение было принято)</span></label>
-              </div>
-            </div>
-            <div class="question">
-              <label class="q-label"><span class="q-num">10</span><span data-i18n="q10">Помог ли сервис подготовить черновик правового обоснования?</span></label>
-              <div class="options">
-                <label class="option-label"><input type="radio" name="q10" value="yes"><span data-i18n="q10a">Да, полностью</span></label>
-                <label class="option-label"><input type="radio" name="q10" value="partial"><span data-i18n="q10b">Частично, потребовалась доработка</span></label>
-                <label class="option-label"><input type="radio" name="q10" value="no"><span data-i18n="q10c">Нет</span></label>
-                <label class="option-label"><input type="radio" name="q10" value="skip"><span data-i18n="q10d">Не дошёл(шла) до этого шага</span></label>
+                <label class="option-label"><input type="radio" name="q44" value="clear"><span data-i18n="q44a">Да, было чётко указано, куда обратиться</span></label>
+                <label class="option-label"><input type="radio" name="q44" value="partial"><span data-i18n="q44b">Было указано, но недостаточно подробно</span></label>
+                <label class="option-label"><input type="radio" name="q44" value="no"><span data-i18n="q44c">Нет, указано не было</span></label>
+                <label class="option-label"><input type="radio" name="q44" value="na"><span data-i18n="q44d">Не применимо (обращение было принято к подготовке)</span></label>
               </div>
             </div>
           </div>
@@ -438,75 +352,89 @@ select option { background: var(--bg-white); }
 
         <!-- BLOCK 4 -->
         <div class="block">
-          <div class="block-header" data-i18n="block4">Блок 4 — Время обработки</div>
+          <div class="block-header" data-i18n="block4Title">Блок 4 — Время обработки</div>
           <div class="block-body">
             <div class="question">
-              <label class="q-label" for="q11"><span class="q-num">11</span><span data-i18n="q11">Сколько времени заняло прохождение всех шагов?</span></label>
-              <select name="q11" id="q11">
+              <label class="q-label" for="q45"><span class="q-num">45</span><span data-i18n="q45">В целом, сколько времени у вас заняло прохождение всех шагов интерфейса?</span></label>
+              <select name="q45" id="q45">
                 <option value="" data-i18n="selPh">— выберите —</option>
-                <option value="u10" data-i18n="q11a">До 10 минут</option>
-                <option value="10-20" data-i18n="q11b">10–20 минут</option>
-                <option value="20-40" data-i18n="q11c">20–40 минут</option>
-                <option value="o40" data-i18n="q11d">Более 40 минут</option>
+                <option value="u10" data-i18n="q45a">10 минут или меньше</option>
+                <option value="11-20" data-i18n="q45b">От 11 до 20 минут</option>
+                <option value="21-40" data-i18n="q45c">От 21 до 40 минут</option>
+                <option value="o40" data-i18n="q45d">Более 40 минут</option>
               </select>
             </div>
             <div class="question">
-              <label class="q-label"><span class="q-num">12</span><span data-i18n="q12">Как вы оцениваете это время?</span></label>
+              <label class="q-label"><span class="q-num">46</span><span data-i18n="q46">Как вы оцениваете это время?</span></label>
               <div class="options">
-                <label class="option-label"><input type="radio" name="q12" value="faster"><span data-i18n="q12a">Быстрее, чем ожидал(а)</span></label>
-                <label class="option-label"><input type="radio" name="q12" value="ok"><span data-i18n="q12b">Соответствует ожиданиям</span></label>
-                <label class="option-label"><input type="radio" name="q12" value="slower"><span data-i18n="q12c">Дольше, чем ожидал(а)</span></label>
+                <label class="option-label"><input type="radio" name="q46" value="faster"><span data-i18n="q46a">Быстрее, чем я ожидал(а)</span></label>
+                <label class="option-label"><input type="radio" name="q46" value="ok"><span data-i18n="q46b">Соответствует моим ожиданиям</span></label>
+                <label class="option-label"><input type="radio" name="q46" value="slower"><span data-i18n="q46c">Дольше, чем я ожидал(а) — что заняло больше всего времени:</span><input type="text" name="q46_text" class="inline-text" style="width:auto;flex:1;margin-top:0"></label>
               </div>
             </div>
             <div class="question">
-              <label class="q-label"><span class="q-num">13</span><span data-i18n="q13">Была ли система «зависания» или долгого ожидания?</span></label>
+              <label class="q-label"><span class="q-num">47</span><span data-i18n="q47">Был ли момент, когда система «зависала» или заставляла вас долго ждать ответа?</span></label>
               <div class="options">
-                <label class="option-label"><input type="radio" name="q13" value="no"><span data-i18n="no">Нет</span></label>
-                <label class="option-label"><input type="radio" name="q13" value="yes"><span data-i18n="q13y">Да</span></label>
+                <label class="option-label"><input type="radio" name="q47" value="no"><span data-i18n="q47a">Нет</span></label>
+                <label class="option-label"><input type="radio" name="q47" value="yes"><span data-i18n="q47b">Да, на этом шаге:</span><input type="text" name="q47_text" class="inline-text" style="width:auto;flex:1;margin-top:0"></label>
               </div>
-              <textarea name="q13d" style="margin-top:10px" data-i18n-ph="q13ph" placeholder="На каком шаге? (необязательно)"></textarea>
             </div>
           </div>
         </div>
 
         <!-- BLOCK 5 -->
         <div class="block">
-          <div class="block-header" data-i18n="block5">Блок 5 — Удовлетворённость</div>
+          <div class="block-header" data-i18n="block5Title">Блок 5 — Удовлетворённость и готовность рекомендовать</div>
           <div class="block-body">
-            <div class="question">
-              <label class="q-label"><span class="q-num">14</span><span data-i18n="q14">Насколько вы в целом удовлетворены опытом использования Constitutional Assistant?</span></label>
-              <div class="sat-row" id="satRow"></div>
-              <div class="nps-labels"><span data-i18n="q14lo">1 — совсем не удовлетворён(а)</span><span data-i18n="q14hi">5 — полностью удовлетворён(а)</span></div>
-              <input type="hidden" name="q14" id="q14val">
-            </div>
-            <div class="question">
-              <label class="q-label"><span class="q-num">15</span><span data-i18n="q15">Насколько вероятно, что вы порекомендуете этот сервис? (0 — точно нет, 10 — точно да)</span></label>
+            <div class="construct-title" data-i18n="c5A">5A. Удовлетворённость</div>
+            <div class="scale-list" id="scale5A"></div>
+
+            <div class="question" style="margin-top:22px">
+              <label class="q-label"><span class="q-num">51</span><span data-i18n="q51">Насколько вероятно, что вы порекомендуете этот сервис кому-то из знакомых, кто столкнулся с похожей проблемой?</span></label>
               <div class="nps-wrap">
                 <div class="nps-row" id="npsRow"></div>
-                <div class="nps-labels"><span data-i18n="q15lo">0 — точно не порекомендую</span><span data-i18n="q15hi">10 — точно порекомендую</span></div>
+                <div class="nps-labels"><span data-i18n="q51lo">0 — точно не порекомендую</span><span data-i18n="q51hi">10 — точно порекомендую</span></div>
               </div>
-              <input type="hidden" name="q15" id="q15val">
-            </div>
-            <div class="question">
-              <label class="q-label"><span class="q-num">16</span><span data-i18n="q16">Что стоило бы улучшить в первую очередь?</span></label>
-              <textarea name="q16" data-i18n-ph="q16ph" placeholder="Опишите свободно..."></textarea>
-            </div>
-            <div class="question">
-              <label class="q-label"><span class="q-num">17</span><span data-i18n="q17">Что вам особенно понравилось в интерфейсе?</span></label>
-              <textarea name="q17" data-i18n-ph="q17ph" placeholder="Опишите свободно..."></textarea>
+              <input type="hidden" name="q51">
             </div>
           </div>
         </div>
+
+        <!-- BLOCK 6 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block6Title">Блок 6 — Открытые вопросы</div>
+          <div class="block-body">
+            <div class="question">
+              <label class="q-label"><span class="q-num">52</span><span data-i18n="q52">Что стоило бы улучшить в первую очередь?</span></label>
+              <textarea name="q52"></textarea>
+            </div>
+            <div class="question">
+              <label class="q-label"><span class="q-num">53</span><span data-i18n="q53">Есть ли что-то, что вам особенно понравилось в интерфейсе?</span></label>
+              <textarea name="q53"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- BLOCK 7 -->
+        <div class="block">
+          <div class="block-header" data-i18n="block7Title">Блок 7 — Шкала удобства использования (SUS)</div>
+          <div class="block-body">
+            <p class="scale-hint" data-i18n="scaleHintSus">Шкала: 1 = совершенно не согласен(на) … 5 = полностью согласен(на).</p>
+            <div class="scale-list" id="scaleSUS"></div>
+          </div>
+        </div>
+
+        <p class="closing-note" data-i18n="closingNote">Благодарим за участие в исследовании. Если вы юрист, адвокат или юридический консультант и хотели бы дать более развёрнутый профессиональный комментарий, воспользуйтесь вкладкой «Обратная связь» в интерфейсе или напишите на email: assel.bekenova@alumni.nu.edu.kz.</p>
 
         <div class="submit-area">
           <button type="submit" class="btn-submit" id="submitBtn"><span data-i18n="submitBtn">Отправить ответы</span></button>
           <p class="submit-note" data-i18n="submitNote">Ответы передаются анонимно</p>
         </div>
 
-      </div><!-- /mainContent -->
+      </div>
     </form>
-  </div><!-- /page -->
-</div><!-- /formArea -->
+  </div>
+</div>
 
 <div class="footer">
   <span data-i18n="footer">Пилотная версия · Не является официальным ресурсом государственных органов Республики Казахстан</span>
@@ -516,223 +444,326 @@ select option { background: var(--bg-white); }
 const API_BASE = "https://constitutional-assistant-api2.onrender.com";
 
 const T = {
-  ru: {
-    siteTitle:"Конституционный ассистент", headerSub:"Пилотный проект",
-    eyebrow:"Исследование пилота", introTitle:"Опросник: оценка Constitutional Assistant",
-    introText:"Опрос анонимный. Ответы используются только для доработки пилота.",
-    consentYes:"Да, согласен(на) — продолжить", consentNo:"Нет — завершить опрос",
-    block1:"Блок 1 — О респонденте", block2:"Блок 2 — Удобство использования",
-    block3:"Блок 3 — Правовая польза", block4:"Блок 4 — Время обработки",
-    block5:"Блок 5 — Удовлетворённость",
-    q1:"Ваша роль:", q1a:"Гражданин, обращавшийся за помощью в составлении обращения",
-    q1b:"Юрист / адвокат / юридический консультант",
-    q1c:"Преподаватель права / представитель научного сообщества", q1d:"Другое",
-    q2:"Обращались ли вы раньше самостоятельно в Конституционный Суд РК или в суды общей юрисдикции?",
-    q2a:"Да, неоднократно", q2b:"Да, один раз", q2c:"Нет, впервые сталкиваюсь с этим через интерфейс",
-    scaleHint:"Оцените от 1 (совсем не согласен) до 5 (полностью согласен):",
-    scale:["Мне было понятно, что нужно делать на каждом шаге",
-           "Формулировки вопросов ассистента были понятны без юридической подготовки",
-           "Мне не пришлось обращаться за посторонней помощью",
-           "Загрузка судебных актов и распознавание текста сработали корректно",
-           "Интерфейс работал одинаково удобно на казахском / русском / английском"],
-    q6:"Что вызвало наибольшие затруднения при использовании интерфейса?", q6ph:"Опишите свободно...",
-    yes:"Да", no:"Нет",
-    q7:"Помог ли ассистент понять разницу между обжалованием решения суда и оспариванием нормы закона?",
-    q7a:"Да, стало понятно", q7b:"Частично понятно", q7c:"Нет, осталось непонятно",
-    q8:"Ассистент верно определил, входит ли ваше обращение в компетенцию КС РК?",
-    q8c:"Не уверен(а) / затрудняюсь оценить",
-    q9:"Если ассистент сообщил, что обращение вне компетенции КС — было ли понятно, куда обратиться?",
-    q9a:"Да, чётко указано", q9b:"Указано, но недостаточно подробно",
-    q9c:"Не применимо (моё обращение было принято)",
-    q10:"Помог ли сервис подготовить черновик правового обоснования?",
-    q10a:"Да, полностью", q10b:"Частично, потребовалась доработка",
-    q10c:"Нет", q10d:"Не дошёл(шла) до этого шага",
-    q11:"Сколько времени заняло прохождение всех шагов?",
-    selPh:"— выберите —", q11a:"До 10 минут", q11b:"10–20 минут", q11c:"20–40 минут", q11d:"Более 40 минут",
-    q12:"Как вы оцениваете это время?",
-    q12a:"Быстрее, чем ожидал(а)", q12b:"Соответствует ожиданиям", q12c:"Дольше, чем ожидал(а)",
-    q13:"Была ли система «зависания» или долгого ожидания?", q13y:"Да", q13ph:"На каком шаге? (необязательно)",
-    q14:"Насколько вы в целом удовлетворены опытом использования Constitutional Assistant?",
-    q14lo:"1 — совсем не удовлетворён(а)", q14hi:"5 — полностью удовлетворён(а)",
-    q15:"Насколько вероятно, что вы порекомендуете этот сервис? (0 — точно нет, 10 — точно да)",
-    q15lo:"0 — точно не порекомендую", q15hi:"10 — точно порекомендую",
-    q16:"Что стоило бы улучшить в первую очередь?", q16ph:"Опишите свободно...",
-    q17:"Что вам особенно понравилось в интерфейсе?", q17ph:"Опишите свободно...",
-    submitBtn:"Отправить ответы", submitNote:"Ответы передаются анонимно",
-    successTitle:"Спасибо за участие!", homeLink:"← На главную",
-    successText:"Ваши ответы помогут сделать Constitutional Assistant понятнее и полезнее для граждан Республики Казахстан.",
-    footer:"Пилотная версия · Не является официальным ресурсом государственных органов Республики Казахстан"
-  },
-  kk: {
-    siteTitle:"Конституциялық көмекші", headerSub:"Пилоттық жоба",
-    eyebrow:"Пилотты зерттеу", introTitle:"Сауалнама: Constitutional Assistant бағалау",
-    introText:"Сауалнама анонимді. Жауаптар тек пилотты жетілдіру үшін пайдаланылады.",
-    consentYes:"Иә, келісемін — жалғастыру", consentNo:"Жоқ — сауалнаманы аяқтау",
-    block1:"1-блок — Респондент туралы", block2:"2-блок — Пайдалану ыңғайлылығы",
-    block3:"3-блок — Заңдық пайда", block4:"4-блок — Өңдеу уақыты",
-    block5:"5-блок — Қанағаттану деңгейі",
-    q1:"Сіздің рөліңіз:", q1a:"Азамат (өтінішті жасауға көмек сұраған)",
-    q1b:"Заңгер / адвокат / заң консультанты",
-    q1c:"Құқық оқытушысы / ғылым өкілі", q1d:"Басқа",
-    q2:"Бұған дейін ҚР Конституциялық Сотына немесе жалпы соттарға жүгіндіңіз бе?",
-    q2a:"Иә, бірнеше рет", q2b:"Иә, бір рет", q2c:"Жоқ, алғаш рет",
-    scaleHint:"1-ден (мүлдем келіспеймін) 5-ке (толық келісемін) дейін бағалаңыз:",
-    scale:["Әр қадамда не істеу керектігін түсіндім",
-           "Ассистент сұрақтары заң дайындығынсыз түсінікті болды",
-           "Интерфейстен өту үшін сырттан көмек сұрауға тура келмеді",
-           "Сот актілерін жүктеу және мәтінді тану дұрыс жұмыс істеді",
-           "Интерфейс қазақша / орысша / ағылшынша бірдей ыңғайлы болды"],
-    q6:"Интерфейсті пайдалану кезінде қандай қиындықтар туындады?", q6ph:"Еркін сипаттаңыз...",
-    yes:"Иә", no:"Жоқ",
-    q7:"Ассистент сот шешімін шағымдау мен заң нормасын даулаудың айырмашылығын түсінуге көмектесті ме?",
-    q7a:"Иә, түсінікті болды", q7b:"Ішінара түсінікті", q7c:"Жоқ, түсінікті болмады",
-    q8:"Ассистент өтінішіңіздің КС құзыретіне жататынын дұрыс анықтады ма?",
-    q8c:"Сенімді емеспін",
-    q9:"Ассистент өтініш КС құзыретінен тыс деп хабарласа — одан әрі қайда жүгіну керектігі түсінікті болды ма?",
-    q9a:"Иә, нақты көрсетілді", q9b:"Көрсетілді, бірақ жеткіліксіз", q9c:"Қолданылмайды",
-    q10:"Қызмет заңдық негіздеменің жобасын дайындауға көмектесті ме?",
-    q10a:"Иә, толық", q10b:"Ішінара, өңдеу қажет болды", q10c:"Жоқ", q10d:"Осы қадамға жетпедім",
-    q11:"Барлық қадамдарынан өтуге қанша уақыт кетті?",
-    selPh:"— таңдаңыз —", q11a:"10 минутқа дейін", q11b:"10–20 минут", q11c:"20–40 минут", q11d:"40 минуттан астам",
-    q12:"Бұл уақытты қалай бағалайсыз?",
-    q12a:"Күткеннен жылдам", q12b:"Күтуге сәйкес", q12c:"Күткеннен ұзақ",
-    q13:"Жүйе «қатып қалған» немесе ұзақ күтуге мәжбүр еткен сәт болды ма?", q13y:"Иә", q13ph:"Қай қадамда? (міндетті емес)",
-    q14:"Constitutional Assistant пайдалану тәжірибесіне жалпы қаншалықты қанағаттандыңыз?",
-    q14lo:"1 — мүлдем қанағаттанбадым", q14hi:"5 — толық қанағаттандым",
-    q15:"Бұл қызметті таныстарыңызға ұсыну ықтималдығы қандай?",
-    q15lo:"0 — ұсынбаймын", q15hi:"10 — міндетті түрде ұсынамын",
-    q16:"Ең алдымен нені жақсарту керек?", q16ph:"Еркін сипаттаңыз...",
-    q17:"Интерфейстің қай жағы ұнады?", q17ph:"Еркін сипаттаңыз...",
-    submitBtn:"Жауаптарды жіберу", submitNote:"Жауаптар анонимді түрде жіберіледі",
-    successTitle:"Қатысқаныңыз үшін рахмет!", homeLink:"← Басты бетке",
-    successText:"Жауаптарыңыз Constitutional Assistant-ті Қазақстан Республикасы азаматтары үшін пайдалырақ етуге көмектеседі.",
-    footer:"Пилоттық нұсқа · Қазақстан Республикасы мемлекеттік органдарының ресми ресурсы емес"
-  },
-  en: {
-    siteTitle:"Constitutional Assistant", headerSub:"Pilot project",
-    eyebrow:"Pilot Research", introTitle:"Survey: Constitutional Assistant Evaluation",
-    introText:"This survey is anonymous. Responses are used solely to improve the pilot.",
-    consentYes:"Yes, I agree — continue", consentNo:"No — end the survey",
-    block1:"Block 1 — About You", block2:"Block 2 — Usability",
-    block3:"Block 3 — Legal Value", block4:"Block 4 — Processing Time",
-    block5:"Block 5 — Satisfaction",
-    q1:"Your role:", q1a:"Citizen who sought help drafting an appeal",
-    q1b:"Lawyer / attorney / legal consultant",
-    q1c:"Law professor / academic", q1d:"Other",
-    q2:"Have you previously submitted applications to the Constitutional Court or regular courts?",
-    q2a:"Yes, multiple times", q2b:"Yes, once", q2c:"No, this is my first time",
-    scaleHint:"Rate from 1 (strongly disagree) to 5 (strongly agree):",
-    scale:["I understood what to do at each step",
-           "The assistant's questions were clear without legal training",
-           "I did not need outside help to complete the interface",
-           "Uploading court documents and text recognition worked correctly",
-           "The interface worked equally well in Kazakh / Russian / English"],
-    q6:"What caused the most difficulty when using the interface?", q6ph:"Describe freely...",
-    yes:"Yes", no:"No",
-    q7:"Did the assistant help you understand the difference between appealing a court ruling and challenging a legal norm?",
-    q7a:"Yes, it became clear", q7b:"Partially clear", q7c:"No, it remained unclear",
-    q8:"Did the assistant correctly determine whether your appeal falls within the CC's jurisdiction?",
-    q8c:"Unsure / hard to assess",
-    q9:"If the assistant said your appeal was outside the CC's jurisdiction — was it clear where to go next?",
-    q9a:"Yes, clearly indicated", q9b:"Indicated but not in enough detail", q9c:"Not applicable (my appeal was accepted)",
-    q10:"Did the service help you prepare a draft legal justification?",
-    q10a:"Yes, fully", q10b:"Partially — revision was needed", q10c:"No", q10d:"I did not reach this step",
-    q11:"How long did it take to complete all steps?",
-    selPh:"— select —", q11a:"Under 10 minutes", q11b:"10–20 minutes", q11c:"20–40 minutes", q11d:"Over 40 minutes",
-    q12:"How would you rate that time?",
-    q12a:"Faster than expected", q12b:"As expected", q12c:"Slower than expected",
-    q13:"Were there moments when the system froze or made you wait?", q13y:"Yes", q13ph:"At which step? (optional)",
-    q14:"How satisfied are you overall with your Constitutional Assistant experience?",
-    q14lo:"1 — not satisfied at all", q14hi:"5 — fully satisfied",
-    q15:"How likely are you to recommend this service? (0 — definitely not, 10 — definitely yes)",
-    q15lo:"0 — definitely would not recommend", q15hi:"10 — definitely would recommend",
-    q16:"What should be improved first?", q16ph:"Describe freely...",
-    q17:"What did you especially like about the interface?", q17ph:"Describe freely...",
-    submitBtn:"Submit responses", submitNote:"Responses are submitted anonymously",
-    successTitle:"Thank you for participating!", homeLink:"← Back to home",
-    successText:"Your responses will help make Constitutional Assistant more useful for citizens of Kazakhstan.",
-    footer:"Pilot version · Not an official resource of state authorities of the Republic of Kazakhstan"
-  }
+ru: {
+siteTitle:"Конституционный ассистент", headerSub:"Пилотный проект",
+eyebrow:"Пилотное исследование", introTitle:"Опросник: оценка Constitutional Assistant",
+draftNote:"Формулировки на казахском и русском языках — рабочий перевод английского оригинала (Annex 1), ожидает проверки и согласования исследователем/этическим комитетом. Английская версия соответствует утверждённому тексту.",
+icfTitle:"Форма информированного согласия",
+icfProjectLabel:"Тема исследования: «Constitutional Assistant: ИИ-интерфейс для доступа граждан к конституционному правосудию»",
+icfResearcher:"Исследователь: д-р Ассель Бекенова, преподаватель, Международная школа экономики, Maqsut Narikbayev University",
+icfIntro1:"Благодарим вас за участие в нашем исследовании! Цель этого исследования — понять, как пользователи воспринимают пилотный интерфейс Constitutional Assistant — ИИ-инструмент, который помогает гражданам Казахстана готовить индивидуальные обращения в Конституционный Суд.",
+icfIntro2:"В рамках исследования вам нужно будет ответить на короткий опросник (сочетающий открытые и закрытые вопросы) о вашем опыте использования интерфейса Constitutional Assistant. Это займёт примерно 10–15 минут. Участие не оплачивается.",
+icfVoluntary:"Ваше участие полностью добровольное, и вы можете прекратить его в любой момент до отправки ответов, закрыв окно браузера. Поскольку опросник анонимный, после отправки ответы отозвать нельзя. Вы также можете пропустить любые вопросы, на которые не хотите отвечать.",
+icfRisk:"Это исследование не связано с какими-либо известными рисками, помимо обычных при заполнении онлайн-опросника.",
+icfPrivacyLabel:"Конфиденциальность данных",
+icfPrivacyText:"Исследование полностью анонимно. После отправки ответов их невозможно идентифицировать или удалить, если впоследствии вы захотите их отозвать.",
+icfStorageLabel:"Хранение данных и доступ к ним",
+icfStorageText:"Данные исследования будут надёжно храниться в базе данных проекта и использоваться исключительно в целях данного исследования и улучшения интерфейса Constitutional Assistant. Доступ к данным будет иметь только исследовательская группа. Это исследование было рассмотрено и одобрено Комитетом по научным исследованиям ISE при Maqsut Narikbayev University.",
+icfContact:"Если у вас есть вопросы, свяжитесь с д-ром Ассель Бекеновой по адресу: assel.bekenova@alumni.nu.edu.kz.",
+icfComplaints:"Если у вас есть жалобы по поводу исследования, вы можете обратиться к председателю Комитета по научным исследованиям ISE: ise_science_committee@kazguu.kz.",
+icfThanks:"Благодарим за ознакомление с этой информацией.",
+icfConsentLabel:"Форма согласия",
+icfConsentIntro:"Я прочитал(а) и понял(а) предоставленную информацию и:",
+consentYes:"Согласен(на) участвовать в этом исследовании", consentNo:"Не хочу участвовать в этом исследовании",
+block1Title:"Блок 1 — О респонденте",
+q1:"Ваша роль:", q1a:"Гражданин, обратившийся за помощью в подготовке обращения", q1b:"Юрист / адвокат / юридический консультант", q1c:"Преподаватель права / представитель академического сообщества", q1d:"Другое:",
+q2:"Обращались ли вы раньше самостоятельно в Конституционный Суд Республики Казахстан или в суды общей юрисдикции?", q2a:"Да, неоднократно", q2b:"Да, один раз", q2c:"Нет, это мой первый такой опыт — через интерфейс",
+q3:"Идентификатор сессии (скопируйте код, показанный на экране завершения):", q3ph:"Необязательно", q3note:"Код используется только для сопоставления объективного системного журнала с вашими ответами и для возможности отзыва согласия. Он не связан с персональными данными.",
+q4:"На каком языке вы использовали интерфейс?", q4a:"Казахский", q4b:"Русский", q4c:"Английский", q4d:"Использовал(а) более одного языка (уточните):",
+q5:"Ваш возраст:", q5a:"До 25", q5b:"25–34", q5c:"35–44", q5d:"45–54", q5e:"55–64", q5f:"65 и старше",
+q6:"Ваш пол:", q6a:"Женский", q6b:"Мужской", q6c:"Предпочитаю не указывать",
+q7:"Ваше образование:", q7a:"Среднее / среднее специальное", q7b:"Высшее, неюридическое", q7c:"Высшее юридическое", q7d:"Послевузовская степень",
+q8:"Как часто вы пользуетесь ИИ-ассистентами (ChatGPT и подобными)?", q8a:"Никогда", q8b:"Пробовал(а) несколько раз", q8c:"Иногда", q8d:"Регулярно",
+q9:"Как часто вы пользуетесь цифровыми государственными услугами (eGov и подобными)?", q9a:"Никогда", q9b:"Редко", q9c:"Иногда", q9d:"Регулярно",
+block2Title:"Блок 2 — Восприятие технологии, качество системы и доверие",
+scaleHint:"Шкала для всех утверждений этого блока: 1 = совершенно не согласен(на), 2 = скорее не согласен(на), 3 = ни то ни другое, 4 = скорее согласен(на), 5 = полностью согласен(на).",
+naHint:"В некоторых таблицах есть столбец «Н/П» (не применимо). Отметьте его, если указанная функция вас не касалась — это не считается пропущенным ответом.",
+c2A:"2A. Лёгкость использования", c2B:"2B. Воспринимаемая полезность", c2C:"2C. Качество системы", c2D:"2D. Качество информации", c2E:"2E. Проверка внимания", c2F:"2F. Доверие", c2G:"2G. Воспринимаемый риск", c2H:"2H. Благоприятствующие условия", c2I:"2I. Социальное влияние", c2J:"2J. Намерение использовать повторно",
+q40:"Что вызвало у вас наибольшие затруднения при использовании интерфейса? (открытый вопрос)",
+block3Title:"Блок 3 — Практическая правовая польза",
+scaleHint2:"Шкала для всех утверждений этого блока: 1 = совершенно не согласен(на) … 5 = полностью согласен(на).",
+q44:"Если ассистент сообщил, что ваше обращение выходит за пределы компетенции Конституционного Суда — было ли понятно, куда обратиться дальше?",
+q44a:"Да, было чётко указано, куда обратиться", q44b:"Было указано, но недостаточно подробно", q44c:"Нет, указано не было", q44d:"Не применимо (обращение было принято к подготовке)",
+block4Title:"Блок 4 — Время обработки",
+q45:"В целом, сколько времени у вас заняло прохождение всех шагов интерфейса?", selPh:"— выберите —",
+q45a:"10 минут или меньше", q45b:"От 11 до 20 минут", q45c:"От 21 до 40 минут", q45d:"Более 40 минут",
+q46:"Как вы оцениваете это время?", q46a:"Быстрее, чем я ожидал(а)", q46b:"Соответствует моим ожиданиям", q46c:"Дольше, чем я ожидал(а) — что заняло больше всего времени:",
+q47:"Был ли момент, когда система «зависала» или заставляла вас долго ждать ответа?", q47a:"Нет", q47b:"Да, на этом шаге:",
+block5Title:"Блок 5 — Удовлетворённость и готовность рекомендовать",
+c5A:"5A. Удовлетворённость",
+q51:"Насколько вероятно, что вы порекомендуете этот сервис кому-то из знакомых, кто столкнулся с похожей проблемой?", q51lo:"0 — точно не порекомендую", q51hi:"10 — точно порекомендую",
+block6Title:"Блок 6 — Открытые вопросы",
+q52:"Что стоило бы улучшить в первую очередь?", q53:"Есть ли что-то, что вам особенно понравилось в интерфейсе?",
+block7Title:"Блок 7 — Шкала удобства использования (SUS)",
+scaleHintSus:"Шкала: 1 = совершенно не согласен(на) … 5 = полностью согласен(на).",
+closingNote:"Благодарим за участие в исследовании. Если вы юрист, адвокат или юридический консультант и хотели бы дать более развёрнутый профессиональный комментарий, воспользуйтесь вкладкой «Обратная связь» в интерфейсе или напишите на email: assel.bekenova@alumni.nu.edu.kz.",
+submitBtn:"Отправить ответы", submitNote:"Ответы передаются анонимно",
+successTitle:"Спасибо за участие!", successText:"Ваши ответы помогут улучшить Constitutional Assistant для граждан Республики Казахстан.", homeLink:"← На главную",
+footer:"Пилотная версия · Не является официальным ресурсом государственных органов Республики Казахстан"
+},
+kk: {
+siteTitle:"Конституциялық көмекші", headerSub:"Пилоттық жоба",
+eyebrow:"Пилоттық зерттеу", introTitle:"Сауалнама: Constitutional Assistant бағалау",
+draftNote:"Қазақ және орыс тілдеріндегі тұжырымдар — ағылшын түпнұсқасының (Annex 1) жұмыс аудармасы, зерттеушінің/этикалық комитеттің тексеруін күтуде. Ағылшын нұсқасы бекітілген мәтінге сәйкес келеді.",
+icfTitle:"Ақпараттандырылған келісім нысаны",
+icfProjectLabel:"Зерттеу тақырыбы: «Constitutional Assistant: азаматтардың конституциялық сот төрелігіне қолжетімділігі үшін ЖИ-интерфейсі»",
+icfResearcher:"Зерттеуші: PhD Ассель Бекенова, оқытушы, Халықаралық экономика мектебі, Maqsut Narikbayev University",
+icfIntro1:"Зерттеуімізге қатысқаныңыз үшін рахмет! Бұл зерттеудің мақсаты — пайдаланушылардың Constitutional Assistant пилоттық интерфейсін қалай қабылдайтынын түсіну. Бұл — Қазақстан азаматтарына жеке конституциялық өтініштерін дайындауға көмектесетін ЖИ-құралы.",
+icfIntro2:"Зерттеу барысында сізге Constitutional Assistant интерфейсін пайдалану тәжірибеңіз туралы қысқа сауалнамаға (ашық және жабық сұрақтардан тұратын) жауап беру қажет болады. Бұл шамамен 10–15 минут алады. Қатысу үшін төлем қарастырылмаған.",
+icfVoluntary:"Сіздің қатысуыңыз толығымен ерікті, жауаптарыңызды жібермей тұрып браузер терезесін жабу арқылы кез келген уақытта тоқтата аласыз. Сауалнама анонимді болғандықтан, жіберілгеннен кейін жауаптарды қайтарып алу мүмкін емес. Сондай-ақ жауап бергіңіз келмейтін кез келген сұрақты өткізіп жіберуге болады.",
+icfRisk:"Бұл зерттеу онлайн сауалнаманы толтырудың әдеттегі жағдайларынан басқа белгілі бір тәуекелдермен байланысты емес.",
+icfPrivacyLabel:"Деректердің құпиялылығы",
+icfPrivacyText:"Зерттеу толығымен анонимді. Жауаптарыңызды жібергеннен кейін оларды анықтау немесе кейін қайтарып алғыңыз келсе жою мүмкін емес.",
+icfStorageLabel:"Деректерді сақтау және оларға қолжетімділік",
+icfStorageText:"Зерттеу деректері жобаның дерекқорында сенімді сақталады және тек осы зерттеудің мақсаттары мен Constitutional Assistant интерфейсін жетілдіру үшін пайдаланылады. Деректерге тек зерттеу тобы қолжетімділікке ие болады. Бұл зерттеу Maqsut Narikbayev University жанындағы ISE Ғылыми зерттеулер жөніндегі комитетінде қаралып, мақұлданды.",
+icfContact:"Сұрақтарыңыз болса, PhD Ассель Бекеновамен байланысыңыз: assel.bekenova@alumni.nu.edu.kz.",
+icfComplaints:"Зерттеуге қатысты шағымдарыңыз болса, ISE Ғылыми зерттеулер жөніндегі комитетінің төрағасына хабарласыңыз: ise_science_committee@kazguu.kz.",
+icfThanks:"Осы ақпаратпен танысқаныңыз үшін рахмет.",
+icfConsentLabel:"Келісім нысаны",
+icfConsentIntro:"Мен берілген ақпаратпен таныстым, түсіндім және:",
+consentYes:"Осы зерттеуге қатысуға келісемін", consentNo:"Осы зерттеуге қатысқым келмейді",
+block1Title:"1-блок — Респондент туралы",
+q1:"Сіздің рөліңіз:", q1a:"Өтініш дайындауға көмек сұраған азамат", q1b:"Заңгер / адвокат / заң кеңесшісі", q1c:"Құқық оқытушысы / академиялық қоғамдастық өкілі", q1d:"Басқа:",
+q2:"Бұған дейін Қазақстан Республикасының Конституциялық Сотына немесе жалпы юрисдикциядағы соттарға өз бетіңізше жүгіндіңіз бе?", q2a:"Иә, бірнеше рет", q2b:"Иә, бір рет", q2c:"Жоқ, бұл — интерфейс арқылы алғашқы тәжірибем",
+q3:"Сессия идентификаторы (аяқтау экранында көрсетілген кодты көшіріңіз):", q3ph:"Міндетті емес", q3note:"Код тек объективті жүйелік журналды жауаптарыңызбен сәйкестендіру және келісімді кері қайтарып алу мүмкіндігі үшін пайдаланылады. Ол жеке деректермен байланысты емес.",
+q4:"Интерфейсті қай тілде пайдаландыңыз?", q4a:"Қазақша", q4b:"Орысша", q4c:"Ағылшынша", q4d:"Бірден көп тіл пайдаландым (нақтылаңыз):",
+q5:"Сіздің жасыңыз:", q5a:"25-ке дейін", q5b:"25–34", q5c:"35–44", q5d:"45–54", q5e:"55–64", q5f:"65 және одан жоғары",
+q6:"Сіздің жынысыңыз:", q6a:"Әйел", q6b:"Ер", q6c:"Көрсеткім келмейді",
+q7:"Сіздің біліміңіз:", q7a:"Орта / орта арнаулы", q7b:"Жоғары, заңгерлік емес", q7c:"Жоғары заңгерлік", q7d:"Жоғары оқу орнынан кейінгі дәреже",
+q8:"ЖИ-көмекшілерін (ChatGPT және т.б.) қаншалықты жиі пайдаланасыз?", q8a:"Ешқашан", q8b:"Бірнеше рет байқап көрдім", q8c:"Кейде", q8d:"Тұрақты түрде",
+q9:"Цифрлық мемлекеттік қызметтерді (eGov және т.б.) қаншалықты жиі пайдаланасыз?", q9a:"Ешқашан", q9b:"Сирек", q9c:"Кейде", q9d:"Тұрақты түрде",
+block2Title:"2-блок — Технологияны қабылдау, жүйе сапасы және сенім",
+scaleHint:"Осы блоктың барлық тұжырымдары үшін шкала: 1 = мүлдем келіспеймін, 2 = келіспеймін, 3 = бейтарап, 4 = келісемін, 5 = толығымен келісемін.",
+naHint:"Кейбір кестелерде «Қ/Е» (қолданылмайды) бағаны бар. Егер сұралған функция сізге қатысты болмаса, оны белгілеңіз — бұл жауапсыз қалдырылған деп есептелмейді.",
+c2A:"2A. Пайдалану ыңғайлылығы", c2B:"2B. Қабылданған пайдалылық", c2C:"2C. Жүйе сапасы", c2D:"2D. Ақпарат сапасы", c2E:"2E. Назар тексерісі", c2F:"2F. Сенім", c2G:"2G. Қабылданған тәуекел", c2H:"2H. Жағдай жасау факторлары", c2I:"2I. Әлеуметтік ықпал", c2J:"2J. Қайта пайдалану ниеті",
+q40:"Интерфейсті пайдалану кезінде сізге не ең үлкен қиындық туғызды? (ашық сұрақ)",
+block3Title:"3-блок — Нақты құқықтық пайда",
+scaleHint2:"Осы блоктың барлық тұжырымдары үшін шкала: 1 = мүлдем келіспеймін … 5 = толығымен келісемін.",
+q44:"Егер ассистент өтінішіңіз Конституциялық Сот құзыретінен тыс екенін хабарласа — одан әрі қайда жүгіну керектігі түсінікті болды ма?",
+q44a:"Иә, қайда жүгіну керектігі нақты көрсетілді", q44b:"Көрсетілді, бірақ жеткілікті түсінікті болмады", q44c:"Жоқ, ешқандай нәрсе көрсетілмеді", q44d:"Қолданылмайды (өтініш дайындауға қабылданды)",
+block4Title:"4-блок — Өңдеу уақыты",
+q45:"Жалпы алғанда, интерфейстің барлық қадамдарынан өтуге қанша уақыт кетті?", selPh:"— таңдаңыз —",
+q45a:"10 минут немесе одан аз", q45b:"11-ден 20 минутқа дейін", q45c:"21-ден 40 минутқа дейін", q45d:"40 минуттан астам",
+q46:"Бұл уақытты қалай бағалайсыз?", q46a:"Күткенімнен жылдам", q46b:"Күткеніме сәйкес келді", q46c:"Күткенімнен ұзақ — ең көп уақыт неге кетті:",
+q47:"Жүйе «қатып қалған» немесе жауап беруге ұзақ уақыт күттірген сәт болды ма?", q47a:"Жоқ", q47b:"Иә, мына қадамда:",
+block5Title:"5-блок — Қанағаттану және ұсыну ниеті",
+c5A:"5A. Қанағаттану",
+q51:"Осындай мәселеге тап болған таныстарыңызға бұл қызметті ұсыну ықтималдығы қандай?", q51lo:"0 — мүлдем ұсынбаймын", q51hi:"10 — міндетті түрде ұсынамын",
+block6Title:"6-блок — Ашық сұрақтар",
+q52:"Ең алдымен нені жақсарту керек?", q53:"Интерфейсте сізге ерекше ұнаған нәрсе бар ма?",
+block7Title:"7-блок — Пайдалану ыңғайлылығы шкаласы (SUS)",
+scaleHintSus:"Шкала: 1 = мүлдем келіспеймін … 5 = толығымен келісемін.",
+closingNote:"Зерттеуге қатысқаныңыз үшін рахмет. Егер сіз заңгер, адвокат немесе заң кеңесшісі болсаңыз және толығырақ кәсіби пікір қалдырғыңыз келсе, интерфейстегі «Кері байланыс» қойындысын пайдаланыңыз немесе email арқылы жазыңыз: assel.bekenova@alumni.nu.edu.kz.",
+submitBtn:"Жауаптарды жіберу", submitNote:"Жауаптар анонимді түрде жіберіледі",
+successTitle:"Қатысқаныңыз үшін рахмет!", successText:"Жауаптарыңыз Constitutional Assistant-ті Қазақстан Республикасы азаматтары үшін жақсартуға көмектеседі.", homeLink:"← Басты бетке",
+footer:"Пилоттық нұсқа · Қазақстан Республикасы мемлекеттік органдарының ресми ресурсы емес"
+},
+en: {
+siteTitle:"Constitutional Assistant", headerSub:"Pilot project",
+eyebrow:"Pilot Research", introTitle:"Survey: Constitutional Assistant Evaluation",
+draftNote:"This is the approved English version (Annex 1). The Kazakh and Russian wording is a working translation pending researcher/ethics-committee review.",
+icfTitle:"Informed Consent Form",
+icfProjectLabel:"Research Project Title: «Constitutional Assistant: an AI-guided interface for citizen access to constitutional justice»",
+icfResearcher:"Researcher/s: Dr. Assel Bekenova, Teaching Professor, International School of Economics, Maqsut Narikbayev University",
+icfIntro1:"Thank you for your participation in our research! This study aims to understand how users experience the Constitutional Assistant pilot interface, an AI-guided tool that helps citizens of Kazakhstan prepare individual constitutional appeals.",
+icfIntro2:"In this study, you will answer a short questionnaire (combining open-ended and closed questions) about your experience using the Constitutional Assistant interface. This process will take approximately 10–15 minutes. No compensation is provided for participation.",
+icfVoluntary:"Your participation is entirely voluntary, and you may withdraw at any time before submitting your responses by closing your browser window. Because the questionnaire is anonymous, responses cannot be withdrawn once submitted. You are also free to skip any questions you prefer not to answer.",
+icfRisk:"This study does not involve any known risks beyond those of everyday use of an online questionnaire.",
+icfPrivacyLabel:"Data Privacy",
+icfPrivacyText:"This study is fully anonymous. Once you submit your responses, they cannot be identified or deleted if you wish to withdraw them at a later date.",
+icfStorageLabel:"Data Storage and Access",
+icfStorageText:"Research data will be securely stored in the project's database and used solely for the purposes of this research and improving the Constitutional Assistant interface. Only the research team will have access to this data. This study has been reviewed and approved by ISE Committee for Scientific Research at Maqsut Narikbayev University.",
+icfContact:"If you have any questions, please contact Dr. Assel Bekenova at email: assel.bekenova@alumni.nu.edu.kz.",
+icfComplaints:"If you have any complaints regarding the study, you may contact the Chair of ISE Committee for Scientific Research at: ise_science_committee@kazguu.kz.",
+icfThanks:"Thank you for reviewing this information.",
+icfConsentLabel:"Consent Form",
+icfConsentIntro:"I have read and understood the information provided and:",
+consentYes:"I agree to participate in this study", consentNo:"I don't want to participate in this study",
+block1Title:"Block 1 — About You",
+q1:"Your role:", q1a:"Citizen who sought help in drafting a petition", q1b:"Lawyer / advocate / legal consultant", q1c:"Law lecturer / member of the academic community", q1d:"Other:",
+q2:"Have you previously approached the Constitutional Court of the Republic of Kazakhstan or the courts of general jurisdiction on your own?", q2a:"Yes, more than once", q2b:"Yes, once", q2c:"No, this is my first such experience, through the interface",
+q3:"Session identifier (copy the code shown on the completion screen):", q3ph:"Optional", q3note:"The code is used only to match the objective system log to your answers and to make withdrawal of consent possible. It is not linked to personal data.",
+q4:"Which language did you use with the interface?", q4a:"Kazakh", q4b:"Russian", q4c:"English", q4d:"I used more than one language (please specify):",
+q5:"Your age:", q5a:"Under 25", q5b:"25–34", q5c:"35–44", q5d:"45–54", q5e:"55–64", q5f:"65 or over",
+q6:"Your gender:", q6a:"Female", q6b:"Male", q6c:"Prefer not to say",
+q7:"Your education:", q7a:"Secondary / vocational", q7b:"Higher, non-law", q7c:"Higher, law", q7d:"Postgraduate degree",
+q8:"How often do you use AI assistants (ChatGPT and similar)?", q8a:"Never", q8b:"Tried a few times", q8c:"Occasionally", q8d:"Regularly",
+q9:"How often do you use digital government services (eGov and similar)?", q9a:"Never", q9b:"Rarely", q9c:"Occasionally", q9d:"Regularly",
+block2Title:"Block 2 — Technology acceptance, system quality and trust",
+scaleHint:"Scale for all statements in this block: 1 = strongly disagree, 2 = somewhat disagree, 3 = neither agree nor disagree, 4 = somewhat agree, 5 = strongly agree.",
+naHint:"Some tables include an «N/A» column (not applicable). Tick it if the feature in question did not apply to you; this is not treated as a missing answer.",
+c2A:"2A. Ease of use", c2B:"2B. Perceived usefulness", c2C:"2C. System quality", c2D:"2D. Information quality", c2E:"2E. Attention check", c2F:"2F. Trust", c2G:"2G. Perceived risk", c2H:"2H. Facilitating conditions", c2I:"2I. Social influence", c2J:"2J. Intention to reuse",
+q40:"What caused you the most difficulty when using the interface? (open question)",
+block3Title:"Block 3 — Actual legal utility",
+scaleHint2:"Scale for all statements in this block: 1 = strongly disagree … 5 = strongly agree.",
+q44:"If the assistant informed you that your petition falls outside the jurisdiction of the Constitutional Court, was it clear where to turn next?",
+q44a:"Yes, it clearly stated where to turn", q44b:"It was stated, but not in enough detail", q44c:"No, it was not stated at all", q44d:"Not applicable (the petition was accepted for drafting)",
+block4Title:"Block 4 — Processing time",
+q45:"Overall, how long did it take you to complete all the steps of the interface?", selPh:"— select —",
+q45a:"10 minutes or less", q45b:"11 to 20 minutes", q45c:"21 to 40 minutes", q45d:"More than 40 minutes",
+q46:"How do you rate that time?", q46a:"Faster than I expected", q46b:"About what I expected", q46c:"Longer than I expected — please say what took the most time:",
+q47:"Was there a point at which the system froze or made you wait a long time for a response?", q47a:"No", q47b:"Yes, at this step:",
+block5Title:"Block 5 — Satisfaction and recommendation",
+c5A:"5A. Satisfaction",
+q51:"How likely are you to recommend this service to someone you know who is facing a similar problem?", q51lo:"0 — definitely would not recommend", q51hi:"10 — definitely would recommend",
+block6Title:"Block 6 — Open questions",
+q52:"What should be improved first?", q53:"Is there anything you particularly liked about the interface?",
+block7Title:"Block 7 — System Usability Scale (SUS)",
+scaleHintSus:"Scale: 1 = strongly disagree … 5 = strongly agree.",
+closingNote:"Thank you for taking part in this study. If you are a lawyer, advocate or legal consultant and would like to offer a fuller professional comment, please use the «Feedback» tab in the interface or write to email: assel.bekenova@alumni.nu.edu.kz.",
+submitBtn:"Submit responses", submitNote:"Responses are submitted anonymously",
+successTitle:"Thank you for participating!", successText:"Your responses will help make Constitutional Assistant more useful for citizens of Kazakhstan.", homeLink:"← Back to home",
+footer:"Pilot version · Not an official resource of state authorities of the Republic of Kazakhstan"
+}
+};
+
+// Scale item texts, keyed by construct. Each item: {id, text: {en,ru,kk}}
+const SCALES = {
+"2A": { hasNA:false, items: [
+  {id:10, en:"It was clear to me what to do at each step of the interface", ru:"Мне было понятно, что нужно делать на каждом шаге интерфейса", kk:"Интерфейстің әр қадамында не істеу керектігі маған түсінікті болды"},
+  {id:11, en:"The assistant's questions were worded clearly, without requiring legal training", ru:"Вопросы ассистента были сформулированы понятно, без необходимости юридической подготовки", kk:"Ассистенттің сұрақтары заң дайындығынсыз түсінікті түрде тұжырымдалған"},
+  {id:12, en:"I completed the whole interface on my own, without help from anyone else", ru:"Я прошёл(шла) весь интерфейс самостоятельно, без чьей-либо помощи", kk:"Мен интерфейстің барлығынан басқа ешкімнің көмегінсіз өз бетіммен өттім"},
+  {id:13, en:"I learned to use the interface quickly, without spending much time on it", ru:"Я быстро научился(лась) пользоваться интерфейсом, не потратив на это много времени", kk:"Мен интерфейсті көп уақыт жұмсамай, тез үйрендім"}
+]},
+"2B": { hasNA:false, items: [
+  {id:14, en:"Using the interface improved my chances of preparing the petition correctly", ru:"Использование интерфейса повысило мои шансы правильно подготовить обращение", kk:"Интерфейсті пайдалану өтінішті дұрыс дайындау мүмкіндігімді арттырды"},
+  {id:15, en:"The interface helped me do something that would have been difficult without a lawyer", ru:"Интерфейс помог мне сделать то, что было бы сложно без юриста", kk:"Интерфейс маған заңгерсіз қиын болатын нәрсені жасауға көмектесті"},
+  {id:16, en:"Preparing the petition through the interface took me less time than it would have taken without it", ru:"Подготовка обращения через интерфейс заняла у меня меньше времени, чем без него", kk:"Өтінішті интерфейс арқылы дайындау маған онсыз кететін уақыттан аз уақыт алды"},
+  {id:17, en:"Overall, I find this interface useful for the task I had", ru:"В целом я считаю этот интерфейс полезным для моей задачи", kk:"Жалпы алғанда, мен бұл интерфейсті өз міндетім үшін пайдалы деп санаймын"}
+]},
+"2C": { hasNA:true, items: [
+  {id:18, en:"Uploading court decisions and other documents worked without problems", ru:"Загрузка судебных решений и других документов прошла без проблем", kk:"Сот шешімдері мен басқа құжаттарды жүктеу мәселесіз өтті"},
+  {id:19, en:"Text recognition in the uploaded documents worked correctly", ru:"Распознавание текста в загруженных документах работало корректно", kk:"Жүктелген құжаттардағы мәтінді тану дұрыс жұмыс істеді"},
+  {id:20, en:"The interface was technically stable, with no crashes or freezes", ru:"Интерфейс был технически стабилен, без сбоев и зависаний", kk:"Интерфейс техникалық тұрғыдан тұрақты болды, ақаулар мен тоқтап қалулар болмады"},
+  {id:21, en:"In the language I selected (see question 4), the interface performed correctly: the wording was grammatical and natural", ru:"На выбранном мной языке (см. вопрос 4) интерфейс работал корректно: формулировки были грамматически верными и естественными", kk:"Мен таңдаған тілде (4-сұрақты қараңыз) интерфейс дұрыс жұмыс істеді: тұжырымдар грамматикалық тұрғыдан дұрыс және табиғи болды"}
+]},
+"2D": { hasNA:false, items: [
+  {id:22, en:"The information the assistant provided was clear", ru:"Информация, предоставленная ассистентом, была понятной", kk:"Ассистент берген ақпарат түсінікті болды"},
+  {id:23, en:"The information was complete enough for me to decide what to do next", ru:"Информации было достаточно, чтобы понять, что делать дальше", kk:"Ақпарат әрі қарай не істеу керектігін шешу үшін жеткілікті болды"},
+  {id:24, en:"The information was consistent: the assistant did not contradict itself", ru:"Информация была последовательной: ассистент себе не противоречил", kk:"Ақпарат бірізді болды: ассистент өзіне-өзі қайшы келмеді"}
+]},
+"2E": { hasNA:false, attention:true, items: [
+  {id:25, en:"This is an attention check. Please select option \"2\".", ru:"Это проверка внимания. Пожалуйста, выберите вариант «2».", kk:"Бұл — назар тексерісі. «2» вариантын таңдаңыз."}
+]},
+"2F": { hasNA:false, items: [
+  {id:26, en:"I trust the accuracy of the legal information the assistant provided", ru:"Я доверяю точности правовой информации, предоставленной ассистентом", kk:"Мен ассистент берген құқықтық ақпараттың дұрыстығына сенемін"},
+  {id:27, en:"I believe this service acts in my interest", ru:"Я считаю, что этот сервис действует в моих интересах", kk:"Мен бұл қызмет менің мүддемде әрекет етеді деп санаймын"},
+  {id:28, en:"I am willing to rely on the assistant's output when deciding whether to file the petition", ru:"Я готов(а) полагаться на результат работы ассистента при принятии решения о подаче обращения", kk:"Мен өтініш беру туралы шешім қабылдағанда ассистенттің нәтижесіне сенуге дайынмын"}
+]},
+"2G": { hasNA:false, items: [
+  {id:29, en:"I am concerned that an error by the assistant could harm my case", ru:"Я обеспокоен(а), что ошибка ассистента может навредить моему делу", kk:"Мен ассистенттің қателігі ісіме зиян тигізуі мүмкін деп алаңдаймын"},
+  {id:30, en:"I am concerned that data about my petition could be used for purposes other than intended", ru:"Я обеспокоен(а), что данные о моём обращении могут быть использованы не по назначению", kk:"Мен өтінішім туралы деректер мақсатсыз пайдаланылуы мүмкін деп алаңдаймын"}
+]},
+"2H": { hasNA:true, items: [
+  {id:31, en:"I had a suitable device and a stable internet connection to use the interface", ru:"У меня было подходящее устройство и стабильное интернет-соединение для использования интерфейса", kk:"Интерфейсті пайдалану үшін маған қолайлы құрылғы мен тұрақты интернет байланысы болды"},
+  {id:32, en:"I had sufficient digital skills to use the interface", ru:"У меня было достаточно цифровых навыков для использования интерфейса", kk:"Интерфейсті пайдалану үшін маған жеткілікті цифрлық дағдылар болды"},
+  {id:33, en:"Prompts and instructions were available exactly when I needed them", ru:"Подсказки и инструкции были доступны именно тогда, когда они были мне нужны", kk:"Нұсқаулар мен түсініктемелер маған қажет кезде дәл қолжетімді болды"},
+  {id:34, en:"I knew where to turn for further help if I needed it", ru:"Я знал(а), куда обратиться за дальнейшей помощью, если она понадобится", kk:"Маған көмек қажет болса, қайда жүгіну керектігін білдім"}
+]},
+"2I": { hasNA:false, items: [
+  {id:35, en:"People I know or colleagues recommended that I use this interface", ru:"Знакомые или коллеги рекомендовали мне использовать этот интерфейс", kk:"Таныстарым немесе әріптестерім маған осы интерфейсті пайдалануды ұсынды"},
+  {id:36, en:"People whose opinion I value think a service of this kind is worth using", ru:"Люди, чьё мнение для меня важно, считают, что подобным сервисом стоит пользоваться", kk:"Пікірін маңызды санайтын адамдар осындай қызметті пайдалану құнды деп санайды"}
+]},
+"2J": { hasNA:false, items: [
+  {id:37, en:"I intend to use this interface again if a similar situation arises", ru:"Я намерен(а) снова воспользоваться этим интерфейсом, если возникнет похожая ситуация", kk:"Ұқсас жағдай туындаса, мен бұл интерфейсті қайта пайдалануды жоспарлаймын"},
+  {id:38, en:"I will use this interface for future matters relating to the Constitutional Court", ru:"Я буду пользоваться этим интерфейсом для будущих вопросов, связанных с Конституционным Судом", kk:"Мен Конституциялық Сотқа қатысты болашақ мәселелер үшін бұл интерфейсті пайдаланамын"},
+  {id:39, en:"I plan to continue using this interface in the future", ru:"Я планирую продолжать пользоваться этим интерфейсом в будущем", kk:"Мен болашақта бұл интерфейсті пайдалануды жалғастыруды жоспарлаймын"}
+]},
+"3": { hasNA:false, items: [
+  {id:41, en:"The assistant helped me understand the difference between appealing a court decision and challenging a legal norm", ru:"Ассистент помог мне понять разницу между обжалованием решения суда и оспариванием нормы закона", kk:"Ассистент маған сот шешімін шағымдау мен заң нормасына дау айтудың айырмашылығын түсінуге көмектесті"},
+  {id:42, en:"It was clearly explained to me why my petition does or does not fall within the jurisdiction of the Constitutional Court of the Republic of Kazakhstan", ru:"Мне было чётко объяснено, почему моё обращение относится или не относится к компетенции Конституционного Суда Республики Казахстан", kk:"Маған өтінішімнің Қазақстан Республикасы Конституциялық Сотының құзыретіне жататыны немесе жатпайтыны нақты түсіндірілді"},
+  {id:43, en:"Using the service, I obtained a draft legal argument that I could show to a lawyer", ru:"С помощью сервиса я получил(а) черновик правового обоснования, который могу показать юристу", kk:"Қызметті пайдалана отырып, мен заңгерге көрсете алатын құқықтық негіздеме жобасын алдым"}
+]},
+"5A": { hasNA:false, items: [
+  {id:48, en:"Overall, I am satisfied with my experience of using Constitutional Assistant", ru:"В целом я удовлетворён(а) своим опытом использования Constitutional Assistant", kk:"Жалпы алғанда, мен Constitutional Assistant пайдалану тәжірибеме қанағаттанамын"},
+  {id:49, en:"The interface met my expectations", ru:"Интерфейс оправдал мои ожидания", kk:"Интерфейс менің күткенімді ақтады"},
+  {id:50, en:"Looking back, I think using this interface was the right decision", ru:"Оглядываясь назад, я считаю, что использование этого интерфейса было правильным решением", kk:"Артқа қарасам, бұл интерфейсті пайдалану дұрыс шешім болды деп ойлаймын"}
+]},
+"SUS": { hasNA:false, items: [
+  {id:54, sus:1, en:"I think that I would like to use this interface frequently", ru:"Я думаю, что хотел(а) бы пользоваться этим интерфейсом часто", kk:"Мен бұл интерфейсті жиі пайдаланғым келеді деп ойлаймын"},
+  {id:55, sus:2, en:"I found this interface unnecessarily complex", ru:"Я нашёл(нашла) этот интерфейс излишне сложным", kk:"Мен бұл интерфейсті қажетсіз күрделі деп таптым"},
+  {id:56, sus:3, en:"I thought this interface was easy to use", ru:"Я считаю, что этим интерфейсом легко пользоваться", kk:"Мен бұл интерфейсті пайдалану оңай деп ойладым"},
+  {id:57, sus:4, en:"I think that I would need the support of a technical person to be able to use this interface", ru:"Я думаю, что мне понадобилась бы помощь технического специалиста, чтобы пользоваться этим интерфейсом", kk:"Бұл интерфейсті пайдалану үшін маған техникалық маманның көмегі қажет болар еді деп ойлаймын"},
+  {id:58, sus:5, en:"I found the various functions in this interface were well integrated", ru:"Я считаю, что различные функции этого интерфейса были хорошо интегрированы", kk:"Мен бұл интерфейстің әртүрлі функциялары жақсы біріктірілген деп таптым"},
+  {id:59, sus:6, en:"I thought there was too much inconsistency in this interface", ru:"Я считаю, что в этом интерфейсе было слишком много несогласованности", kk:"Мен бұл интерфейсте тым көп сәйкессіздік бар деп ойладым"},
+  {id:60, sus:7, en:"I would imagine that most people would learn to use this interface very quickly", ru:"Полагаю, что большинство людей научились бы пользоваться этим интерфейсом очень быстро", kk:"Көптеген адамдар бұл интерфейсті пайдалануды өте тез үйренеді деп ойлаймын"},
+  {id:61, sus:8, en:"I found this interface very cumbersome to use", ru:"Я считаю, что этот интерфейс очень неудобно использовать", kk:"Мен бұл интерфейсті пайдалану өте ыңғайсыз деп таптым"},
+  {id:62, sus:9, en:"I felt very confident using this interface", ru:"Я чувствовал(а) себя очень уверенно, используя этот интерфейс", kk:"Мен бұл интерфейсті пайдаланғанда өзімді өте сенімді сезіндім"},
+  {id:63, sus:10, en:"I needed to learn a lot of things before I could get going with this interface", ru:"Мне нужно было узнать многое, прежде чем я смог(ла) начать пользоваться этим интерфейсом", kk:"Бұл интерфейспен жұмыс істей бастамас бұрын маған көп нәрсені үйрену керек болды"}
+]}
 };
 
 let lang = "ru";
+function t(k) { return (T[lang] && T[lang][k] !== undefined) ? T[lang][k] : k; }
 
-function t(k) { return T[lang][k] || k; }
-
-function applyLang() {
-  var l = T[lang];
-  document.querySelectorAll("[data-i18n]").forEach(function(el) {
-    var k = el.getAttribute("data-i18n");
-    if (l[k] !== undefined) el.textContent = l[k];
-  });
-  document.querySelectorAll("[data-i18n-ph]").forEach(function(el) {
-    var k = el.getAttribute("data-i18n-ph");
-    if (l[k]) el.placeholder = l[k];
-  });
-  // select options
-  var sel = document.getElementById("q11");
-  var keys = ["selPh","q11a","q11b","q11c","q11d"];
-  Array.from(sel.options).forEach(function(o,i){ if(l[keys[i]]) o.textContent = l[keys[i]]; });
-  buildScale();
-  // success
-  var st = document.getElementById("successTitle");
-  var sp = document.getElementById("successText");
-  var hl = document.getElementById("homeLink");
-  if(st) st.textContent = l.successTitle;
-  if(sp) sp.textContent = l.successText;
-  if(hl) hl.textContent = l.homeLink;
-}
-
-function buildScale() {
-  var c = document.getElementById("scaleList");
+function buildScaleGroup(containerId, key) {
+  var c = document.getElementById(containerId);
   if (!c) return;
+  var def = SCALES[key];
   c.innerHTML = "";
-  (T[lang].scale||[]).forEach(function(txt, i) {
-    var n = i+1;
+  def.items.forEach(function(item) {
     var row = document.createElement("div");
-    row.className = "scale-row-item";
-    row.innerHTML = '<span class="scale-text">'+txt+'</span>' +
-      '<div class="scale-nums">' +
-      [1,2,3,4,5].map(function(v){
-        return '<label><input type="radio" name="sc'+n+'" value="'+v+'"><span>'+v+'</span></label>';
-      }).join('') + '</div>';
+    row.className = "scale-row-item" + (def.attention ? " attention-row" : "");
+    var name = "item" + item.id;
+    var nums = [1,2,3,4,5].map(function(v) {
+      return '<label><input type="radio" name="'+name+'" value="'+v+'"><span>'+v+'</span></label>';
+    }).join('');
+    if (def.hasNA) {
+      nums += '<label class="na-opt"><input type="radio" name="'+name+'" value="na"><span>N/A</span></label>';
+    }
+    row.innerHTML = '<span class="scale-text"><span class="q-num">'+item.id+'</span>'+(item[lang]||item.en)+'</span>' +
+      '<div class="scale-nums">'+nums+'</div>';
     c.appendChild(row);
   });
 }
 
-function buildSat() {
-  var r = document.getElementById("satRow");
-  for(var n=1;n<=5;n++) {
-    (function(n){
-      var b = document.createElement("button");
-      b.type="button"; b.className="sat-btn"; b.textContent=n;
-      b.onclick=function(){
-        document.querySelectorAll("#satRow .sat-btn").forEach(function(x){x.classList.remove("selected");});
-        b.classList.add("selected");
-        document.getElementById("q14val").value=n;
-      };
-      r.appendChild(b);
-    })(n);
-  }
+function buildAllScales() {
+  ["2A","2B","2C","2D","2E","2F","2G","2H","2I","2J"].forEach(function(k){ buildScaleGroup("scale"+k, k); });
+  buildScaleGroup("scale3", "3");
+  buildScaleGroup("scale5A", "5A");
+  buildScaleGroup("scaleSUS", "SUS");
 }
 
 function buildNps() {
   var r = document.getElementById("npsRow");
-  for(var n=0;n<=10;n++) {
+  r.innerHTML = "";
+  for (var n=0;n<=10;n++) {
     (function(n){
       var b = document.createElement("button");
-      b.type="button"; b.className="nps-btn"; b.textContent=n;
-      b.onclick=function(){
+      b.type = "button"; b.className = "nps-btn"; b.textContent = n;
+      b.onclick = function() {
         document.querySelectorAll("#npsRow .nps-btn").forEach(function(x){x.classList.remove("selected");});
         b.classList.add("selected");
-        document.getElementById("q15val").value=n;
+        document.querySelector('input[name="q51"]').value = n;
       };
       r.appendChild(b);
     })(n);
   }
 }
 
-// Consent gate
+function applyLang() {
+  document.querySelectorAll("[data-i18n]").forEach(function(el) {
+    var k = el.getAttribute("data-i18n");
+    if (t(k) !== k || T[lang][k] !== undefined) el.textContent = t(k);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(function(el) {
+    var k = el.getAttribute("data-i18n-ph");
+    el.placeholder = t(k);
+  });
+  var sel = document.getElementById("q45");
+  if (sel) {
+    var keys = ["selPh","q45a","q45b","q45c","q45d"];
+    Array.from(sel.options).forEach(function(o,i){ o.textContent = t(keys[i]); });
+  }
+  buildAllScales();
+  var st = document.getElementById("successTitle");
+  var sp = document.getElementById("successText");
+  var hl = document.getElementById("homeLink");
+  if (st) st.textContent = t("successTitle");
+  if (sp) sp.textContent = t("successText");
+  if (hl) hl.textContent = t("homeLink");
+}
+
 document.querySelectorAll('input[name="consent"]').forEach(function(r) {
   r.addEventListener("change", function() {
     if (r.value === "yes") {
@@ -743,12 +774,10 @@ document.querySelectorAll('input[name="consent"]').forEach(function(r) {
   });
 });
 
-// Submit
 document.getElementById("surveyForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   var fd = new FormData(e.target);
   var data = Object.fromEntries(fd.entries());
-  for(var i=1;i<=5;i++) data["sc"+i] = fd.get("sc"+i)||"";
   data.language = lang;
   data.submitted_at = new Date().toISOString();
 
@@ -756,9 +785,9 @@ document.getElementById("surveyForm").addEventListener("submit", async function(
   btn.disabled = true;
 
   try {
-    await fetch(API_BASE+"/api/feedback", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
+    await fetch(API_BASE + "/api/feedback", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
       body: JSON.stringify({type:"survey", data: data})
     });
   } catch(_) {}
@@ -772,7 +801,6 @@ function showSuccess() {
   window.scrollTo({top:0, behavior:"smooth"});
 }
 
-// Lang switcher
 document.querySelectorAll(".lang-btn").forEach(function(btn) {
   btn.addEventListener("click", function() {
     document.querySelectorAll(".lang-btn").forEach(function(b){b.classList.remove("active");});
@@ -782,10 +810,9 @@ document.querySelectorAll(".lang-btn").forEach(function(btn) {
   });
 });
 
-buildScale();
-buildSat();
 buildNps();
 applyLang();
+
 </script>
 </body>
 </html>
